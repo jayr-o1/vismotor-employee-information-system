@@ -23,7 +23,7 @@ const Home = () => {
         onClick={() => navigate("/scan-qr")}
         onMouseEnter={() => setIsTooltipVisible(true)}
         onMouseLeave={() => setIsTooltipVisible(false)}
-        className="fixed bottom-8 right-8 bg-blue-500 text-white w-16 h-16 flex items-center justify-center space-x-2 rounded-full shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300"
+        className="fixed bottom-8 right-8 bg-[#0f6013] text-white w-16 h-16 flex items-center justify-center space-x-2 rounded-full shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300"
       >
         <i className="fas fa-qrcode text-3xl"></i>
       </button>

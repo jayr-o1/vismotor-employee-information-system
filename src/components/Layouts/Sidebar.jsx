@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
-
 import logo from "../../assets/vismotor-corporation.png";
+import Swal from "sweetalert2";
 
 const Sidebar = () => {
   // Logout confirmation dialog
@@ -21,23 +21,15 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-64 border-r-2 border-gray-200 dark:border-gray-700 bg-gray-50 fixed">
-      {/* SpendWise Title */}
+    <div className="flex flex-col min-h-screen w-64 border-r-2 border-gray-200 bg-[#e95016] fixed">
+      {/* Logo */}
       <div className="text-center -mt-20 -mb-20">
-        <img
-          src={logo}
-          alt="Vismotor Logo"
-          className="mx-auto h-64 w-auto"
-        />
+        <img src={logo} alt="Vismotor Logo" className="mx-auto h-64 w-auto" />
       </div>
 
       {/* Profile Picture */}
       <div className="text-center mt-5">
-        <img
-          className="w-20 h-20 rounded-full mx-auto"
-          src={logo}
-          alt="Profile Picture"
-        />
+        <img className="w-20 h-20 rounded-full mx-auto" src={logo} alt="Profile" />
       </div>
 
       {/* Navigation */}
@@ -50,7 +42,7 @@ const Sidebar = () => {
               className={({ isActive }) =>
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
-                    ? "bg-blue-500 text-white border-r-4 border-blue-200 hover:no-underline"
+                    ? "bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline"
                     : "text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline"
                 }`
               }
@@ -59,51 +51,35 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          {/* Wallet */}
+          {/* Employees */}
           <li className="my-2">
             <NavLink
-              to="/wallet"
+              to="/employees"
               className={({ isActive }) =>
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
-                    ? "bg-blue-500 text-white border-r-4 border-blue-200 hover:no-underline"
+                    ? "bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline"
                     : "text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline"
                 }`
               }
             >
-              <i className="fas fa-wallet mr-4"></i> Wallet
+              <i className="fas fa-id-badge mr-4"></i> Employees
             </NavLink>
           </li>
 
-          {/* Category */}
-          <li className="my-2">
-            <NavLink
-              to="/category"
-              className={({ isActive }) =>
-                `flex items-center py-3 pl-4 rounded-l ${
-                  isActive
-                    ? "bg-blue-500 text-white border-r-4 border-blue-200 hover:no-underline"
-                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline"
-                }`
-              }
-            >
-              <i className="fas fa-layer-group mr-4"></i> Category
-            </NavLink>
-          </li>
-
-          {/* Transaction */}
+          {/* Scan QR */}
           <li className="my-2">
             <NavLink
               to="/scan-qr"
               className={({ isActive }) =>
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
-                    ? "bg-blue-500 text-white border-r-4 border-blue-200 hover:no-underline"
+                    ? "bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline"
                     : "text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline"
                 }`
               }
             >
-              <i className="fas fa-file-invoice-dollar mr-4"></i> Scan QR
+              <i className="fas fa-qrcode mr-4"></i> Scan QR
             </NavLink>
           </li>
 
@@ -114,7 +90,7 @@ const Sidebar = () => {
               className={({ isActive }) =>
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
-                    ? "bg-blue-500 text-white border-r-4 border-blue-200 hover:no-underline"
+                    ? "bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline"
                     : "text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline"
                 }`
               }

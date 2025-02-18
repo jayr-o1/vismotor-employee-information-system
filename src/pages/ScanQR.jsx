@@ -39,22 +39,6 @@ const ScanQR = () => {
             Scanned Result: <span className="font-semibold">{scanResult}</span>
           </p>
         </div>
-
-        {/* Generate QR */}
-        <div className="p-4 bg-white shadow-lg rounded-lg w-1/2 text-center">
-          <h2 className="text-lg font-semibold mb-2">Generate QR Code</h2>
-          <input
-            type="text"
-            placeholder="Enter text to generate QR"
-            className="w-full p-2 border rounded-lg"
-          />
-          <div className="mt-4 flex justify-center">
-            <div className="w-40 h-40 border flex items-center justify-center rounded-lg bg-gray-200">
-              {/* QR Code Placeholder */}
-              <span className="text-gray-500">QR Code Here</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
