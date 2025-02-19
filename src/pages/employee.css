@@ -1,0 +1,29 @@
+/* Add this to your CSS file */
+.pagination {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin-top: 20px; /* Add margin above the pagination */
+}
+
+.pagination li {
+    margin: 0 5px;
+}
+
+.pagination li a {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    color: #007bff;
+    cursor: pointer;
+}
+
+.pagination li a:hover {
+    background-color: #ddd;
+}
+
+.pagination .active a {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+}
