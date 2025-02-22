@@ -207,7 +207,7 @@ const Employees = () => {
                         </select>
                         {currentEmployee.status === 'Inactive' && (
                             <>
-                                <label className="block mb-2">Reason for Inactivity:</label>
+                                <label className="block mb-2">Reason/s for Inactivity:</label>
                                 <input
                                     type="text"
                                     value={currentEmployee.reason}
