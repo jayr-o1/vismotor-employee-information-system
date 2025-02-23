@@ -3,7 +3,7 @@ import { FaEdit, FaTrash } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import ReactPaginate from 'react-paginate';
 import 'react-toastify/dist/ReactToastify.css';
-import './employee.css';
+import '../styles/employee.css';
 
 const Employees = () => {
     const [selectedDepartment, setSelectedDepartment] = useState('');
