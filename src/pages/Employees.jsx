@@ -5,35 +5,66 @@ import ReactPaginate from 'react-paginate';
 import 'react-toastify/dist/ReactToastify.css';
 import './employee.css';
 
-
 const Employees = () => {
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [employees, setEmployees] = useState([
-        { id: 1, name: 'James Smith', department: 'Cashier', status: 'Active', reason: '' },
-        { id: 2, name: 'Sophia Lee', department: 'Marketing', status: 'Active', reason: '' },
-        { id: 3, name: 'John Doe', department: 'HR', status: 'Inactive', reason: 'Retired' },
-        { id: 4, name: 'Olivia Brown', department: 'Cashier', status: 'Active', reason: '' },
-        { id: 5, name: 'Mason Johnson', department: 'Sales', status: 'Inactive', reason: 'On Leave' },
-        { id: 6, name: 'Emma Wilson', department: 'IT', status: 'Active', reason: '' },
-        { id: 7, name: 'Liam Martinez', department: 'Liaison', status: 'Active', reason: '' },
-        { id: 8, name: 'Noah Davis', department: 'CCA', status: 'Inactive', reason: 'Retired' },
-        { id: 9, name: 'Ava Garcia', department: 'CNC', status: 'Active', reason: '' },
-        { id: 10, name: 'Isabella Rodriguez', department: 'Accounting', status: 'Active', reason: '' },
-        { id: 11, name: 'Ethan Clark', department: 'Cashier', status: 'Inactive', reason: 'On Leave' },
-        { id: 12, name: 'Mia Turner', department: 'Marketing', status: 'Active', reason: '' },
-        { id: 13, name: 'Lucas Walker', department: 'HR', status: 'Active', reason: '' },
-        { id: 14, name: 'Amelia Harris', department: 'Sales', status: 'Inactive', reason: 'Retired' },
-        { id: 15, name: 'Henry Young', department: 'IT', status: 'Active', reason: '' },
-        { id: 16, name: 'Charlotte King', department: 'Liaison', status: 'Active', reason: '' },
-        { id: 17, name: 'Alexander Scott', department: 'CCA', status: 'Inactive', reason: 'On Leave' },
-        { id: 18, name: 'Grace Green', department: 'IT', status: 'Active', reason: '' },
-        { id: 19, name: 'Benjamin Adams', department: 'Accounting', status: 'Inactive', reason: 'Retired' },
-        { id: 20, name: 'Ella Baker', department: 'Cashier', status: 'Active', reason: '' },
+        { id: 1, name: 'James Smith', department: 'Cashier', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 2, name: 'Sophia Lee', department: 'Marketing', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 3, name: 'John Doe', department: 'HR', status: 'Inactive', reason: 'Retired', branch: 'Headoffice' },
+        { id: 4, name: 'Olivia Brown', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 5, name: 'Mason Johnson', department: 'Sales', status: 'Inactive', reason: 'On Leave', branch: 'Talamban' },
+        { id: 6, name: 'Emma Wilson', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 7, name: 'Liam Martinez', department: 'Liaison', status: 'Active', reason: '', branch: 'Headoffice' },
+        { id: 8, name: 'Noah Davis', department: 'CCA', status: 'Inactive', reason: 'Retired', branch: 'Bogo' },
+        { id: 9, name: 'Ava Garcia', department: 'CNC', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 10, name: 'Isabella Rodriguez', department: 'Accounting', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 11, name: 'Ethan Clark', department: 'Cashier', status: 'Inactive', reason: 'On Leave', branch: 'Headoffice' },
+        { id: 12, name: 'Mia Turner', department: 'Marketing', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 13, name: 'Lucas Walker', department: 'HR', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 14, name: 'Amelia Harris', department: 'Sales', status: 'Inactive', reason: 'Retired', branch: 'Mandaue' },
+        { id: 15, name: 'Henry Young', department: 'IT', status: 'Active', reason: '', branch: 'Headoffice' },
+        { id: 16, name: 'Charlotte King', department: 'Liaison', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 17, name: 'Alexander Scott', department: 'CCA', status: 'Inactive', reason: 'On Leave', branch: 'Talamban' },
+        { id: 18, name: 'Grace Green', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 19, name: 'Benjamin Adams', department: 'Accounting', status: 'Inactive', reason: 'Retired', branch: 'Headoffice' },
+        { id: 20, name: 'Ella Baker', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 21, name: 'David Johnson', department: 'Sales', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 22, name: 'Sophia Brown', department: 'Marketing', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 23, name: 'Michael White', department: 'HR', status: 'Active', reason: '', branch: 'Headoffice' },
+        { id: 24, name: 'Emily Davis', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 25, name: 'Daniel Wilson', department: 'Sales', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 26, name: 'Emma Moore', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 27, name: 'James Taylor', department: 'Liaison', status: 'Active', reason: '', branch: 'Headoffice' },
+        { id: 28, name: 'Olivia Anderson', department: 'CCA', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 29, name: 'Liam Thomas', department: 'CNC', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 30, name: 'Sophia Jackson', department: 'Accounting', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 31, name: 'John Harris', department: 'Cashier', status: 'Active', reason: '', branch: 'Headoffice' },
+        { id: 32, name: 'Mia Martin', department: 'Marketing', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 33, name: 'Lucas Thompson', department: 'HR', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 34, name: 'Amelia Garcia', department: 'Sales', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 35, name: 'Henry Martinez', department: 'IT', status: 'Active', reason: '', branch: 'Headoffice' },
+        { id: 36, name: 'Charlotte Robinson', department: 'Liaison', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 37, name: 'Alexander Clark', department: 'CCA', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 38, name: 'Grace Rodriguez', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 39, name: 'Benjamin Lewis', department: 'Accounting', status: 'Active', reason: '', branch: 'Headoffice' },
+        { id: 40, name: 'Ella Lee', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 41, name: 'David Walker', department: 'Sales', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 42, name: 'Sophia Hall', department: 'Marketing', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 43, name: 'Michael Allen', department: 'HR', status: 'Active', reason: '', branch: 'Headoffice' },
+        { id: 44, name: 'Emily Young', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 45, name: 'Daniel Hernandez', department: 'Sales', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 46, name: 'Emma King', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
+        { id: 47, name: 'James Wright', department: 'Liaison', status: 'Active', reason: '', branch: 'Headoffice' },
+        { id: 48, name: 'Olivia Lopez', department: 'CCA', status: 'Active', reason: '', branch: 'Bogo' },
+        { id: 49, name: 'Liam Hill', department: 'CNC', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 50, name: 'Sophia Scott', department: 'Accounting', status: 'Active', reason: '', branch: 'Mandaue' },
     ]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentEmployee, setCurrentEmployee] = useState(null);
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
+
+    const departments = [...new Set(employees.map(employee => employee.department))];
 
     const handleEdit = (employee) => {
         setCurrentEmployee(employee);
@@ -85,15 +116,9 @@ const Employees = () => {
                 className="mb-4 p-2 border border-gray-300 rounded"
             >
                 <option value="">All</option>
-                <option value="Marketing">Marketing</option>
-                <option value="HR">HR</option>
-                <option value="Sales">Sales</option>
-                <option value="IT">IT</option>
-                <option value="Liaison">Liaison</option>
-                <option value="CCA">CCA</option>
-                <option value="CNC">CNC</option>
-                <option value="Accounting">Accounting</option>
-                <option value="Cashier">Cashier</option>
+                {departments.map(department => (
+                    <option key={department} value={department}>{department}</option>
+                ))}
             </select>
 
             <div className="overflow-x-auto">
@@ -162,12 +187,15 @@ const Employees = () => {
                             className="mb-4 p-2 border border-gray-300 rounded w-full"
                         />
                         <label className="block mb-2">Department:</label>
-                        <input
-                            type="text"
+                        <select
                             value={currentEmployee.department}
                             onChange={(e) => setCurrentEmployee({ ...currentEmployee, department: e.target.value })}
                             className="mb-4 p-2 border border-gray-300 rounded w-full"
-                        />
+                        >
+                            {departments.map(department => (
+                                <option key={department} value={department}>{department}</option>
+                            ))}
+                        </select>
                         <label className="block mb-2">Status:</label>
                         <select
                             value={currentEmployee.status}
@@ -179,7 +207,7 @@ const Employees = () => {
                         </select>
                         {currentEmployee.status === 'Inactive' && (
                             <>
-                                <label className="block mb-2">Reason for Inactivity:</label>
+                                <label className="block mb-2">Reason/s for Inactivity:</label>
                                 <input
                                     type="text"
                                     value={currentEmployee.reason}

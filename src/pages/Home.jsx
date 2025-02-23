@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { Line } from 'react-chartjs-2';
@@ -8,44 +8,90 @@ ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, T
 
 const Home = () => {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const employees = [
-    { id: 1, name: 'James Smith', department: 'Cashier' },
-    { id: 2, name: 'Sophia Lee', department: 'Marketing' },
-    { id: 3, name: 'John Doe', department: 'HR' },
-    { id: 4, name: 'Olivia Brown', department: 'Cashier' },
-    { id: 5, name: 'Mason Johnson', department: 'Sales' },
-    { id: 6, name: 'Emma Wilson', department: 'IT' },
-    { id: 7, name: 'Liam Martinez', department: 'Liaison' },
-    { id: 8, name: 'Noah Davis', department: 'CCA' },
-    { id: 9, name: 'Ava Garcia', department: 'CNC' },
-    { id: 10, name: 'Isabella Rodriguez', department: 'Accounting' },
-    { id: 11, name: 'Ethan Clark', department: 'Cashier' },
-    { id: 12, name: 'Mia Turner', department: 'Marketing' },
-    { id: 13, name: 'Lucas Walker', department: 'HR' },
-    { id: 14, name: 'Amelia Harris', department: 'Sales' },
-    { id: 15, name: 'Henry Young', department: 'IT' },
-    { id: 16, name: 'Charlotte King', department: 'Liaison' },
-    { id: 17, name: 'Alexander Scott', department: 'CCA' },
-    { id: 18, name: 'Grace Green', department: 'IT' },
-    { id: 19, name: 'Benjamin Adams', department: 'Accounting' },
-    { id: 20, name: 'Ella Baker', department: 'Cashier' },
+    { id: 1, name: 'James Smith', department: 'Cashier', branch: 'Talamban' },
+    { id: 2, name: 'Sophia Lee', department: 'Marketing', branch: 'Mandaue' },
+    { id: 3, name: 'John Doe', department: 'HR', branch: 'Headoffice' },
+    { id: 4, name: 'Olivia Brown', department: 'Cashier', branch: 'Bogo' },
+    { id: 5, name: 'Mason Johnson', department: 'Sales', branch: 'Talamban' },
+    { id: 6, name: 'Emma Wilson', department: 'IT', branch: 'Mandaue' },
+    { id: 7, name: 'Liam Martinez', department: 'Liaison', branch: 'Headoffice' },
+    { id: 8, name: 'Noah Davis', department: 'CCA', branch: 'Bogo' },
+    { id: 9, name: 'Ava Garcia', department: 'CNC', branch: 'Talamban' },
+    { id: 10, name: 'Isabella Rodriguez', department: 'Accounting', branch: 'Mandaue' },
+    { id: 11, name: 'Ethan Clark', department: 'Cashier', branch: 'Headoffice' },
+    { id: 12, name: 'Mia Turner', department: 'Marketing', branch: 'Bogo' },
+    { id: 13, name: 'Lucas Walker', department: 'HR', branch: 'Talamban' },
+    { id: 14, name: 'Amelia Harris', department: 'Sales', branch: 'Mandaue' },
+    { id: 15, name: 'Henry Young', department: 'IT', branch: 'Headoffice' },
+    { id: 16, name: 'Charlotte King', department: 'Liaison', branch: 'Bogo' },
+    { id: 17, name: 'Alexander Scott', department: 'CCA', branch: 'Talamban' },
+    { id: 18, name: 'Grace Green', department: 'IT', branch: 'Mandaue' },
+    { id: 19, name: 'Benjamin Adams', department: 'Accounting', branch: 'Headoffice' },
+    { id: 20, name: 'Ella Baker', department: 'Cashier', branch: 'Bogo' },
+    { id: 21, name: 'David Johnson', department: 'Sales', branch: 'Talamban' },
+    { id: 22, name: 'Sophia Brown', department: 'Marketing', branch: 'Mandaue' },
+    { id: 23, name: 'Michael White', department: 'HR', branch: 'Headoffice' },
+    { id: 24, name: 'Emily Davis', department: 'Cashier', branch: 'Bogo' },
+    { id: 25, name: 'Daniel Wilson', department: 'Sales', branch: 'Talamban' },
+    { id: 26, name: 'Emma Moore', department: 'IT', branch: 'Mandaue' },
+    { id: 27, name: 'James Taylor', department: 'Liaison', branch: 'Headoffice' },
+    { id: 28, name: 'Olivia Anderson', department: 'CCA', branch: 'Bogo' },
+    { id: 29, name: 'Liam Thomas', department: 'CNC', branch: 'Talamban' },
+    { id: 30, name: 'Sophia Jackson', department: 'Accounting', branch: 'Mandaue' },
+    { id: 31, name: 'John Harris', department: 'Cashier', branch: 'Headoffice' },
+    { id: 32, name: 'Mia Martin', department: 'Marketing', branch: 'Bogo' },
+    { id: 33, name: 'Lucas Thompson', department: 'HR', branch: 'Talamban' },
+    { id: 34, name: 'Amelia Garcia', department: 'Sales', branch: 'Mandaue' },
+    { id: 35, name: 'Henry Martinez', department: 'IT', branch: 'Headoffice' },
+    { id: 36, name: 'Charlotte Robinson', department: 'Liaison', branch: 'Bogo' },
+    { id: 37, name: 'Alexander Clark', department: 'CCA', branch: 'Talamban' },
+    { id: 38, name: 'Grace Rodriguez', department: 'IT', branch: 'Mandaue' },
+    { id: 39, name: 'Benjamin Lewis', department: 'Accounting', branch: 'Headoffice' },
+    { id: 40, name: 'Ella Lee', department: 'Cashier', branch: 'Bogo' },
+    { id: 41, name: 'David Walker', department: 'Sales', branch: 'Talamban' },
+    { id: 42, name: 'Sophia Hall', department: 'Marketing', branch: 'Mandaue' },
+    { id: 43, name: 'Michael Allen', department: 'HR', branch: 'Headoffice' },
+    { id: 44, name: 'Emily Young', department: 'Cashier', branch: 'Bogo' },
+    { id: 45, name: 'Daniel Hernandez', department: 'Sales', branch: 'Talamban' },
+    { id: 46, name: 'Emma King', department: 'IT', branch: 'Mandaue' },
+    { id: 47, name: 'James Wright', department: 'Liaison', branch: 'Headoffice' },
+    { id: 48, name: 'Olivia Lopez', department: 'CCA', branch: 'Bogo' },
+    { id: 49, name: 'Liam Hill', department: 'CNC', branch: 'Talamban' },
+    { id: 50, name: 'Sophia Scott', department: 'Accounting', branch: 'Mandaue' },
   ];
 
+  const branches = [...new Set(employees.map(employee => employee.branch))];
+
   const departmentColors = {
-    Cashier: 'bg-green-500',
-    Marketing: 'bg-yellow-500',
-    HR: 'bg-purple-500',
-    Sales: 'bg-blue-500',
-    IT: 'bg-teal-500',
-    Liaison: 'bg-orange-500',
-    CCA: 'bg-red-500',
-    CNC: 'bg-indigo-500',
-    Accounting: 'bg-gray-500',
+    Cashier: 'bg-green-600',
+    Marketing: 'bg-yellow-600',
+    HR: 'bg-purple-600',
+    Sales: 'bg-blue-600',
+    IT: 'bg-teal-600',
+    Liaison: 'bg-orange-600',
+    CCA: 'bg-red-600',
+    CNC: 'bg-indigo-600',
+    Accounting: 'bg-gray-600',
   };
 
-  const departmentCounts = employees.reduce((acc, employee) => {
+  const filteredEmployees = selectedBranch
+    ? employees.filter(employee => employee.branch === selectedBranch)
+    : employees;
+
+  const departmentCounts = filteredEmployees.reduce((acc, employee) => {
     acc[employee.department] = (acc[employee.department] || 0) + 1;
     return acc;
   }, {});
@@ -77,9 +123,30 @@ const Home = () => {
     },
   };
 
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const currentDay = daysOfWeek[currentDateTime.getDay()];
+
   return (
     <div className="relative p-4">
       <h1 className="text-3xl font-bold mb-6 text-center">Employee Dashboard</h1>
+
+      <div className="mb-4 text-sm text-gray-600">
+        {currentDay}, {currentDateTime.toLocaleString()}
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-2">Select Branch:</label>
+        <select
+          value={selectedBranch}
+          onChange={(e) => setSelectedBranch(e.target.value)}
+          className="p-2 border border-gray-300 rounded w-48"
+        >
+          <option value="">All Branches</option>
+          {branches.map(branch => (
+            <option key={branch} value={branch}>{branch}</option>
+          ))}
+        </select>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
         {Object.entries(departmentCounts).map(([department, count]) => (
