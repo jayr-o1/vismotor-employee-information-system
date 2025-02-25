@@ -4,6 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import ReactPaginate from 'react-paginate';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/employee.css';
+import { motion } from 'framer-motion';
 
 const Employees = () => {
     const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -107,22 +108,45 @@ const Employees = () => {
     return (
         <div className="p-4">
             <ToastContainer />
-            <h1 className="text-2xl font-bold mb-4">Employee List</h1>
-            <label htmlFor="department-select" className="block mb-2">Filter by Department: </label>
-            <select
+            <motion.h1
+                initial={{ opacity: 0, y: -50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-2xl font-bold mb-4"
+            >
+                Employee List
+            </motion.h1>
+            <motion.label
+                htmlFor="department-select"
+                className="block mb-2"
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+            >
+                Filter by Department:
+            </motion.label>
+            <motion.select
                 id="department-select"
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
                 className="mb-4 p-2 border border-gray-300 rounded"
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
             >
                 <option value="">All</option>
                 {departments.map(department => (
                     <option key={department} value={department}>{department}</option>
                 ))}
-            </select>
+            </motion.select>
 
             <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
+                <motion.table
+                    className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                >
                     <thead className="bg-gray-200">
                         <tr>
                             <th className="py-3 px-4 border-b text-left">ID</th>
@@ -134,7 +158,14 @@ const Employees = () => {
                     </thead>
                     <tbody>
                         {currentEmployees.map(employee => (
-                            <tr key={employee.id} className="hover:bg-gray-100 cursor-pointer" onClick={() => handleRowClick(employee)}>
+                            <motion.tr
+                                key={employee.id}
+                                className="hover:bg-gray-100 cursor-pointer"
+                                onClick={() => handleRowClick(employee)}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5 }}
+                            >
                                 <td className="py-3 px-4 border-b">{employee.id}</td>
                                 <td className="py-3 px-4 border-b">{employee.name}</td>
                                 <td className="py-3 px-4 border-b">{employee.department}</td>
@@ -157,10 +188,10 @@ const Employees = () => {
                                         <FaTrash />
                                     </button>
                                 </td>
-                            </tr>
+                            </motion.tr>
                         ))}
                     </tbody>
-                </table>
+                </motion.table>
             </div>
 
             <ReactPaginate
@@ -176,7 +207,12 @@ const Employees = () => {
             />
 
             {isModalOpen && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <motion.div
+                    className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                >
                     <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
                         <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
                         <label className="block mb-2">Name:</label>
@@ -231,11 +267,16 @@ const Employees = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             )}
 
             {isInfoModalOpen && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <motion.div
+                    className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                >
                     <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
                         <h2 className="text-xl font-bold mb-4">Employee Information</h2>
                         <p><strong>ID:</strong> {currentEmployee.id}</p>
@@ -254,7 +295,7 @@ const Employees = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             )}
         </div>
     );

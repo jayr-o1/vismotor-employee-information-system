@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
+import { motion } from "framer-motion";
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend);
 
@@ -128,13 +129,30 @@ const Home = () => {
 
   return (
     <div className="relative p-4">
-      <h1 className="text-3xl font-bold mb-6 text-center">Employee Dashboard</h1>
+      <motion.h1
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="text-3xl font-bold mb-6 text-center"
+      >
+        Employee Dashboard
+      </motion.h1>
 
-      <div className="mb-4 text-sm text-gray-600">
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        className="mb-4 text-sm text-gray-600"
+      >
         {currentDay}, {currentDateTime.toLocaleString()}
-      </div>
+      </motion.div>
 
-      <div className="mb-4">
+      <motion.div
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.4 }}
+        className="mb-4"
+      >
         <label className="block mb-2">Select Branch:</label>
         <select
           value={selectedBranch}
@@ -146,40 +164,57 @@ const Home = () => {
             <option key={branch} value={branch}>{branch}</option>
           ))}
         </select>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+      </motion.div>
+
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: 0.6 }}
+      >
         {Object.entries(departmentCounts).map(([department, count]) => (
-          <div key={department} className={`${departmentColors[department]} p-6 rounded-lg shadow-lg text-white transform transition-transform duration-500 hover:scale-105`}>
+          <motion.div
+            key={department}
+            className={`${departmentColors[department]} p-6 rounded-lg shadow-lg text-white`}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <h2 className="text-xl font-semibold">{department}</h2>
             <p className="text-4xl font-bold">{count}</p>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
-      <div className="mb-10">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.8 }}
+        className="mb-10"
+      >
         <Line data={data} options={options} />
-      </div>
+      </motion.div>
 
       {/* Tooltip Message */}
-      <div
+      <motion.div
         id="dialog-message"
-        className={`fixed bottom-10 right-24 bg-gray-50 dark:bg-gray-700 dark:text-white border-2 border-blue-200 text-sm rounded-lg p-3 shadow transition-opacity duration-300 ${
-          isTooltipVisible ? "opacity-100" : "opacity-0"
-        }`}
+        className={`fixed bottom-10 right-24 bg-gray-50 dark:bg-gray-700 dark:text-white border-2 border-blue-200 text-sm rounded-lg p-3 shadow`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isTooltipVisible ? 1 : 0 }}
       >
-        Click me scan QR!
-      </div>
+        Click me to scan QR!
+      </motion.div>
 
       {/* Floating Action Button */}
-      <button
+      <motion.button
         onClick={() => navigate("/scan-qr")}
         onMouseEnter={() => setIsTooltipVisible(true)}
         onMouseLeave={() => setIsTooltipVisible(false)}
-        className="fixed bottom-8 right-8 bg-[#0f6013] text-white w-16 h-16 flex items-center justify-center space-x-2 rounded-full shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-transform duration-500 hover:scale-110"
+        className="fixed bottom-8 right-8 bg-[#0f6013] text-white w-16 h-16 flex items-center justify-center space-x-2 rounded-full shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
         <i className="fas fa-qrcode text-3xl"></i>
-      </button>
+      </motion.button>
     </div>
   );
 };
