@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import Header from './Layouts/Header';
 import Sidebar from './Layouts/Sidebar';
+import { ThemeContext } from '../ThemeContext';
 
 const Layout = ({ children }) => {
+  const { isDarkMode } = useContext(ThemeContext);
+
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className={`flex min-h-screen ${isDarkMode ? 'dark:bg-gray-900 dark:text-white' : 'bg-gray-100 text-black'}`}>
       {/* Sidebar */}
       <Sidebar />
 

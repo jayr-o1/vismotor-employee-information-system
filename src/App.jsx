@@ -5,19 +5,22 @@ import Home from './pages/Home';
 import Employees from './pages/Employees';
 import ScanQR from './pages/ScanQR';
 import Settings from './pages/Settings';
+import { ThemeProvider } from './ThemeContext';
 
 const App = () => {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/employees" element={<Employees />} />
-          <Route path="/scan-qr" element={<ScanQR />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </Layout>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/employees" element={<Employees />} />
+            <Route path="/scan-qr" element={<ScanQR />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </Layout>
+      </Router>
+    </ThemeProvider>
   );
 };
 
