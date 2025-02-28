@@ -42,7 +42,7 @@ const Sidebar = () => {
           {/* Home */}
           <li className="my-2">
             <NavLink
-              to="/"
+              to="/home"
               className={({ isActive }) =>
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
