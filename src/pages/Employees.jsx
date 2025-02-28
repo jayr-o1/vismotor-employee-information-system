@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import ReactPaginate from 'react-paginate';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/employee.css';
 import { motion } from 'framer-motion';
+import { ThemeContext } from '../ThemeContext';
 
 const Employees = () => {
+    const { isDarkMode } = useContext(ThemeContext);
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [employees, setEmployees] = useState([
         { id: 1, name: 'James Smith', department: 'Cashier', status: 'Active', reason: '', branch: 'Talamban' },
@@ -106,7 +108,7 @@ const Employees = () => {
     };
 
     return (
-        <div className="p-4 dark:bg-gray-900 dark:text-white transition-colors duration-200">
+        <div className={`p-4 transition-colors duration-200 ${isDarkMode ? 'dark:bg-gray-900 dark:text-white' : 'bg-white text-black'}`}>
             <ToastContainer 
                 theme="colored"
                 position="top-right"
@@ -116,13 +118,13 @@ const Employees = () => {
                 initial={{ opacity: 0, y: -50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
-                className="text-2xl font-bold mb-4 dark:text-white"
+                className="text-2xl font-bold mb-4"
             >
                 Employee List
             </motion.h1>
             <motion.label
                 htmlFor="department-select"
-                className="block mb-2 dark:text-gray-200"
+                className="block mb-2"
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -133,7 +135,7 @@ const Employees = () => {
                 id="department-select"
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="mb-4 p-2 border border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className={`mb-4 p-2 border rounded ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -146,48 +148,48 @@ const Employees = () => {
 
             <div className="overflow-x-auto">
                 <motion.table
-                    className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700 transition-colors duration-200"
+                    className={`min-w-full border rounded-lg shadow-md transition-colors duration-200 ${isDarkMode ? 'dark:bg-gray-800 dark:border-gray-700' : 'bg-white border-gray-300'}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
                 >
-                    <thead className="bg-gray-200 dark:bg-gray-700">
+                    <thead className={`${isDarkMode ? 'dark:bg-gray-700' : 'bg-gray-200'}`}>
                         <tr>
-                            <th className="py-3 px-4 border-b text-left dark:text-gray-200 dark:border-gray-600">ID</th>
-                            <th className="py-3 px-4 border-b text-left dark:text-gray-200 dark:border-gray-600">Name</th>
-                            <th className="py-3 px-4 border-b text-left dark:text-gray-200 dark:border-gray-600">Department</th>
-                            <th className="py-3 px-4 border-b text-left dark:text-gray-200 dark:border-gray-600">Status</th>
-                            <th className="py-3 px-4 border-b text-left dark:text-gray-200 dark:border-gray-600">Actions</th>
+                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>ID</th>
+                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>Name</th>
+                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>Department</th>
+                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>Status</th>
+                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {currentEmployees.map(employee => (
                             <motion.tr
                                 key={employee.id}
-                                className="hover:bg-gray-100 cursor-pointer dark:hover:bg-gray-700 dark:text-gray-200"
+                                className={`hover:bg-gray-100 cursor-pointer ${isDarkMode ? 'dark:hover:bg-gray-700 dark:text-gray-200' : 'hover:bg-gray-200 text-black'}`}
                                 onClick={() => handleRowClick(employee)}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5 }}
                             >
-                                <td className="py-3 px-4 border-b dark:border-gray-600">{employee.id}</td>
-                                <td className="py-3 px-4 border-b dark:border-gray-600">{employee.name}</td>
-                                <td className="py-3 px-4 border-b dark:border-gray-600">{employee.department}</td>
-                                <td className="py-3 px-4 border-b dark:border-gray-600">
+                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>{employee.id}</td>
+                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>{employee.name}</td>
+                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>{employee.department}</td>
+                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>
                                     <span className={`inline-block px-4 py-2 rounded-md shadow-lg text-white ${employee.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>
                                         {employee.status}
                                     </span>
                                 </td>
-                                <td className="py-3 px-4 border-b dark:border-gray-600">
+                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleEdit(employee); }}
-                                        className="text-blue-500 hover:text-blue-700 mr-2 dark:text-blue-400 dark:hover:text-blue-300"
+                                        className={`mr-2 ${isDarkMode ? 'dark:text-blue-400 dark:hover:text-blue-300' : 'text-blue-500 hover:text-blue-700'}`}
                                     >
                                         <FaEdit />
                                     </button>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleDelete(employee.id); }}
-                                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                        className={`mr-2 ${isDarkMode ? 'dark:text-red-400 dark:hover:text-red-300' : 'text-red-500 hover:text-red-700'}`}
                                     >
                                         <FaTrash />
                                     </button>
@@ -206,31 +208,31 @@ const Employees = () => {
                 marginPagesDisplayed={2}
                 pageRangeDisplayed={3}
                 onPageChange={handlePageClick}
-                containerClassName={'pagination dark:pagination-dark'}
-                activeClassName={'active dark:active-dark'}
+                containerClassName={`pagination ${isDarkMode ? 'dark:pagination-dark' : ''}`}
+                activeClassName={`active ${isDarkMode ? 'dark:active-dark' : ''}`}
             />
 
             {isModalOpen && (
                 <motion.div
-                    className="fixed inset-0 flex items-center justify-center  bg-opacity-30 backdrop-blur-sm dark:bg-opacity-50"
+                    className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm dark:bg-opacity-50"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md dark:bg-gray-800 dark:text-white">
+                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
                         <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
                         <label className="block mb-2">Name:</label>
                         <input
                             type="text"
-                            value={currentEmployee.name}
+                            value={currentEmployee?.name || ''}
                             onChange={(e) => setCurrentEmployee({ ...currentEmployee, name: e.target.value })}
-                            className="mb-4 p-2 border border-gray-300 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
                         />
                         <label className="block mb-2">Department:</label>
                         <select
-                            value={currentEmployee.department}
+                            value={currentEmployee?.department || ''}
                             onChange={(e) => setCurrentEmployee({ ...currentEmployee, department: e.target.value })}
-                            className="mb-4 p-2 border border-gray-300 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
                         >
                             {departments.map(department => (
                                 <option key={department} value={department}>{department}</option>
@@ -238,21 +240,21 @@ const Employees = () => {
                         </select>
                         <label className="block mb-2">Status:</label>
                         <select
-                            value={currentEmployee.status}
+                            value={currentEmployee?.status || ''}
                             onChange={(e) => setCurrentEmployee({ ...currentEmployee, status: e.target.value })}
-                            className="mb-4 p-2 border border-gray-300 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
                         >
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
-                        {currentEmployee.status === 'Inactive' && (
+                        {currentEmployee?.status === 'Inactive' && (
                             <>
                                 <label className="block mb-2">Reason/s for Inactivity:</label>
                                 <input
                                     type="text"
-                                    value={currentEmployee.reason}
+                                    value={currentEmployee?.reason || ''}
                                     onChange={(e) => setCurrentEmployee({ ...currentEmployee, reason: e.target.value })}
-                                    className="mb-4 p-2 border border-gray-300 rounded w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
                                 />
                             </>
                         )}
@@ -281,15 +283,15 @@ const Employees = () => {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md dark:bg-gray-800 dark:text-white">
+                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
                         <h2 className="text-xl font-bold mb-4">Employee Information</h2>
-                        <p><strong>ID:</strong> {currentEmployee.id}</p>
-                        <p><strong>Name:</strong> {currentEmployee.name}</p>
-                        <p><strong>Department:</strong> {currentEmployee.department}</p>
-                        <p><strong>Branch:</strong> {currentEmployee.branch}</p>
-                        <p><strong>Status:</strong> <span className={`inline-block px-4 py-2 rounded-md shadow-lg text-white ${currentEmployee.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>{currentEmployee.status}</span></p>
-                        {currentEmployee.status === 'Inactive' && (
-                            <p><strong>Reason for Inactivity:</strong> {currentEmployee.reason}</p>
+                        <p><strong>ID:</strong> {currentEmployee?.id}</p>
+                        <p><strong>Name:</strong> {currentEmployee?.name}</p>
+                        <p><strong>Department:</strong> {currentEmployee?.department}</p>
+                        <p><strong>Branch:</strong> {currentEmployee?.branch}</p>
+                        <p><strong>Status:</strong> <span className={`inline-block px-4 py-2 rounded-md shadow-lg text-white ${currentEmployee?.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>{currentEmployee?.status}</span></p>
+                        {currentEmployee?.status === 'Inactive' && (
+                            <p><strong>Reason for Inactivity:</strong> {currentEmployee?.reason}</p>
                         )}
                         <div className="flex justify-end mt-4">
                             <button

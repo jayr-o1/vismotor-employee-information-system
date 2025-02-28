@@ -1,8 +1,12 @@
+import React, { useContext } from 'react';
 import { NavLink } from "react-router-dom";
 import logo from "../../assets/vismotor-corporation.png";
 import Swal from "sweetalert2";
+import { ThemeContext } from '../../ThemeContext';
 
 const Sidebar = () => {
+  const { isDarkMode } = useContext(ThemeContext);
+
   // Logout confirmation dialog
   const handleLogout = (e) => {
     e.preventDefault();
@@ -21,7 +25,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-64 border-r-2 border-gray-200 bg-[#e95016] fixed">
+    <div className={`flex flex-col min-h-screen w-64 border-r-2 fixed bg-[#e95016] border-gray-200'}`}>
       {/* Logo */}
       <div className="text-center -mt-20 -mb-20">
         <img src={logo} alt="Vismotor Logo" className="mx-auto h-64 w-auto" />
@@ -33,7 +37,7 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 pl-4 lg:pl-4 mt-5 overflow-y-auto bg-gray-50">
+      <nav className={`flex-1 pl-4 lg:pl-4 mt-5 overflow-y-auto ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-gray-50 text-black'}`}>
         <ul className="w-full flex flex-col">
           {/* Home */}
           <li className="my-2">
@@ -42,8 +46,8 @@ const Sidebar = () => {
               className={({ isActive }) =>
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
-                    ? "bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline"
-                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline"
+                    ? `${isDarkMode ? 'dark:bg-green-700 dark:text-white' : 'bg-[#0f6013] text-white'} border-r-4 border-green-700 hover:no-underline`
+                    : `${isDarkMode ? 'dark:text-gray-300' : 'text-gray-500'} hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
             >
@@ -58,8 +62,8 @@ const Sidebar = () => {
               className={({ isActive }) =>
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
-                    ? "bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline"
-                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline"
+                    ? `${isDarkMode ? 'dark:bg-green-700 dark:text-white' : 'bg-[#0f6013] text-white'} border-r-4 border-green-700 hover:no-underline`
+                    : `${isDarkMode ? 'dark:text-gray-300' : 'text-gray-500'} hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
             >
@@ -74,8 +78,8 @@ const Sidebar = () => {
               className={({ isActive }) =>
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
-                    ? "bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline"
-                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline"
+                    ? `${isDarkMode ? 'dark:bg-green-700 dark:text-white' : 'bg-[#0f6013] text-white'} border-r-4 border-green-700 hover:no-underline`
+                    : `${isDarkMode ? 'dark:text-gray-300' : 'text-gray-500'} hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
             >
@@ -90,8 +94,8 @@ const Sidebar = () => {
               className={({ isActive }) =>
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
-                    ? "bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline"
-                    : "text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline"
+                    ? `${isDarkMode ? 'dark:bg-green-700 dark:text-white' : 'bg-[#0f6013] text-white'} border-r-4 border-green-700 hover:no-underline`
+                    : `${isDarkMode ? 'dark:text-gray-300' : 'text-gray-500'} hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
             >
@@ -100,7 +104,7 @@ const Sidebar = () => {
           </li>
 
           {/* Divider */}
-          <hr className="bg-gray-100 dark:bg-gray-600" />
+          <hr className={`${isDarkMode ? 'dark:bg-gray-600' : 'bg-gray-100'}`} />
 
           {/* Logout */}
           <li className="my-2">
@@ -108,9 +112,9 @@ const Sidebar = () => {
               href="/account/signout"
               id="logoutLink"
               onClick={handleLogout}
-              className="flex items-center py-3 px-4 rounded-l text-red-500 dark:text-gray-500 hover:text-red-500 hover:no-underline hover:scale-105 transition-transform duration-200"
+              className={`flex items-center py-3 px-4 rounded-l ${isDarkMode ? 'dark:text-gray-300' : 'text-red-500'} hover:text-red-500 hover:no-underline hover:scale-105 transition-transform duration-200`}
             >
-              <i className="fas fa-sign-out-alt mr-4 text-red-500"></i> Logout
+              <i className={`fas fa-sign-out-alt mr-4 ${isDarkMode ? 'dark:text-gray-300' : 'text-red-500'}`}></i> Logout
             </a>
           </li>
         </ul>
