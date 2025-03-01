@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaEdit, FaUserCircle, FaCheck, FaTimes } from 'react-icons/fa';
+import { ThemeContext } from '../ThemeContext';  // Import ThemeContext
 
 const Settings = () => {
+    const { isDarkMode } = useContext(ThemeContext);  // Access the dark mode context
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -77,7 +79,6 @@ const Settings = () => {
             toast.error('Passwords do not match');
             return;
         }
-        // Handle save password logic here
         setIsPasswordModalOpen(false);
         toast.success('Password changed successfully');
     };
@@ -97,23 +98,24 @@ const Settings = () => {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
+        <div className={`flex justify-center items-center min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
             <ToastContainer />
             <motion.div
                 initial={{ opacity: 0, y: -50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
-                className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md"
+                className={`p-8 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}
             >
                 <motion.h1
                     initial={{ opacity: 0, y: -50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
-                    className="text-3xl font-semibold mb-6 text-center text-gray-800"
+                    className="text-3xl font-semibold mb-6 text-center"
                 >
                     Settings
                 </motion.h1>
 
+                {/* Profile Picture Section */}
                 <motion.div
                     initial={{ opacity: 0, y: -50 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -139,13 +141,14 @@ const Settings = () => {
                     </div>
                 </motion.div>
 
+                {/* Username Section */}
                 <motion.div
                     initial={{ opacity: 0, x: -50 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="mb-4"
                 >
-                    <label className="block mb-2 text-gray-700">Change Username:</label>
+                    <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Change Username:</label>
                     <div className="flex items-center">
                         {isEditingUsername ? (
                             <>
@@ -154,7 +157,7 @@ const Settings = () => {
                                     value={username}
                                     onChange={handleUsernameChange}
                                     placeholder="username"
-                                    className="p-2 border border-gray-300 rounded flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className={`p-2 border ${isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-300 bg-gray-100'} rounded flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                 />
                                 <button
                                     onClick={handleSaveUsername}
@@ -171,7 +174,7 @@ const Settings = () => {
                             </>
                         ) : (
                             <>
-                                <span className="flex-grow p-2 border border-transparent rounded">{username || 'username'}</span>
+                                <span className={`flex-grow p-2 border ${isDarkMode ? 'border-transparent text-gray-400' : 'border-transparent text-gray-800'} rounded`}>{username || 'username'}</span>
                                 <button
                                     onClick={handleEditUsername}
                                     className="ml-2 bg-yellow-500 text-white px-4 py-2 rounded shadow-lg"
@@ -183,13 +186,14 @@ const Settings = () => {
                     </div>
                 </motion.div>
 
+                {/* Email Section */}
                 <motion.div
                     initial={{ opacity: 0, x: -50 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="mb-4"
                 >
-                    <label className="block mb-2 text-gray-700">Change Email:</label>
+                    <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Change Email:</label>
                     <div className="flex items-center">
                         {isEditingEmail ? (
                             <>
@@ -198,7 +202,7 @@ const Settings = () => {
                                     value={email}
                                     onChange={handleEmailChange}
                                     placeholder="example@gmail.com"
-                                    className="p-2 border border-gray-300 rounded flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className={`p-2 border ${isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-300 bg-gray-100'} rounded flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                 />
                                 <button
                                     onClick={handleSaveEmail}
@@ -215,7 +219,7 @@ const Settings = () => {
                             </>
                         ) : (
                             <>
-                                <span className="flex-grow p-2 border border-transparent rounded">{email || 'example@gmail.com'}</span>
+                                <span className={`flex-grow p-2 border ${isDarkMode ? 'border-transparent text-gray-400' : 'border-transparent text-gray-800'} rounded`}>{email || 'example@gmail.com'}</span>
                                 <button
                                     onClick={handleEditEmail}
                                     className="ml-2 bg-yellow-500 text-white px-4 py-2 rounded shadow-lg"
@@ -227,13 +231,14 @@ const Settings = () => {
                     </div>
                 </motion.div>
 
+                {/* Password Section */}
                 <motion.div
                     initial={{ opacity: 0, x: 50 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
                     className="mb-4"
                 >
-                    <label className="block mb-2 text-gray-700">Change Password:</label>
+                    <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Change Password:</label>
                     <button
                         onClick={handleOpenPasswordModal}
                         className="bg-blue-500 text-white px-4 py-2 rounded shadow-lg"
@@ -242,6 +247,7 @@ const Settings = () => {
                     </button>
                 </motion.div>
 
+                {/* Save Changes Button */}
                 <motion.button
                     onClick={handleSaveChanges}
                     className="bg-green-500 text-white px-4 py-2 rounded w-full shadow-lg"
@@ -252,46 +258,53 @@ const Settings = () => {
                 </motion.button>
             </motion.div>
 
+            {/* Password modal */}
             {isPasswordModalOpen && (
                 <motion.div
-                    className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
+                    className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50"
                 >
-                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-                        <h2 className="text-xl font-bold mb-4 text-gray-800">Change Password</h2>
-                        <label className="block mb-2 text-gray-700">Current Password:</label>
-                        <input
-                            type="password"
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="mb-4 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <label className="block mb-2 text-gray-700">New Password:</label>
-                        <input
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="mb-4 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <label className="block mb-2 text-gray-700">Confirm New Password:</label>
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="mb-4 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                    <div className={`bg-white p-6 rounded-lg w-96 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+                        <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+                        <div className="mb-4">
+                            <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Current Password:</label>
+                            <input
+                                type="password"
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                className={`p-2 border ${isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-300 bg-gray-100'} rounded w-full`}
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>New Password:</label>
+                            <input
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className={`p-2 border ${isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-300 bg-gray-100'} rounded w-full`}
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className={`block mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Confirm New Password:</label>
+                            <input
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className={`p-2 border ${isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-300 bg-gray-100'} rounded w-full`}
+                            />
+                        </div>
                         <div className="flex justify-end">
                             <button
                                 onClick={handleClosePasswordModal}
-                                className="bg-gray-500 text-white px-4 py-2 rounded mr-2 shadow-lg"
+                                className="bg-red-500 text-white px-4 py-2 rounded mr-2"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSavePassword}
-                                className="bg-blue-500 text-white px-4 py-2 rounded shadow-lg"
+                                className="bg-green-500 text-white px-4 py-2 rounded"
                             >
                                 Save
                             </button>
@@ -300,30 +313,31 @@ const Settings = () => {
                 </motion.div>
             )}
 
+            {/* Profile picture modal */}
             {isProfileModalOpen && (
                 <motion.div
-                    className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
+                    className="fixed inset-0 flex items-center justify-center bg-opacity-50"
                 >
-                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-                        <h2 className="text-xl font-bold mb-4 text-gray-800">Change Profile Picture</h2>
+                    <div className={`bg-white p-6 rounded-lg w-96 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+                        <h2 className="text-xl font-semibold mb-4">Change Profile Picture</h2>
                         <input
                             type="file"
                             onChange={handleProfilePictureChange}
-                            className="mb-4 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="mb-4"
                         />
                         <div className="flex justify-end">
                             <button
                                 onClick={handleCloseProfileModal}
-                                className="bg-gray-500 text-white px-4 py-2 rounded mr-2 shadow-lg"
+                                className="bg-red-500 text-white px-4 py-2 rounded mr-2"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSaveProfilePicture}
-                                className="bg-blue-500 text-white px-4 py-2 rounded shadow-lg"
+                                className="bg-green-500 text-white px-4 py-2 rounded"
                             >
                                 Save
                             </button>

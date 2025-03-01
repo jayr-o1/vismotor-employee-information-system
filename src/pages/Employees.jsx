@@ -65,6 +65,8 @@ const Employees = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentEmployee, setCurrentEmployee] = useState(null);
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [employeeToDelete, setEmployeeToDelete] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
 
     const departments = [...new Set(employees.map(employee => employee.department))];
@@ -77,10 +79,14 @@ const Employees = () => {
 
     const handleDelete = (id) => {
         const employee = employees.find(emp => emp.id === id);
-        if (window.confirm(`Are you sure you want to delete employee: ${employee.name}?`)) {
-            setEmployees(employees.filter(employee => employee.id !== id));
-            toast.error(`Deleted employee: ${employee.name}`);
-        }
+        setEmployeeToDelete(employee);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        setEmployees(employees.filter(employee => employee.id !== employeeToDelete.id));
+        toast.error(`Deleted employee: ${employeeToDelete.name}`);
+        setIsDeleteModalOpen(false);
     };
 
     const handleSave = () => {
@@ -289,7 +295,7 @@ const Employees = () => {
                         <p><strong>Name:</strong> {currentEmployee?.name}</p>
                         <p><strong>Department:</strong> {currentEmployee?.department}</p>
                         <p><strong>Branch:</strong> {currentEmployee?.branch}</p>
-                        <p><strong>Status:</strong> <span className={`inline-block px-4 py-2 rounded-md shadow-lg text-white ${currentEmployee?.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>{currentEmployee?.status}</span></p>
+                           <p><strong>Status:</strong> <span className={`inline-block px-4 py-2 rounded-md shadow-lg text-white ${currentEmployee?.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>{currentEmployee?.status}</span></p>
                         {currentEmployee?.status === 'Inactive' && (
                             <p><strong>Reason for Inactivity:</strong> {currentEmployee?.reason}</p>
                         )}
@@ -299,6 +305,34 @@ const Employees = () => {
                                 className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            {isDeleteModalOpen && (
+                <motion.div
+                    className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm dark:bg-opacity-50"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
+                        <h2 className="text-xl font-bold mb-4">Delete Employee</h2>
+                        <p>Are you sure you want to delete employee: <strong>{employeeToDelete?.name}</strong>?</p>
+                        <div className="flex justify-end mt-4">
+                            <button
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                className="bg-gray-500 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+                            >
+                                Delete
                             </button>
                         </div>
                     </div>
