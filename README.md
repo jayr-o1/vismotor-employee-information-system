@@ -15,4 +15,3 @@ CREATE TABLE Users (
     resetToken NVARCHAR(255), -- Token for password reset
     resetTokenExpires DATETIME -- Expiration time for password reset
 );
-
