@@ -3,6 +3,8 @@ USE VismotorDB;
 
 CREATE TABLE Users (
     id INT IDENTITY(1,1) PRIMARY KEY, -- Auto-incrementing primary key
+    firstName NVARCHAR(50) NOT NULL, -- First name
+    lastName NVARCHAR(50) NOT NULL, -- Last name
     username NVARCHAR(50) NOT NULL UNIQUE, -- Unique username
     email NVARCHAR(100) NOT NULL UNIQUE, -- Unique email
     password NVARCHAR(255) NOT NULL, -- Hashed password
