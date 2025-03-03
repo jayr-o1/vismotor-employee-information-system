@@ -1,24 +1,26 @@
-const sql = require("mssql");
-require("dotenv").config();
+const sql = require("mssql/msnodesqlv8");
 
-const dbConfig = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER,
-  database: process.env.DB_DATABASE,
-  port: parseInt(process.env.DB_PORT),
+const config = {
+  server: "(localdb)\\Vismotor",
+  database: "VismotorDB",
+  driver: "ODBC Driver 17 for SQL Server", // Ensure you have this driver installed
   options: {
-    encrypt: false, // Set to true for Azure
-    trustServerCertificate: true, // Required for self-signed certificates
+    trustedConnection: true,
   },
 };
 
-const poolPromise = new sql.ConnectionPool(dbConfig)
+const poolPromise = new sql.ConnectionPool(config)
   .connect()
-  .then((pool) => {
+  .then(pool => {
     console.log("Connected to SQL Server");
     return pool;
   })
-  .catch((err) => console.log("Database Connection Failed!", err));
+  .catch(err => {
+    console.error("Database connection failed!", err);
+    process.exit(1);
+  });
 
-module.exports = { sql, poolPromise };
+module.exports = {
+  sql,
+  poolPromise,
+};

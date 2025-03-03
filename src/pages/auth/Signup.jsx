@@ -14,18 +14,38 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
-
+  
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-
-    // Replace with Firebase signup logic
-    localStorage.setItem("userToken", "fakeToken");
-    navigate("/home");
+  
+    try {
+      const response = await fetch("http://localhost:5000/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+        }),
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        navigate("/verify-email", { state: { email } });
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Something went wrong!");
+    }
   };
+  
 
   return (
     <>
