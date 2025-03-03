@@ -8,9 +8,9 @@ CREATE TABLE Users (
     password NVARCHAR(255) NOT NULL, -- Hashed password
     createdAt DATETIME DEFAULT GETDATE(), -- Timestamp for account creation
     isVerified BIT DEFAULT 0, -- 0 = not verified, 1 = verified
-    verificationCode NVARCHAR(6), -- 6-digit verification code
-    verificationCodeExpires DATETIME, -- Expiration time for verification code
-    passwordResetCode NVARCHAR(6), -- 6-digit password reset code
-    passwordResetExpires DATETIME -- Expiration time for password reset code
+    verificationToken NVARCHAR(255), -- Token for email verification
+    verificationTokenExpires DATETIME, -- Expiration time for verification token
+    resetToken NVARCHAR(255), -- Token for password reset
+    resetTokenExpires DATETIME -- Expiration time for password reset
 );
 
