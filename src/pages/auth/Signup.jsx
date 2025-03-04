@@ -9,19 +9,23 @@ import FooterLogo from "../../assets/vismotor-logo.jpg";
 const Signup = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
+  // Function to check if passwords match
+  const passwordsMatch = password === confirmPassword;
+
   const handleSignup = async (e) => {
     e.preventDefault();
-  
-    if (password !== confirmPassword) {
+
+    if (!passwordsMatch) {
       alert("Passwords do not match!");
       return;
     }
-  
+
     try {
       const response = await fetch("http://localhost:5000/api/signup", {
         method: "POST",
@@ -29,11 +33,12 @@ const Signup = () => {
         body: JSON.stringify({
           firstName,
           lastName,
+          username,
           email,
           password,
         }),
       });
-  
+
       const data = await response.json();
       if (response.ok) {
         navigate("/verify-email", { state: { email } });
@@ -45,7 +50,6 @@ const Signup = () => {
       alert("Something went wrong!");
     }
   };
-  
 
   return (
     <>
@@ -84,6 +88,22 @@ const Signup = () => {
               </div>
             </div>
 
+            {/* Username Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Username
+              </label>
+              <input
+                type="text"
+                className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
+                placeholder="Enter your Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 E-Mail
@@ -98,6 +118,7 @@ const Signup = () => {
               />
             </div>
 
+            {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Password
@@ -112,6 +133,7 @@ const Signup = () => {
               />
             </div>
 
+            {/* Confirm Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Confirm Password
@@ -124,9 +146,25 @@ const Signup = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
+              {/* Password Match Indicator */}
+              {confirmPassword && (
+                <p
+                  className={`mt-2 text-sm ${
+                    passwordsMatch ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {passwordsMatch
+                    ? "Passwords match!"
+                    : "Passwords do not match!"}
+                </p>
+              )}
             </div>
 
-            <button className="w-full cursor-pointer bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold transition duration-200">
+            {/* Sign Up Button */}
+            <button
+              type="submit"
+              className="w-full cursor-pointer bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold transition duration-200"
+            >
               Sign Up
             </button>
           </form>
@@ -134,6 +172,7 @@ const Signup = () => {
           {/* Divider Line */}
           <div className="mt-6 border-t border-gray-300"></div>
 
+          {/* Login Link */}
           <div className="mt-4 text-sm text-center">
             <p>
               Already have an account?{" "}
@@ -147,6 +186,8 @@ const Signup = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
       <footer className="w-full py-4 md:py-6 bg-orange-500 flex flex-col md:flex-row items-center justify-between px-6 md:px-10 text-white">
         {/* Left - Logo & Address */}
         <div className="flex flex-col md:flex-row items-center md:items-center space-y-4 md:space-y-0 md:space-x-6">
