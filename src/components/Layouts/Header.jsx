@@ -1,6 +1,5 @@
 import React, { useContext, useState } from 'react';
 import { ThemeContext } from '../../ThemeContext';
-import { FaMoon, FaSun } from 'react-icons/fa';
 import '../../styles/toggle.css'; // Import the CSS for the toggle switch
 
 const Header = () => {
@@ -17,7 +16,6 @@ const Header = () => {
       <div className="flex start items-center w-full">
         {/* Search Bar */}
         <div className="flex items-center space-x-4 my-4 relative">
-          {/* Clear Button (visible only when search input has value) */}
           {searchValue && (
             <button
               id="clear-btn"
@@ -33,7 +31,6 @@ const Header = () => {
         <label className="toggle-switch flex items-center space-x-2">
           <input type="checkbox" checked={isDarkMode} onChange={toggleDarkMode} />
           <span className="slider"></span>
-          {isDarkMode ? <FaMoon className="text-yellow-500" /> : <FaSun className="text-yellow-500" />}
         </label>
       </div>
     </header>
