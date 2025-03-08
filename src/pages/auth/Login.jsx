@@ -10,20 +10,20 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("savedEmail") || sessionStorage.getItem("savedEmail");
-    const savedPassword = localStorage.getItem("savedPassword") || sessionStorage.getItem("savedPassword");
-
-    if (savedEmail && savedPassword) {
+    if (savedEmail) {
       setEmail(savedEmail);
-      setPassword(savedPassword);
     }
   }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
       const response = await fetch("http://localhost:5000/api/login", {
@@ -33,30 +33,30 @@ const Login = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
-        throw new Error(data.message || "Login failed!");
+        throw new Error(data.message || "Login failed! Please try again.");
       }
-  
+
       // Store user data in localStorage or context
       localStorage.setItem("userToken", "fakeToken"); // Replace with actual token if using JWT
       localStorage.setItem("user", JSON.stringify(data.user));
-  
-      // Save login credentials if "Remember Me" is checked
+
+      // Save email if "Remember Me" is checked
       if (rememberMe) {
         localStorage.setItem("savedEmail", email);
-        localStorage.setItem("savedPassword", password);
       } else {
         sessionStorage.setItem("savedEmail", email);
-        sessionStorage.setItem("savedPassword", password);
       }
 
       // Redirect to home page
       navigate("/home");
     } catch (error) {
-      setError(error.message);
+      setError(error.message || "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,17 +115,22 @@ const Login = () => {
                 </div>
 
                 <div>
-                  <a
-                    href="/forgot-password"
+                  <button
+                    type="button"
+                    onClick={() => navigate("/forgot-password")}
                     className="text-orange-500 text-sm font-semibold hover:underline"
                   >
                     Forgot Password?
-                  </a>
+                  </button>
                 </div>
               </div>
 
-              <button className="w-full cursor-pointer bg-orange-500 hover:bg-[#538b30] text-white p-3 rounded-lg font-semibold transition duration-200">
-                Login
+              <button
+                type="submit"
+                className="w-full cursor-pointer bg-orange-500 hover:bg-[#538b30] text-white p-3 rounded-lg font-semibold transition duration-200"
+                disabled={isLoading}
+              >
+                {isLoading ? "Logging in..." : "Login"}
               </button>
             </form>
 
@@ -134,12 +139,13 @@ const Login = () => {
             <div className="mt-4 text-sm text-center">
               <p>
                 Don't have an account?{" "}
-                <a
-                  href="/signup"
+                <button
+                  type="button"
+                  onClick={() => navigate("/signup")}
                   className="text-orange-500 font-semibold hover:underline"
                 >
                   Sign up
-                </a>
+                </button>
               </p>
             </div>
           </div>
