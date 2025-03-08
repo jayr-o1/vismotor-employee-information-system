@@ -1,10 +1,10 @@
 // src/controllers/auth/routes/authRoutes.js
 const express = require("express");
-const { login } = require("../controllers/loginController");
-const { signup } = require("../controllers/signupController");
-const { verifyEmail } = require("../controllers/verifyEmailController");
-const { forgotPassword } = require("../controllers/forgotPasswordController");
-const { resetPassword } = require("../controllers/resetPasswordController");
+const { login } = require("../loginController");
+const { signup } = require("../signupController");
+const { verifyEmail } = require("../verifyEmailController");
+const { forgotPassword } = require("../forgotPasswordController");
+const { resetPassword } = require("../resetPasswordController");
 
 const router = express.Router();
 

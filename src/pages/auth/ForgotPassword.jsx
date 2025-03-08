@@ -1,14 +1,37 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; // Import axios for making HTTP requests
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleReset = (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
-    // Replace with Firebase password reset logic
-    alert("Password reset link sent to your email.");
+
+    if (!email) {
+      setError("Email is required!");
+      return;
+    }
+
+    try {
+      // Send a POST request to the backend
+      const response = await axios.post("http://localhost:5000/api/forgot-password", { email });
+
+      // Display success message
+      setMessage(response.data.message);
+      setError("");
+    } catch (error) {
+      // Handle errors
+      if (error.response) {
+        setError(error.response.data.message);
+      } else {
+        setError("Something went wrong. Please try again later.");
+      }
+      setMessage("");
+    }
   };
 
   return (
@@ -20,6 +43,10 @@ const ForgotPassword = () => {
         <p className="text-gray-600 mb-6 text-center">
           Enter your email, and we'll send a reset link.
         </p>
+
+        {/* Display success or error messages */}
+        {message && <p className="text-green-500 text-center mb-4">{message}</p>}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         <form onSubmit={handleReset} className="space-y-4">
           <div>
@@ -36,7 +63,10 @@ const ForgotPassword = () => {
             />
           </div>
 
-          <button className="w-full cursor-pointer bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold transition duration-200">
+          <button
+            type="submit"
+            className="w-full cursor-pointer bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold transition duration-200"
+          >
             Send Reset Link
           </button>
         </form>
@@ -59,4 +89,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default ForgotPassword;  
