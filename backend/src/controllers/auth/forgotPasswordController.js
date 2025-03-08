@@ -25,7 +25,7 @@ const forgotPassword = async (req, res) => {
       [resetToken, resetTokenExpires, email]
     );
 
-    const resetLink = `http://localhost:5000/api/reset-password?token=${resetToken}`;
+    const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
     await sendResetPasswordEmail(email, resetLink);
 
     res.json({ message: "Password reset link sent to your email!" });
