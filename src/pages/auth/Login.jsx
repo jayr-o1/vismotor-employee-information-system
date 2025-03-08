@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 
@@ -8,24 +8,68 @@ import FooterLogo from "../../assets/vismotor-logo.jpg";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("savedEmail") || sessionStorage.getItem("savedEmail");
+    const savedPassword = localStorage.getItem("savedPassword") || sessionStorage.getItem("savedPassword");
+
+    if (savedEmail && savedPassword) {
+      setEmail(savedEmail);
+      setPassword(savedPassword);
+    }
+  }, []);
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Replace with Firebase authentication logic
-    localStorage.setItem("userToken", "fakeToken");
-    navigate("/home");
+
+    try {
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed!");
+      }
+  
+      // Store user data in localStorage or context
+      localStorage.setItem("userToken", "fakeToken"); // Replace with actual token if using JWT
+      localStorage.setItem("user", JSON.stringify(data.user));
+  
+      // Save login credentials if "Remember Me" is checked
+      if (rememberMe) {
+        localStorage.setItem("savedEmail", email);
+        localStorage.setItem("savedPassword", password);
+      } else {
+        sessionStorage.setItem("savedEmail", email);
+        sessionStorage.setItem("savedPassword", password);
+      }
+
+      // Redirect to home page
+      navigate("/home");
+    } catch (error) {
+      setError(error.message);
+    }
   };
 
   return (
     <>
       <div className="flex min-h-screen bg-gradient-to-b from-[#538b30] to-[#003519]">
-
         {/* Right Column (Login Form) */}
         <div className="flex items-center justify-center w-full p-10">
           <div className="bg-white p-10 rounded-xl shadow-lg w-[480px]">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Login</h2>
             <p className="text-gray-600 mb-6">Welcome back! We missed you!</p>
+
+            {error && <p className="text-red-500 mb-4">{error}</p>}
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -54,8 +98,23 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+              </div>
 
-                <div className="text-right mt-1">
+              {/* Remember Me and Forgot Password */}
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
+                    Remember Me
+                  </label>
+                </div>
+
+                <div>
                   <a
                     href="/forgot-password"
                     className="text-orange-500 text-sm font-semibold hover:underline"
