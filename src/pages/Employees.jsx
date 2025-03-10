@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import ReactPaginate from 'react-paginate';
@@ -11,7 +11,7 @@ const Employees = () => {
     const { isDarkMode } = useContext(ThemeContext);
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [employees, setEmployees] = useState([
-        { id: 1, name: 'James Smith', department: 'Cashier', status: 'Active', reason: '', branch: 'Talamban' },
+        { id: 1, name: 'James Smith', department: 'Cashier', status: 'Active', reason: '', branch: 'Talamban', role: 'Regular Employee' },
         { id: 2, name: 'Sophia Lee', department: 'Marketing', status: 'Active', reason: '', branch: 'Mandaue' },
         { id: 3, name: 'John Doe', department: 'HR', status: 'Inactive', reason: 'Retired', branch: 'Headoffice' },
         { id: 4, name: 'Olivia Brown', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
@@ -68,10 +68,52 @@ const Employees = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [employeeToDelete, setEmployeeToDelete] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
+    // New state to force re-render every second for the countdown effect
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
 
     const departments = [...new Set(employees.map(employee => employee.department))];
 
+    const calculateHoursRemaining = (employee) => {
+        if (
+            !employee ||
+            employee.role !== 'Intern' ||
+            !employee.startingDate ||
+            !employee.hoursNeeded ||
+            !employee.daysOff
+        )
+            return "00:00:00";
+        const start = new Date(employee.startingDate);
+        const now = currentTime;
+        const diffInMs = now - start;
+        const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+        const weeks = diffInDays / 7;
+        const effectiveWorkingDaysPerWeek = 7 - parseInt(employee.daysOff, 10);
+        const workedDays = weeks * effectiveWorkingDaysPerWeek;
+        const workedHours = workedDays * 8;
+        let remaining = employee.hoursNeeded - workedHours;
+        if (remaining <= 0) return "00:00:00";
+        const hrs = Math.floor(remaining);
+        const min = Math.floor((remaining - hrs) * 60);
+        const sec = Math.floor((((remaining - hrs) * 60) - min) * 60);
+        // Pad with leading zeros if needed.
+        const formattedHrs = String(hrs).padStart(2, '0');
+        const formattedMin = String(min).padStart(2, '0');
+        const formattedSec = String(sec).padStart(2, '0');
+        return `${formattedHrs}:${formattedMin}:${formattedSec}`;
+    };
+
     const handleEdit = (employee) => {
+        // Add a default role in case it is missing
+        if (!employee.role) {
+            employee.role = 'Regular Employee';
+        }
         setCurrentEmployee(employee);
         setIsModalOpen(true);
         toast.info(`Editing employee: ${employee.name}`);
@@ -225,7 +267,7 @@ const Employees = () => {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
+                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[80vh] overflow-y-auto ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
                         <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
                         <label className="block mb-2">Name:</label>
                         <input
@@ -253,6 +295,43 @@ const Employees = () => {
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
+                        {/* New Role Field */}
+                        <label className="block mb-2">Role:</label>
+                        <select
+                            value={currentEmployee?.role || 'Regular Employee'}
+                            onChange={(e) => setCurrentEmployee({ ...currentEmployee, role: e.target.value })}
+                            className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
+                        >
+                            <option value="Regular Employee">Regular Employee</option>
+                            <option value="Intern">Intern</option>
+                        </select>
+                        {/* Intern specific fields */}
+                        {currentEmployee?.role === 'Intern' && (
+                            <>
+                                <label className="block mb-2">Starting Date:</label>
+                                <input
+                                    type="date"
+                                    value={currentEmployee?.startingDate || ''}
+                                    onChange={(e) => setCurrentEmployee({ ...currentEmployee, startingDate: e.target.value })}
+                                    className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
+                                />
+                                <label className="block mb-2">Hours Needed:</label>
+                                <input
+                                    type="number"
+                                    value={currentEmployee?.hoursNeeded || ''}
+                                    onChange={(e) => setCurrentEmployee({ ...currentEmployee, hoursNeeded: e.target.value })}
+                                    className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
+                                />
+                                <label className="block mb-2">Days Off per Week:</label>
+                                <input
+                                    type="number"
+                                    value={currentEmployee?.daysOff || ''}
+                                    onChange={(e) => setCurrentEmployee({ ...currentEmployee, daysOff: e.target.value })}
+                                    className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
+                                />
+                                <p className="mb-4">Hours Remaining: {calculateHoursRemaining(currentEmployee)}</p>
+                            </>
+                        )}
                         {currentEmployee?.status === 'Inactive' && (
                             <>
                                 <label className="block mb-2">Reason/s for Inactivity:</label>
@@ -289,13 +368,17 @@ const Employees = () => {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
+                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[80vh] overflow-y-auto ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
                         <h2 className="text-xl font-bold mb-4">Employee Information</h2>
                         <p><strong>ID:</strong> {currentEmployee?.id}</p>
                         <p><strong>Name:</strong> {currentEmployee?.name}</p>
                         <p><strong>Department:</strong> {currentEmployee?.department}</p>
                         <p><strong>Branch:</strong> {currentEmployee?.branch}</p>
-                           <p><strong>Status:</strong> <span className={`inline-block px-4 py-2 rounded-md shadow-lg text-white ${currentEmployee?.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>{currentEmployee?.status}</span></p>
+                        <p><strong>Status:</strong> <span className={`inline-block px-4 py-2 rounded-md shadow-lg text-white ${currentEmployee?.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>{currentEmployee?.status}</span></p>
+                        <p><strong>Role:</strong> {currentEmployee?.role || 'Regular Employee'}</p>
+                        {currentEmployee?.role === 'Intern' && (
+                            <p><strong>Hours Remaining:</strong> {calculateHoursRemaining(currentEmployee)}</p>
+                        )}
                         {currentEmployee?.status === 'Inactive' && (
                             <p><strong>Reason for Inactivity:</strong> {currentEmployee?.reason}</p>
                         )}

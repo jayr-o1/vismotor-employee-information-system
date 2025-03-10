@@ -13,6 +13,19 @@ const Home = () => {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const navigate = useNavigate();
 
+  // New darkMode state with MutationObserver to update on class changes
+  const [darkMode, setDarkMode] = useState(document.documentElement.classList.contains('dark'));
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setDarkMode(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentDateTime(new Date());
@@ -157,7 +170,11 @@ const Home = () => {
         <select
           value={selectedBranch}
           onChange={(e) => setSelectedBranch(e.target.value)}
-          className="p-2 border border-gray-300 rounded w-48"
+          className={`p-2 border rounded w-48 ${
+            darkMode
+              ? "border-gray-500 bg-gray-700 text-white"
+              : "border-gray-300 bg-white text-gray-900"
+          }`}
         >
           <option value="">All Branches</option>
           {branches.map(branch => (
