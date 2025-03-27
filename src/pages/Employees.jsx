@@ -1,345 +1,406 @@
-import React, { useState, useContext } from 'react';
-import { FaEdit, FaTrash } from 'react-icons/fa';
-import { ToastContainer, toast } from 'react-toastify';
-import ReactPaginate from 'react-paginate';
+import React, { useState, useEffect } from "react";
+import Header from "../components/Layouts/Header";
+import Sidebar from "../components/Layouts/Sidebar";
+import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import ReactPaginate from "react-paginate";
+import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import '../styles/employee.css';
-import { motion } from 'framer-motion';
-import { ThemeContext } from '../ThemeContext';
+import apiService from "../services/api";
 
 const Employees = () => {
-    const { isDarkMode } = useContext(ThemeContext);
-    const [selectedDepartment, setSelectedDepartment] = useState('');
-    const [employees, setEmployees] = useState([
-        { id: 1, name: 'James Smith', department: 'Cashier', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 2, name: 'Sophia Lee', department: 'Marketing', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 3, name: 'John Doe', department: 'HR', status: 'Inactive', reason: 'Retired', branch: 'Headoffice' },
-        { id: 4, name: 'Olivia Brown', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 5, name: 'Mason Johnson', department: 'Sales', status: 'Inactive', reason: 'On Leave', branch: 'Talamban' },
-        { id: 6, name: 'Emma Wilson', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 7, name: 'Liam Martinez', department: 'Liaison', status: 'Active', reason: '', branch: 'Headoffice' },
-        { id: 8, name: 'Noah Davis', department: 'CCA', status: 'Inactive', reason: 'Retired', branch: 'Bogo' },
-        { id: 9, name: 'Ava Garcia', department: 'CNC', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 10, name: 'Isabella Rodriguez', department: 'Accounting', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 11, name: 'Ethan Clark', department: 'Cashier', status: 'Inactive', reason: 'On Leave', branch: 'Headoffice' },
-        { id: 12, name: 'Mia Turner', department: 'Marketing', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 13, name: 'Lucas Walker', department: 'HR', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 14, name: 'Amelia Harris', department: 'Sales', status: 'Inactive', reason: 'Retired', branch: 'Mandaue' },
-        { id: 15, name: 'Henry Young', department: 'IT', status: 'Active', reason: '', branch: 'Headoffice' },
-        { id: 16, name: 'Charlotte King', department: 'Liaison', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 17, name: 'Alexander Scott', department: 'CCA', status: 'Inactive', reason: 'On Leave', branch: 'Talamban' },
-        { id: 18, name: 'Grace Green', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 19, name: 'Benjamin Adams', department: 'Accounting', status: 'Inactive', reason: 'Retired', branch: 'Headoffice' },
-        { id: 20, name: 'Ella Baker', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 21, name: 'David Johnson', department: 'Sales', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 22, name: 'Sophia Brown', department: 'Marketing', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 23, name: 'Michael White', department: 'HR', status: 'Active', reason: '', branch: 'Headoffice' },
-        { id: 24, name: 'Emily Davis', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 25, name: 'Daniel Wilson', department: 'Sales', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 26, name: 'Emma Moore', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 27, name: 'James Taylor', department: 'Liaison', status: 'Active', reason: '', branch: 'Headoffice' },
-        { id: 28, name: 'Olivia Anderson', department: 'CCA', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 29, name: 'Liam Thomas', department: 'CNC', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 30, name: 'Sophia Jackson', department: 'Accounting', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 31, name: 'John Harris', department: 'Cashier', status: 'Active', reason: '', branch: 'Headoffice' },
-        { id: 32, name: 'Mia Martin', department: 'Marketing', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 33, name: 'Lucas Thompson', department: 'HR', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 34, name: 'Amelia Garcia', department: 'Sales', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 35, name: 'Henry Martinez', department: 'IT', status: 'Active', reason: '', branch: 'Headoffice' },
-        { id: 36, name: 'Charlotte Robinson', department: 'Liaison', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 37, name: 'Alexander Clark', department: 'CCA', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 38, name: 'Grace Rodriguez', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 39, name: 'Benjamin Lewis', department: 'Accounting', status: 'Active', reason: '', branch: 'Headoffice' },
-        { id: 40, name: 'Ella Lee', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 41, name: 'David Walker', department: 'Sales', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 42, name: 'Sophia Hall', department: 'Marketing', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 43, name: 'Michael Allen', department: 'HR', status: 'Active', reason: '', branch: 'Headoffice' },
-        { id: 44, name: 'Emily Young', department: 'Cashier', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 45, name: 'Daniel Hernandez', department: 'Sales', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 46, name: 'Emma King', department: 'IT', status: 'Active', reason: '', branch: 'Mandaue' },
-        { id: 47, name: 'James Wright', department: 'Liaison', status: 'Active', reason: '', branch: 'Headoffice' },
-        { id: 48, name: 'Olivia Lopez', department: 'CCA', status: 'Active', reason: '', branch: 'Bogo' },
-        { id: 49, name: 'Liam Hill', department: 'CNC', status: 'Active', reason: '', branch: 'Talamban' },
-        { id: 50, name: 'Sophia Scott', department: 'Accounting', status: 'Active', reason: '', branch: 'Mandaue' },
-    ]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentEmployee, setCurrentEmployee] = useState(null);
-    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [employeeToDelete, setEmployeeToDelete] = useState(null);
-    const [currentPage, setCurrentPage] = useState(0);
+  // State management
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [currentEmployee, setCurrentEmployee] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    department: "",
+    position: "",
+    email: "",
+    phone: "",
+    status: "Active"
+  });
 
-    const departments = [...new Set(employees.map(employee => employee.department))];
+  // Pagination settings
+  const itemsPerPage = 10;
 
-    const handleEdit = (employee) => {
-        setCurrentEmployee(employee);
-        setIsModalOpen(true);
-        toast.info(`Editing employee: ${employee.name}`);
-    };
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
 
-    const handleDelete = (id) => {
-        const employee = employees.find(emp => emp.id === id);
-        setEmployeeToDelete(employee);
-        setIsDeleteModalOpen(true);
-    };
+  // Fetch employees from API
+  const fetchEmployees = async () => {
+    setLoading(true);
+    try {
+      const response = await apiService.employees.getAll();
+      setEmployees(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+      
+      // Fallback to sample data when API is not available
+      console.log("Using sample employee data instead");
+      const sampleEmployees = Array.from({ length: 50 }, (_, index) => ({
+        id: index + 1,
+        name: `Employee ${index + 1}`,
+        department: ['HR', 'IT', 'Finance', 'Marketing', 'Operations'][Math.floor(Math.random() * 5)],
+        position: ['Manager', 'Associate', 'Director', 'Assistant', 'Specialist'][Math.floor(Math.random() * 5)],
+        email: `employee${index + 1}@example.com`,
+        phone: `(555) ${100 + index}-${1000 + index}`,
+        status: ['Active', 'On Leave', 'Terminated'][Math.floor(Math.random() * 3)],
+        hire_date: new Date(2020, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
+      }));
+      
+      setEmployees(sampleEmployees);
+      toast.info("Connected to sample data mode");
+      setLoading(false);
+    }
+  };
 
-    const confirmDelete = () => {
-        setEmployees(employees.filter(employee => employee.id !== employeeToDelete.id));
-        toast.error(`Deleted employee: ${employeeToDelete.name}`);
-        setIsDeleteModalOpen(false);
-    };
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(0);
+  };
 
-    const handleSave = () => {
-        setEmployees(employees.map(emp => (emp.id === currentEmployee.id ? currentEmployee : emp)));
-        setIsModalOpen(false);
-        toast.success(`Saved changes for employee: ${currentEmployee.name}`);
-    };
+  // Filter employees based on search term
+  const filteredEmployees = employees.filter(employee =>
+    employee.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    const handleRowClick = (employee) => {
-        setCurrentEmployee(employee);
-        setIsInfoModalOpen(true);
-    };
+  // Calculate page count for pagination
+  const pageCount = Math.ceil(filteredEmployees.length / itemsPerPage);
 
-    const filteredEmployees = selectedDepartment
-        ? employees.filter(employee => employee.department === selectedDepartment)
-        : employees;
+  // Get current page items
+  const currentItems = filteredEmployees.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
+  );
 
-    const employeesPerPage = 5;
-    const pageCount = Math.ceil(filteredEmployees.length / employeesPerPage);
-    const offset = currentPage * employeesPerPage;
-    const currentEmployees = filteredEmployees.slice(offset, offset + employeesPerPage);
+  // Handle page change
+  const handlePageChange = ({ selected }) => {
+    setCurrentPage(selected);
+  };
 
-    const handlePageClick = ({ selected }) => {
-        setCurrentPage(selected);
-    };
+  // Open view employee modal
+  const handleViewEmployee = (employee) => {
+    setCurrentEmployee(employee);
+    setViewModalOpen(true);
+  };
 
-    return (
-        <div className={`p-4 transition-colors duration-200 ${isDarkMode ? 'dark:bg-gray-900 dark:text-white' : 'bg-white text-black'}`}>
-            <ToastContainer 
-                theme="colored"
-                position="top-right"
-                autoClose={3000}
-            />
-            <motion.h1
-                initial={{ opacity: 0, y: -50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="text-2xl font-bold mb-4"
-            >
-                Employee List
-            </motion.h1>
-            <motion.label
-                htmlFor="department-select"
-                className="block mb-2"
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-            >
-                Filter by Department:
-            </motion.label>
-            <motion.select
-                id="department-select"
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-                className={`mb-4 p-2 border rounded ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-            >
-                <option value="">All</option>
-                {departments.map(department => (
-                    <option key={department} value={department}>{department}</option>
-                ))}
-            </motion.select>
+  // Open edit employee modal
+  const handleEditEmployee = (employee) => {
+    setCurrentEmployee(employee);
+    setFormData({
+      name: employee.name,
+      department: employee.department,
+      position: employee.position,
+      email: employee.email,
+      phone: employee.phone,
+      status: employee.status
+    });
+    setEditModalOpen(true);
+  };
 
-            <div className="overflow-x-auto">
-                <motion.table
-                    className={`min-w-full border rounded-lg shadow-md transition-colors duration-200 ${isDarkMode ? 'dark:bg-gray-800 dark:border-gray-700' : 'bg-white border-gray-300'}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                >
-                    <thead className={`${isDarkMode ? 'dark:bg-gray-700' : 'bg-gray-200'}`}>
-                        <tr>
-                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>ID</th>
-                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>Name</th>
-                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>Department</th>
-                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>Status</th>
-                            <th className={`py-3 px-4 border-b text-left ${isDarkMode ? 'dark:text-gray-200 dark:border-gray-600' : 'text-black border-gray-300'}`}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentEmployees.map(employee => (
-                            <motion.tr
-                                key={employee.id}
-                                className={`hover:bg-gray-100 cursor-pointer ${isDarkMode ? 'dark:hover:bg-gray-700 dark:text-gray-200' : 'hover:bg-gray-200 text-black'}`}
-                                onClick={() => handleRowClick(employee)}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                            >
-                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>{employee.id}</td>
-                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>{employee.name}</td>
-                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>{employee.department}</td>
-                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>
-                                    <span className={`inline-block px-4 py-2 rounded-md shadow-lg text-white ${employee.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>
-                                        {employee.status}
-                                    </span>
-                                </td>
-                                <td className={`py-3 px-4 border-b ${isDarkMode ? 'dark:border-gray-600' : 'border-gray-300'}`}>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleEdit(employee); }}
-                                        className={`mr-2 ${isDarkMode ? 'dark:text-blue-400 dark:hover:text-blue-300' : 'text-blue-500 hover:text-blue-700'}`}
-                                    >
-                                        <FaEdit />
-                                    </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDelete(employee.id); }}
-                                        className={`mr-2 ${isDarkMode ? 'dark:text-red-400 dark:hover:text-red-300' : 'text-red-500 hover:text-red-700'}`}
-                                    >
-                                        <FaTrash />
-                                    </button>
-                                </td>
-                            </motion.tr>
-                        ))}
-                    </tbody>
-                </motion.table>
+  // Open delete confirmation modal
+  const handleDeleteClick = (employee) => {
+    setCurrentEmployee(employee);
+    setDeleteModalOpen(true);
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Update employee
+  const handleUpdateEmployee = async () => {
+    try {
+      await apiService.employees.update(currentEmployee.id, formData);
+      
+      // Update the local state
+      setEmployees(employees.map(emp => 
+        emp.id === currentEmployee.id ? { ...emp, ...formData } : emp
+      ));
+      
+      setEditModalOpen(false);
+      toast.success("Employee updated successfully!");
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      toast.error(error.response?.data?.message || error.message || "Failed to update employee. Please try again.");
+    }
+  };
+
+  // Delete employee
+  const handleDeleteEmployee = async () => {
+    try {
+      await apiService.employees.delete(currentEmployee.id);
+      
+      // Remove the employee from the local state
+      setEmployees(employees.filter(emp => emp.id !== currentEmployee.id));
+      
+      setDeleteModalOpen(false);
+      toast.success("Employee deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      toast.error(error.response?.data?.message || error.message || "Failed to delete employee. Please try again.");
+    }
+  };
+
+  return (
+    <div className="flex">
+      <Sidebar />
+      <div className="flex flex-col flex-1 ml-64">
+        <Header />
+        <ToastContainer position="top-right" />
+
+        <main className="bg-gray-100 p-6 flex-1 mt-16">
+          <div className="container mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-semibold text-gray-800">Employee Directory</h1>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search employees..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <i className="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+              </div>
             </div>
 
-            <ReactPaginate
-                previousLabel={'Previous'}
-                nextLabel={'Next'}
-                breakLabel={'...'}
-                pageCount={pageCount}
-                marginPagesDisplayed={2}
-                pageRangeDisplayed={3}
-                onPageChange={handlePageClick}
-                containerClassName={`pagination ${isDarkMode ? 'dark:pagination-dark' : ''}`}
-                activeClassName={`active ${isDarkMode ? 'dark:active-dark' : ''}`}
-            />
+            {loading ? (
+              <div className="bg-white rounded-lg shadow p-6 flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+              </div>
+            ) : (
+              <>
+                <div className="bg-white rounded-lg shadow overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {currentItems.map((employee) => (
+                        <tr key={employee.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.id}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+                            <div className="text-sm text-gray-500">{employee.position}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.department}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              employee.status === "Active" 
+                                ? "bg-green-100 text-green-800" 
+                                : employee.status === "On Leave" 
+                                ? "bg-yellow-100 text-yellow-800" 
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {employee.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onClick={() => handleViewEmployee(employee)} className="text-blue-500 hover:text-blue-700 mr-2">
+                              <FaEye />
+                            </button>
+                            <button onClick={() => handleEditEmployee(employee)} className="text-blue-500 hover:text-blue-700 mr-2">
+                              <FaEdit />
+                            </button>
+                            <button onClick={() => handleDeleteClick(employee)} className="text-red-500 hover:text-red-700">
+                              <FaTrash />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-            {isModalOpen && (
-                <motion.div
-                    className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm dark:bg-opacity-50"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
-                        <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
-                        <label className="block mb-2">Name:</label>
-                        <input
-                            type="text"
-                            value={currentEmployee?.name || ''}
-                            onChange={(e) => setCurrentEmployee({ ...currentEmployee, name: e.target.value })}
-                            className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
-                        />
-                        <label className="block mb-2">Department:</label>
-                        <select
-                            value={currentEmployee?.department || ''}
-                            onChange={(e) => setCurrentEmployee({ ...currentEmployee, department: e.target.value })}
-                            className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
-                        >
-                            {departments.map(department => (
-                                <option key={department} value={department}>{department}</option>
-                            ))}
-                        </select>
-                        <label className="block mb-2">Status:</label>
-                        <select
-                            value={currentEmployee?.status || ''}
-                            onChange={(e) => setCurrentEmployee({ ...currentEmployee, status: e.target.value })}
-                            className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
-                        >
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
-                        {currentEmployee?.status === 'Inactive' && (
-                            <>
-                                <label className="block mb-2">Reason/s for Inactivity:</label>
-                                <input
-                                    type="text"
-                                    value={currentEmployee?.reason || ''}
-                                    onChange={(e) => setCurrentEmployee({ ...currentEmployee, reason: e.target.value })}
-                                    className={`mb-4 p-2 border rounded w-full ${isDarkMode ? 'dark:bg-gray-700 dark:border-gray-600 dark:text-white' : 'bg-white border-gray-300 text-black'}`}
-                                />
-                            </>
-                        )}
-                        <div className="flex justify-end">
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="bg-gray-500 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-                            >
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </motion.div>
+                {/* Pagination */}
+                <div className="mt-6">
+                  <ReactPaginate
+                    previousLabel="← Previous"
+                    nextLabel="Next →"
+                    pageCount={pageCount}
+                    onPageChange={handlePageChange}
+                    containerClassName="flex justify-center items-center mt-6 space-x-1"
+                    pageLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
+                    previousLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
+                    nextLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
+                    activeLinkClassName="bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
+                    disabledLinkClassName="opacity-50 cursor-not-allowed"
+                    breakClassName="px-3 py-2 rounded border border-gray-300"
+                  />
+                </div>
+              </>
             )}
+          </div>
 
-            {isInfoModalOpen && (
-                <motion.div
-                    className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm dark:bg-opacity-50"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
-                        <h2 className="text-xl font-bold mb-4">Employee Information</h2>
-                        <p><strong>ID:</strong> {currentEmployee?.id}</p>
-                        <p><strong>Name:</strong> {currentEmployee?.name}</p>
-                        <p><strong>Department:</strong> {currentEmployee?.department}</p>
-                        <p><strong>Branch:</strong> {currentEmployee?.branch}</p>
-                           <p><strong>Status:</strong> <span className={`inline-block px-4 py-2 rounded-md shadow-lg text-white ${currentEmployee?.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}>{currentEmployee?.status}</span></p>
-                        {currentEmployee?.status === 'Inactive' && (
-                            <p><strong>Reason for Inactivity:</strong> {currentEmployee?.reason}</p>
-                        )}
-                        <div className="flex justify-end mt-4">
-                            <button
-                                onClick={() => setIsInfoModalOpen(false)}
-                                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
+          {/* View Employee Modal */}
+          {viewModalOpen && currentEmployee && (
+            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
+              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                <h2 className="text-2xl font-semibold mb-4">Employee Details</h2>
+                <div className="grid grid-cols-1 gap-4 mb-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Name</p>
+                    <p className="font-medium">{currentEmployee.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Department</p>
+                    <p className="font-medium">{currentEmployee.department}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Position</p>
+                    <p className="font-medium">{currentEmployee.position}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">{currentEmployee.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Phone</p>
+                    <p className="font-medium">{currentEmployee.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Status</p>
+                    <p className="font-medium">{currentEmployee.status}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Hire Date</p>
+                    <p className="font-medium">{currentEmployee.hire_date}</p>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button onClick={() => setViewModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-            {isDeleteModalOpen && (
-                <motion.div
-                    className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm dark:bg-opacity-50"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <div className={`bg-white p-6 rounded-lg shadow-lg w-full max-w-md ${isDarkMode ? 'dark:bg-gray-800 dark:text-white' : 'bg-white text-black'}`}>
-                        <h2 className="text-xl font-bold mb-4">Delete Employee</h2>
-                        <p>Are you sure you want to delete employee: <strong>{employeeToDelete?.name}</strong>?</p>
-                        <div className="flex justify-end mt-4">
-                            <button
-                                onClick={() => setIsDeleteModalOpen(false)}
-                                className="bg-gray-500 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
-        </div>
-    );
-}
+          {/* Edit Employee Modal */}
+          {editModalOpen && currentEmployee && (
+            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
+              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                <h2 className="text-2xl font-semibold mb-4">Edit Employee</h2>
+                <div className="grid grid-cols-1 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1">Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1">Department</label>
+                    <input
+                      type="text"
+                      name="department"
+                      value={formData.department}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1">Position</label>
+                    <input
+                      type="text"
+                      name="position"
+                      value={formData.position}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1">Phone</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1">Status</label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="On Leave">On Leave</option>
+                      <option value="Terminated">Terminated</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button onClick={() => setEditModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+                    Cancel
+                  </button>
+                  <button onClick={handleUpdateEmployee} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    Update
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Delete Confirmation Modal */}
+          {deleteModalOpen && currentEmployee && (
+            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
+              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                <h2 className="text-2xl font-semibold mb-4">Confirm Delete</h2>
+                <p className="mb-6">Are you sure you want to delete {currentEmployee.name}? This action cannot be undone.</p>
+                <div className="flex justify-end space-x-2">
+                  <button onClick={() => setDeleteModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+                    Cancel
+                  </button>
+                  <button onClick={handleDeleteEmployee} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+};
 
 export default Employees;

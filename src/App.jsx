@@ -1,61 +1,50 @@
-import React from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Layout from "./components/Layout";
-import Home from "./pages/Home";
-import Employees from "./pages/Employees";
-import ScanQR from "./pages/ScanQR";
-import Settings from "./pages/Settings";
-import Login from "./pages/auth/Login";
-import Signup from "./pages/auth/Signup";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import EmailVerification from "./pages/auth/EmailVerification";
-import ResetPassword from "./pages/auth/ResetPassword";
-import { ThemeProvider } from "./ThemeContext";
+import ProtectedRoute from "./utils/ProtectedRoute";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Spinner from "./components/Layouts/Spinner";
 
-const isAuthenticated = () => {
-  return !!localStorage.getItem("userToken"); // Example: Replace with Firebase/Auth logic
-};
+// Lazy loaded components
+const Login = lazy(() => import("./pages/auth/Login"));
+const Home = lazy(() => import("./pages/Home"));
+const Employees = lazy(() => import("./pages/Employees"));
+const Applicants = lazy(() => import("./pages/Applicants"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Settings = lazy(() => import("./pages/Settings"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const NotFound = lazy(() => import("./components/NotFound"));
 
-const ProtectedRoute = ({ children }) => {
-  return isAuthenticated() ? children : <Navigate to="/login" />;
-};
-
-const App = () => {
+function App() {
   return (
-    <ThemeProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-email" element={<EmailVerification />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-
-
-          {/* Protected Routes (Require Auth) */}
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Routes>
-                    <Route path="/home" element={<Home />} />
-                    <Route path="/employees" element={<Employees />} />
-                    <Route path="/scan-qr" element={<ScanQR />} />
-                    <Route path="/settings" element={<Settings />} />
-                  </Routes>
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Default Landing Redirect */}
-          <Route path="/" element={<Navigate to="/login" />} />
-        </Routes>
-      </Router>
-    </ThemeProvider>
+    <Router>
+      <div className="app">
+        <ToastContainer position="top-right" autoClose={3000} />
+        <Suspense fallback={<div className="flex items-center justify-center h-screen"><Spinner /></div>}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            
+            {/* Protected Routes */}
+            <Route path="/home" element={<ProtectedRoute element={<Home />} />} />
+            <Route path="/employees" element={<ProtectedRoute element={<Employees />} />} />
+            <Route path="/applicants" element={<ProtectedRoute element={<Applicants />} />} />
+            <Route path="/onboarding" element={<ProtectedRoute element={<Onboarding />} />} />
+            <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
+            
+            {/* Redirect root to login */}
+            <Route path="/" element={<Navigate replace to="/login" />} />
+            
+            {/* Not Found Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </div>
+    </Router>
   );
-};
+}
 
 export default App;

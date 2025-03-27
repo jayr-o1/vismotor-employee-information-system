@@ -5,6 +5,7 @@ import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 
 import Logo from "../../assets/vismotor-splash-art.png";
 import FooterLogo from "../../assets/vismotor-logo.jpg";
+import apiService from "../../services/api";
 
 const Signup = () => {
   const [firstName, setFirstName] = useState("");
@@ -27,27 +28,18 @@ const Signup = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          username,
-          email,
-          password,
-        }),
+      const response = await apiService.auth.signup({
+        firstName,
+        lastName,
+        username,
+        email,
+        password,
       });
-
-      const data = await response.json();
-      if (response.ok) {
-        navigate("/verify-email", { state: { email } });
-      } else {
-        alert(data.message);
-      }
+      
+      navigate("/verify-email", { state: { email } });
     } catch (error) {
       console.error("Signup error:", error);
-      alert("Something went wrong!");
+      alert(error.response?.data?.message || error.message || "Something went wrong!");
     }
   };
 
