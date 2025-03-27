@@ -18,6 +18,10 @@ const Home = () => {
     onboarding: 0,
     recentApplicants: []
   });
+  const [trendsData, setTrendsData] = useState({
+    labels: [],
+    data: []
+  });
 
   // Fetch data on component mount
   useEffect(() => {
@@ -25,18 +29,34 @@ const Home = () => {
       setIsLoading(true);
 
       try {
-        // Add dashboard endpoint to our API service if it doesn't exist
-        const response = await apiService.dashboard.getStats();
+        // Get dashboard stats
+        const statsResponse = await apiService.dashboard.getStats();
         
         setStats({
-          applicants: response.data.totalApplicants || 0,
-          employees: response.data.totalEmployees || 0,
-          onboarding: response.data.totalOnboarding || 0,
-          recentApplicants: response.data.recentApplicants || []
+          applicants: statsResponse.data.totalApplicants || 0,
+          employees: statsResponse.data.totalEmployees || 0,
+          onboarding: statsResponse.data.totalOnboarding || 0,
+          recentApplicants: statsResponse.data.recentApplicants || []
         });
 
-        // Create chart after data is loaded
-        createChart(response.data);
+        // Get trends data for the chart
+        try {
+          const trendsResponse = await apiService.dashboard.getApplicantTrends();
+          setTrendsData({
+            labels: trendsResponse.data.labels || [],
+            data: trendsResponse.data.data || []
+          });
+        } catch (trendsError) {
+          console.error("Error fetching trends data:", trendsError);
+          // Fallback to sample trends data
+          setTrendsData({
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            data: [5, 8, 12, 8, 10, 5, 7, 9, 11, 14, 10, 8]
+          });
+        }
+        
+        // Create the chart after all data is loaded
+        createChart();
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
         
@@ -49,7 +69,7 @@ const Home = () => {
           recentApplicants: Array.from({ length: 5 }, (_, index) => ({
             id: index + 1,
             name: `Applicant ${index + 1}`,
-            position: ['Web Developer', 'UI/UX Designer', 'Project Manager', 'QA Engineer'][Math.floor(Math.random() * 4)],
+            position: `Position ${index + 1}`,
             status: ['Pending', 'Reviewed', 'Interviewed', 'Approved'][Math.floor(Math.random() * 4)],
             date: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString()
           }))
@@ -62,8 +82,14 @@ const Home = () => {
           recentApplicants: sampleData.recentApplicants
         });
         
+        // Set sample trends data
+        setTrendsData({
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+          data: [5, 8, 12, 8, 10, 5, 7, 9, 11, 14, 10, 8]
+        });
+        
         // Create chart with sample data
-        createChart(sampleData);
+        createChart();
         toast.info("Connected to sample data mode");
       } finally {
         setIsLoading(false);
@@ -80,7 +106,14 @@ const Home = () => {
     };
   }, []);
 
-  const createChart = (data) => {
+  // Effect to update chart when trends data changes
+  useEffect(() => {
+    if (trendsData.labels.length > 0) {
+      createChart();
+    }
+  }, [trendsData]);
+
+  const createChart = () => {
     // Destroy existing chart if it exists
     if (window.myChart) {
       window.myChart.destroy();
@@ -89,12 +122,12 @@ const Home = () => {
     const ctx = document.getElementById('applicantChart');
     if (!ctx) return;
 
-    // Use demo data if real data is not available
+    // Use real data from the API
     const chartData = {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      labels: trendsData.labels,
       datasets: [{
         label: 'New Applicants',
-        data: [65, 59, 80, 81, 56, 55, 40, 30, 45, 60, 70, 85],
+        data: trendsData.data,
         backgroundColor: 'rgba(15, 96, 19, 0.2)',
         borderColor: 'rgba(15, 96, 19, 1)',
         borderWidth: 2,

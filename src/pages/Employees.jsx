@@ -49,8 +49,8 @@ const Employees = () => {
       const sampleEmployees = Array.from({ length: 50 }, (_, index) => ({
         id: index + 1,
         name: `Employee ${index + 1}`,
-        department: ['HR', 'IT', 'Finance', 'Marketing', 'Operations'][Math.floor(Math.random() * 5)],
-        position: ['Manager', 'Associate', 'Director', 'Assistant', 'Specialist'][Math.floor(Math.random() * 5)],
+        department: `Department ${Math.floor(index/10) + 1}`,
+        position: `Position ${Math.floor(index/5) + 1}`,
         email: `employee${index + 1}@example.com`,
         phone: `(555) ${100 + index}-${1000 + index}`,
         status: ['Active', 'On Leave', 'Terminated'][Math.floor(Math.random() * 3)],

@@ -67,19 +67,19 @@ const Applicants = () => {
       console.error("Error fetching applicants:", error);
       
       // Fallback to sample data when API is not available
-      console.log("Using sample data instead");
+      console.log("Using sample applicant data instead");
       const sampleApplicants = Array.from({ length: 10 }, (_, index) => ({
         id: index + 1,
         name: `Applicant ${index + 1}`,
-        position: ['Web Developer', 'UI/UX Designer', 'Project Manager', 'QA Engineer', 'DevOps Engineer'][Math.floor(Math.random() * 5)],
+        position: `Position ${index + 1}`,
         email: `applicant${index + 1}@example.com`,
         phone: `(555) ${100 + index}-${1000 + index}`,
         status: ['Pending', 'Reviewed', 'Interviewed', 'Rejected', 'Accepted'][Math.floor(Math.random() * 5)],
         applied_date: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
         interview_scheduled: Math.random() > 0.5,
-        education: "Bachelor's in Computer Science",
-        experience: "5 years of software development",
-        skills: "JavaScript\nReact\nNode.js\nTypeScript"
+        education: "Bachelor's Degree",
+        experience: "Previous work experience",
+        skills: "Relevant skills for the position"
       }));
       
       setApplicants(sampleApplicants);
@@ -666,28 +666,6 @@ const Applicants = () => {
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="block text-sm text-gray-500 mb-1">Email*</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={newApplicantData.email}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Email Address"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label className="block text-sm text-gray-500 mb-1">Phone</label>
-                      <input
-                        type="text"
-                        name="phone"
-                        value={newApplicantData.phone}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Phone Number"
-                      />
-                    </div>
-                    <div className="mb-4">
                       <label className="block text-sm text-gray-500 mb-1">Position Applied For*</label>
                       <input
                         type="text"
@@ -724,20 +702,52 @@ const Applicants = () => {
                         placeholder="Experience"
                       />
                     </div>
+                  </div>
+                  
+                  {/* Email and Phone - Left Column */}
+                  <div>
                     <div className="mb-4">
-                      <label className="block text-sm text-gray-500 mb-1">Skills</label>
-                      <textarea
-                        name="skills"
-                        value={newApplicantData.skills}
+                      <label className="block text-sm text-gray-500 mb-1">Email*</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={newApplicantData.email}
                         onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 h-24"
-                        placeholder="Enter skills (one per line)
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="Email Address"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Phone - Right Column */}
+                  <div>
+                    <div className="mb-4">
+                      <label className="block text-sm text-gray-500 mb-1">Phone</label>
+                      <input
+                        type="text"
+                        name="phone"
+                        value={newApplicantData.phone}
+                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="Phone Number"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Skills - Full Width */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm text-gray-500 mb-1">Skills</label>
+                    <textarea
+                      name="skills"
+                      value={newApplicantData.skills}
+                      onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 h-40"
+                      placeholder="Enter skills (one per line)
 Example:
 Coding Skills
 Teaching Skills"
-                      ></textarea>
-                      <p className="text-xs text-gray-500 mt-1">Press Enter after each skill to add multiple skills</p>
-                    </div>
+                    ></textarea>
+                    <p className="text-xs text-gray-500 mt-1">Press Enter after each skill to add multiple skills</p>
                   </div>
                 </div>
                 
