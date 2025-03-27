@@ -318,4 +318,59 @@ router.get("/api/dashboard", async (req, res) => {
   }
 });
 
+// Get applicant trends by month
+router.get("/api/dashboard/applicant-trends", async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    
+    // Get applicants grouped by month
+    const [trends] = await connection.query(`
+      SELECT 
+        MONTH(applied_date) as month,
+        YEAR(applied_date) as year,
+        COUNT(*) as count
+      FROM 
+        applicants
+      WHERE 
+        applied_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+      GROUP BY 
+        YEAR(applied_date), MONTH(applied_date)
+      ORDER BY 
+        YEAR(applied_date), MONTH(applied_date)
+    `);
+    
+    connection.release();
+    
+    // Transform the data to match the expected format for the chart
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth(); // 0-11
+    const currentYear = currentDate.getFullYear();
+    
+    // Create an array of the last 12 months with proper labels
+    const months = [];
+    const counts = [];
+    
+    for (let i = 11; i >= 0; i--) {
+      const month = (currentMonth - i + 12) % 12; // Ensure it's a positive number
+      const year = currentYear - Math.floor((i - currentMonth) / 12);
+      
+      // Get the month name
+      const monthName = new Date(year, month, 1).toLocaleString('default', { month: 'short' });
+      months.push(monthName);
+      
+      // Find the count for this month in the database results
+      const found = trends.find(item => item.month === month + 1 && item.year === year);
+      counts.push(found ? found.count : 0);
+    }
+    
+    res.json({
+      labels: months,
+      data: counts
+    });
+  } catch (error) {
+    console.error("Error fetching applicant trends:", error);
+    res.status(500).json({ message: "Failed to fetch applicant trends" });
+  }
+});
+
 module.exports = router; 
