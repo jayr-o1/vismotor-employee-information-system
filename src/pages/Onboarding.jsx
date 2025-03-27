@@ -3,6 +3,7 @@ import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from "react-toastify";
+import apiService from "../services/api";
 
 const Onboarding = () => {
   // State for onboarding employee data
@@ -10,42 +11,60 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Sample data - would be replaced with actual API fetch
+  // Fetch employees with Accepted status (in onboarding process)
   useEffect(() => {
-    // Simulating API call
-    setTimeout(() => {
-      const sampleEmployees = [
-        {
-          id: 1,
-          name: "John Doe",
-          position: "Frontend Developer",
-          email: "john.doe@example.com",
-          startDate: "2023-06-15",
-          status: "Documents Pending",
-          progress: 30
-        },
-        {
-          id: 2,
-          name: "Jane Smith",
-          position: "UI/UX Designer",
-          email: "jane.smith@example.com",
-          startDate: "2023-06-20",
-          status: "Training",
-          progress: 65
-        },
-        {
-          id: 3,
-          name: "Robert Johnson",
-          position: "Backend Developer",
-          email: "robert.johnson@example.com",
-          startDate: "2023-06-10",
-          status: "Orientation Complete",
-          progress: 90
-        }
-      ];
-      setEmployees(sampleEmployees);
-      setIsLoading(false);
-    }, 1000);
+    const fetchOnboardingEmployees = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch employees who are in the onboarding process
+        // We'll filter employees by status or join with applicants table
+        const response = await apiService.employees.getAll();
+        
+        // Process the data to add progress percentages
+        const processedEmployees = response.data.map(employee => {
+          // In a real application, we might have a more complex way to calculate progress
+          // For now, we'll simulate it based on some business logic
+          let progress = 0;
+          
+          // Example business logic to calculate onboarding progress:
+          // 1. If they have been hired recently (less than 7 days), they might be in documentation phase
+          const hireDate = new Date(employee.hire_date);
+          const daysSinceHire = Math.floor((Date.now() - hireDate) / (1000 * 60 * 60 * 24));
+          
+          // Determine status and progress based on time since hire
+          let status = "";
+          if (daysSinceHire < 3) {
+            status = "Documents Pending";
+            progress = 30;
+          } else if (daysSinceHire < 7) {
+            status = "Training";
+            progress = 65;
+          } else if (daysSinceHire < 14) {
+            status = "Orientation Complete";
+            progress = 90;
+          } else {
+            status = "Completed";
+            progress = 100;
+          }
+          
+          return {
+            ...employee,
+            startDate: employee.hire_date, // Map hire_date to startDate for consistency
+            status,
+            progress
+          };
+        });
+        
+        setEmployees(processedEmployees);
+      } catch (error) {
+        console.error("Error fetching onboarding employees:", error);
+        toast.error("Failed to load employee data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOnboardingEmployees();
   }, []);
 
   // Handler for search input
@@ -55,18 +74,29 @@ const Onboarding = () => {
 
   // Filter employees based on search term
   const filteredEmployees = employees.filter(employee => 
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email.toLowerCase().includes(searchTerm.toLowerCase())
+    employee.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Handler for marking onboarding as complete
-  const handleCompleteOnboarding = (id) => {
-    // In a real app, this would send a request to the API
-    setEmployees(employees.map(emp => 
-      emp.id === id ? { ...emp, status: "Completed", progress: 100 } : emp
-    ));
-    toast.success("Onboarding marked as complete!");
+  const handleCompleteOnboarding = async (id) => {
+    try {
+      // In a real application, you would update the employee status in the database
+      await apiService.employees.update(id, { 
+        onboarding_status: "Completed"
+      });
+      
+      // Update local state to reflect the change
+      setEmployees(employees.map(emp => 
+        emp.id === id ? { ...emp, status: "Completed", progress: 100 } : emp
+      ));
+      
+      toast.success("Onboarding marked as complete!");
+    } catch (error) {
+      console.error("Error updating onboarding status:", error);
+      toast.error("Failed to update onboarding status");
+    }
   };
 
   // Get status color based on progress
@@ -102,6 +132,10 @@ const Onboarding = () => {
             {isLoading ? (
               <div className="bg-white rounded-lg shadow p-6 flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+              </div>
+            ) : filteredEmployees.length === 0 ? (
+              <div className="bg-white rounded-lg shadow p-6 flex justify-center items-center h-64">
+                <p className="text-gray-500">No employees in onboarding process</p>
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow overflow-hidden">
