@@ -1,0 +1,105 @@
+/* Pagination styling */
+.pagination {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin-top: 1.5rem;
+}
+
+.pagination__link {
+  color: #1d4ed8;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
+  transition: background-color .3s;
+  border: 1px solid #ddd;
+  margin: 0 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pagination__link--active {
+  background-color: #1d4ed8;
+  color: white;
+  border: 1px solid #1d4ed8;
+  border-radius: 4px;
+}
+
+.pagination__link--disabled {
+  color: #ddd;
+  cursor: not-allowed;
+}
+
+.dark .pagination__link {
+  color: #60a5fa;
+  border: 1px solid #374151;
+  background-color: #1f2937;
+}
+
+.dark .pagination__link--active {
+  background-color: #3b82f6;
+  color: white;
+  border: 1px solid #3b82f6;
+}
+
+.dark .pagination__link--disabled {
+  color: #4b5563;
+  cursor: not-allowed;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+/* Modal animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-overlay {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-content {
+  animation: slideIn 0.3s ease-in-out;
+}
+
+/* Form styling */
+.form-input:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+/* Button hover effects */
+.action-button {
+  transition: transform 0.2s, color 0.2s;
+}
+
+.action-button:hover {
+  transform: scale(1.2);
+}
+
+/* Modal content max height for scrolling */
+.modal-scrollable {
+  max-height: 80vh;
+  overflow-y: auto;
+} 

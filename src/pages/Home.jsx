@@ -1,220 +1,231 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
-import { motion } from "framer-motion";
-
-ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend);
+import Chart from 'chart.js/auto';
+import Header from "../components/Layouts/Header";
+import Sidebar from "../components/Layouts/Sidebar";
+import DashboardCard from "../components/Layouts/DashboardCard";
+import DashboardTable from "../components/Layouts/DashboardTable";
+import Spinner from "../components/Layouts/Spinner";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const Home = () => {
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-  const [selectedBranch, setSelectedBranch] = useState('');
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
-  const navigate = useNavigate();
+  // Log environment variables (DEVELOPMENT ONLY - remove in production)
+  console.log("Vite env vars:", import.meta.env);
+  console.log("Process env vars:", process.env);
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [stats, setStats] = useState({
+    applicants: 0,
+    employees: 0,
+    onboarding: 0,
+    recentApplicants: []
+  });
 
+  // Fetch data on component mount
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentDateTime(new Date());
-    }, 1000);
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
 
-    return () => clearInterval(timer);
+      try {
+        const token = localStorage.getItem("userToken");
+        
+        // Try both ways to access API URL
+        const apiUrl = process.env.VITE_API_URL || import.meta.env.VITE_API_URL;
+        
+        if (!apiUrl) {
+          console.warn("API URL environment variable is not loaded");
+          console.log("Check that you have a .env file with VITE_API_URL=http://localhost:5000");
+          console.log("And that you have restarted the development server after creating this file");
+          throw new Error('API URL not configured');
+        }
+        
+        console.log("Using API URL:", apiUrl);
+        
+        const response = await fetch(`${apiUrl}/api/dashboard`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard data");
+        }
+
+        const data = await response.json();
+        setStats({
+          applicants: data.totalApplicants || 0,
+          employees: data.totalEmployees || 0,
+          onboarding: data.totalOnboarding || 0,
+          recentApplicants: data.recentApplicants || []
+        });
+
+        // Create chart after data is loaded
+        createChart(data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        
+        // Fallback to sample data when API is not available
+        console.log("Using sample dashboard data instead");
+        const sampleData = {
+          totalApplicants: 42,
+          totalEmployees: 156,
+          totalOnboarding: 8,
+          recentApplicants: Array.from({ length: 5 }, (_, index) => ({
+            id: index + 1,
+            name: `Applicant ${index + 1}`,
+            position: ['Web Developer', 'UI/UX Designer', 'Project Manager', 'QA Engineer'][Math.floor(Math.random() * 4)],
+            status: ['Pending', 'Reviewed', 'Interviewed', 'Approved'][Math.floor(Math.random() * 4)],
+            date: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString()
+          }))
+        };
+        
+        setStats({
+          applicants: sampleData.totalApplicants,
+          employees: sampleData.totalEmployees,
+          onboarding: sampleData.totalOnboarding,
+          recentApplicants: sampleData.recentApplicants
+        });
+        
+        // Create chart with sample data
+        createChart(sampleData);
+        toast.info("Connected to sample data mode");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+
+    // Cleanup function to destroy chart when component unmounts
+    return () => {
+      if (window.myChart) {
+        window.myChart.destroy();
+      }
+    };
   }, []);
 
-  const employees = [
-    { id: 1, name: 'James Smith', department: 'Cashier', branch: 'Talamban' },
-    { id: 2, name: 'Sophia Lee', department: 'Marketing', branch: 'Mandaue' },
-    { id: 3, name: 'John Doe', department: 'HR', branch: 'Headoffice' },
-    { id: 4, name: 'Olivia Brown', department: 'Cashier', branch: 'Bogo' },
-    { id: 5, name: 'Mason Johnson', department: 'Sales', branch: 'Talamban' },
-    { id: 6, name: 'Emma Wilson', department: 'IT', branch: 'Mandaue' },
-    { id: 7, name: 'Liam Martinez', department: 'Liaison', branch: 'Headoffice' },
-    { id: 8, name: 'Noah Davis', department: 'CCA', branch: 'Bogo' },
-    { id: 9, name: 'Ava Garcia', department: 'CNC', branch: 'Talamban' },
-    { id: 10, name: 'Isabella Rodriguez', department: 'Accounting', branch: 'Mandaue' },
-    { id: 11, name: 'Ethan Clark', department: 'Cashier', branch: 'Headoffice' },
-    { id: 12, name: 'Mia Turner', department: 'Marketing', branch: 'Bogo' },
-    { id: 13, name: 'Lucas Walker', department: 'HR', branch: 'Talamban' },
-    { id: 14, name: 'Amelia Harris', department: 'Sales', branch: 'Mandaue' },
-    { id: 15, name: 'Henry Young', department: 'IT', branch: 'Headoffice' },
-    { id: 16, name: 'Charlotte King', department: 'Liaison', branch: 'Bogo' },
-    { id: 17, name: 'Alexander Scott', department: 'CCA', branch: 'Talamban' },
-    { id: 18, name: 'Grace Green', department: 'IT', branch: 'Mandaue' },
-    { id: 19, name: 'Benjamin Adams', department: 'Accounting', branch: 'Headoffice' },
-    { id: 20, name: 'Ella Baker', department: 'Cashier', branch: 'Bogo' },
-    { id: 21, name: 'David Johnson', department: 'Sales', branch: 'Talamban' },
-    { id: 22, name: 'Sophia Brown', department: 'Marketing', branch: 'Mandaue' },
-    { id: 23, name: 'Michael White', department: 'HR', branch: 'Headoffice' },
-    { id: 24, name: 'Emily Davis', department: 'Cashier', branch: 'Bogo' },
-    { id: 25, name: 'Daniel Wilson', department: 'Sales', branch: 'Talamban' },
-    { id: 26, name: 'Emma Moore', department: 'IT', branch: 'Mandaue' },
-    { id: 27, name: 'James Taylor', department: 'Liaison', branch: 'Headoffice' },
-    { id: 28, name: 'Olivia Anderson', department: 'CCA', branch: 'Bogo' },
-    { id: 29, name: 'Liam Thomas', department: 'CNC', branch: 'Talamban' },
-    { id: 30, name: 'Sophia Jackson', department: 'Accounting', branch: 'Mandaue' },
-    { id: 31, name: 'John Harris', department: 'Cashier', branch: 'Headoffice' },
-    { id: 32, name: 'Mia Martin', department: 'Marketing', branch: 'Bogo' },
-    { id: 33, name: 'Lucas Thompson', department: 'HR', branch: 'Talamban' },
-    { id: 34, name: 'Amelia Garcia', department: 'Sales', branch: 'Mandaue' },
-    { id: 35, name: 'Henry Martinez', department: 'IT', branch: 'Headoffice' },
-    { id: 36, name: 'Charlotte Robinson', department: 'Liaison', branch: 'Bogo' },
-    { id: 37, name: 'Alexander Clark', department: 'CCA', branch: 'Talamban' },
-    { id: 38, name: 'Grace Rodriguez', department: 'IT', branch: 'Mandaue' },
-    { id: 39, name: 'Benjamin Lewis', department: 'Accounting', branch: 'Headoffice' },
-    { id: 40, name: 'Ella Lee', department: 'Cashier', branch: 'Bogo' },
-    { id: 41, name: 'David Walker', department: 'Sales', branch: 'Talamban' },
-    { id: 42, name: 'Sophia Hall', department: 'Marketing', branch: 'Mandaue' },
-    { id: 43, name: 'Michael Allen', department: 'HR', branch: 'Headoffice' },
-    { id: 44, name: 'Emily Young', department: 'Cashier', branch: 'Bogo' },
-    { id: 45, name: 'Daniel Hernandez', department: 'Sales', branch: 'Talamban' },
-    { id: 46, name: 'Emma King', department: 'IT', branch: 'Mandaue' },
-    { id: 47, name: 'James Wright', department: 'Liaison', branch: 'Headoffice' },
-    { id: 48, name: 'Olivia Lopez', department: 'CCA', branch: 'Bogo' },
-    { id: 49, name: 'Liam Hill', department: 'CNC', branch: 'Talamban' },
-    { id: 50, name: 'Sophia Scott', department: 'Accounting', branch: 'Mandaue' },
-  ];
+  const createChart = (data) => {
+    // Destroy existing chart if it exists
+    if (window.myChart) {
+      window.myChart.destroy();
+    }
 
-  const branches = [...new Set(employees.map(employee => employee.branch))];
+    const ctx = document.getElementById('applicantChart');
+    if (!ctx) return;
 
-  const departmentColors = {
-    Cashier: 'bg-green-600',
-    Marketing: 'bg-yellow-600',
-    HR: 'bg-purple-600',
-    Sales: 'bg-blue-600',
-    IT: 'bg-teal-600',
-    Liaison: 'bg-orange-600',
-    CCA: 'bg-red-600',
-    CNC: 'bg-indigo-600',
-    Accounting: 'bg-gray-600',
-  };
-
-  const filteredEmployees = selectedBranch
-    ? employees.filter(employee => employee.branch === selectedBranch)
-    : employees;
-
-  const departmentCounts = filteredEmployees.reduce((acc, employee) => {
-    acc[employee.department] = (acc[employee.department] || 0) + 1;
-    return acc;
-  }, {});
-
-  const data = {
-    labels: Object.keys(departmentCounts),
-    datasets: [
-      {
-        label: 'Number of Employees',
-        data: Object.values(departmentCounts),
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
+    // Use demo data if real data is not available
+    const chartData = {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [{
+        label: 'New Applicants',
+        data: [65, 59, 80, 81, 56, 55, 40, 30, 45, 60, 70, 85],
+        backgroundColor: 'rgba(15, 96, 19, 0.2)',
+        borderColor: 'rgba(15, 96, 19, 1)',
         borderWidth: 2,
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
+        tension: 0.3
+      }]
+    };
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' },
-      title: { display: true, text: 'Employees per Department' },
-    },
-    animation: {
-      duration: 1000,
-      easing: 'easeInOutQuad',
-    },
+    window.myChart = new Chart(ctx, {
+      type: 'line',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#333'
+            }
+          }
+        }
+      }
+    });
   };
-
-  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const currentDay = daysOfWeek[currentDateTime.getDay()];
 
   return (
-    <div className="relative p-4">
-      <motion.h1
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="text-3xl font-bold mb-6 text-center"
-      >
-        Employee Dashboard
-      </motion.h1>
+    <div className="flex">
+      <Sidebar />
+      <div className="flex flex-col flex-1 ml-64">
+        <Header />
+        <ToastContainer position="top-right" />
 
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="mb-4 text-sm text-gray-600"
-      >
-        {currentDay}, {currentDateTime.toLocaleString()}
-      </motion.div>
+        <main className="bg-gray-100 p-4 flex-1 mt-16">
+          <div className="container mx-auto">
+            <h1 className="text-2xl font-semibold text-gray-800 mb-6">Dashboard</h1>
 
-      <motion.div
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, delay: 0.4 }}
-        className="mb-4"
-      >
-        <label className="block mb-2">Select Branch:</label>
-        <select
-          value={selectedBranch}
-          onChange={(e) => setSelectedBranch(e.target.value)}
-          className="p-2 border border-gray-300 rounded w-48"
-        >
-          <option value="">All Branches</option>
-          {branches.map(branch => (
-            <option key={branch} value={branch}>{branch}</option>
-          ))}
-        </select>
-      </motion.div>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-96">
+                <Spinner />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <DashboardCard
+                    title="Total Applicants"
+                    value={stats.applicants}
+                    icon="fas fa-user-tie"
+                    color="text-blue-500"
+                    bgColor="bg-blue-100"
+                  />
 
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.6 }}
-      >
-        {Object.entries(departmentCounts).map(([department, count]) => (
-          <motion.div
-            key={department}
-            className={`${departmentColors[department]} p-6 rounded-lg shadow-lg text-white`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <h2 className="text-xl font-semibold">{department}</h2>
-            <p className="text-4xl font-bold">{count}</p>
-          </motion.div>
-        ))}
-      </motion.div>
+                  <DashboardCard
+                    title="Employees"
+                    value={stats.employees}
+                    icon="fas fa-users"
+                    color="text-green-500"
+                    bgColor="bg-green-100"
+                  />
 
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.8 }}
-        className="mb-10"
-      >
-        <Line data={data} options={options} />
-      </motion.div>
+                  <DashboardCard
+                    title="Onboarding"
+                    value={stats.onboarding}
+                    icon="fas fa-clipboard-check"
+                    color="text-yellow-500"
+                    bgColor="bg-yellow-100"
+                  />
+                </div>
 
-      {/* Tooltip Message */}
-      <motion.div
-        id="dialog-message"
-        className={`fixed bottom-10 right-24 bg-gray-50 dark:bg-gray-700 dark:text-white border-2 border-blue-200 text-sm rounded-lg p-3 shadow`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isTooltipVisible ? 1 : 0 }}
-      >
-        Click me to scan QR!
-      </motion.div>
+                {/* Chart and Table */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Chart Container */}
+                  <div className="bg-white rounded-lg shadow p-4 h-80">
+                    <h2 className="text-lg font-semibold text-gray-700 mb-4">
+                      Applicant Trends
+                    </h2>
+                    <div className="h-64">
+                      <canvas id="applicantChart"></canvas>
+                    </div>
+                  </div>
 
-      {/* Floating Action Button */}
-      <motion.button
-        onClick={() => navigate("/scan-qr")}
-        onMouseEnter={() => setIsTooltipVisible(true)}
-        onMouseLeave={() => setIsTooltipVisible(false)}
-        className="fixed bottom-8 right-8 bg-[#0f6013] text-white w-16 h-16 flex items-center justify-center space-x-2 rounded-full shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <i className="fas fa-qrcode text-3xl"></i>
-      </motion.button>
+                  {/* Recent Applicants Table */}
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <h2 className="text-lg font-semibold text-gray-700 mb-4">
+                      Recent Applicants
+                    </h2>
+                    <DashboardTable data={stats.recentApplicants} />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
+import apiService from "../../services/api";
 
 import Logo from "../../assets/vismotor-splash-art.png";
 import FooterLogo from "../../assets/vismotor-logo.jpg";
@@ -26,23 +27,11 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed! Please try again.");
-      }
+      const response = await apiService.auth.login({ email, password });
 
       // Store user data in localStorage or context
-      localStorage.setItem("userToken", "fakeToken"); // Replace with actual token if using JWT
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("userToken", response.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
 
       // Save email if "Remember Me" is checked
       if (rememberMe) {
@@ -54,7 +43,7 @@ const Login = () => {
       // Redirect to home page
       navigate("/home");
     } catch (error) {
-      setError(error.message || "Something went wrong. Please try again.");
+      setError(error.response?.data?.message || error.message || "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
