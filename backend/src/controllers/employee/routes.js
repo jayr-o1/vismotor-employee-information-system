@@ -224,12 +224,12 @@ router.post("/api/employees", async (req, res) => {
       applicant_id,
       position,
       department,
-      start_date,
+      hire_date,
       salary
     } = req.body;
     
     // Validate required fields
-    if (!applicant_id || !position || !department || !start_date) {
+    if (!applicant_id || !position || !department || !hire_date) {
       return res.status(400).json({ message: "All required onboarding details must be provided" });
     }
     
@@ -247,8 +247,8 @@ router.post("/api/employees", async (req, res) => {
     
     // Add to employees table
     const [result] = await connection.query(
-      "INSERT INTO employees (name, email, phone, position, department, start_date, salary, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())",
-      [applicant.name, applicant.email, applicant.phone, position, department, start_date, salary]
+      "INSERT INTO employees (name, email, phone, position, department, hire_date, salary, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())",
+      [applicant.name, applicant.email, applicant.phone, position, department, hire_date, salary]
     );
     
     // Update applicant status to "Accepted"
@@ -273,7 +273,7 @@ router.post("/api/employees", async (req, res) => {
 router.get("/api/employees", async (req, res) => {
   try {
     const connection = await pool.getConnection();
-    const [rows] = await connection.query("SELECT * FROM employees ORDER BY start_date DESC");
+    const [rows] = await connection.query("SELECT * FROM employees ORDER BY hire_date DESC");
     connection.release();
     
     res.json(rows);
