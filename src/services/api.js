@@ -33,6 +33,12 @@ const apiService = {
     resetPassword: (resetData) => api.post('/api/reset-password', resetData),
   },
   
+  // Dashboard endpoints
+  dashboard: {
+    getStats: () => api.get('/api/dashboard'),
+    getApplicantTrends: () => api.get('/api/dashboard/applicant-trends'),
+  },
+  
   // Applicants endpoints
   applicants: {
     getAll: () => api.get('/api/applicants'),

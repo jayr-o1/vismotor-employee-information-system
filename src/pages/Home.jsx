@@ -8,12 +8,9 @@ import DashboardTable from "../components/Layouts/DashboardTable";
 import Spinner from "../components/Layouts/Spinner";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import apiService from "../services/api";
 
 const Home = () => {
-  // Log environment variables (DEVELOPMENT ONLY - remove in production)
-  console.log("Vite env vars:", import.meta.env);
-  console.log("Process env vars:", process.env);
-  
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState({
     applicants: 0,
@@ -28,41 +25,18 @@ const Home = () => {
       setIsLoading(true);
 
       try {
-        const token = localStorage.getItem("userToken");
+        // Add dashboard endpoint to our API service if it doesn't exist
+        const response = await apiService.dashboard.getStats();
         
-        // Try both ways to access API URL
-        const apiUrl = process.env.VITE_API_URL || import.meta.env.VITE_API_URL;
-        
-        if (!apiUrl) {
-          console.warn("API URL environment variable is not loaded");
-          console.log("Check that you have a .env file with VITE_API_URL=http://localhost:5000");
-          console.log("And that you have restarted the development server after creating this file");
-          throw new Error('API URL not configured');
-        }
-        
-        console.log("Using API URL:", apiUrl);
-        
-        const response = await fetch(`${apiUrl}/api/dashboard`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data");
-        }
-
-        const data = await response.json();
         setStats({
-          applicants: data.totalApplicants || 0,
-          employees: data.totalEmployees || 0,
-          onboarding: data.totalOnboarding || 0,
-          recentApplicants: data.recentApplicants || []
+          applicants: response.data.totalApplicants || 0,
+          employees: response.data.totalEmployees || 0,
+          onboarding: response.data.totalOnboarding || 0,
+          recentApplicants: response.data.recentApplicants || []
         });
 
         // Create chart after data is loaded
-        createChart(data);
+        createChart(response.data);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
         

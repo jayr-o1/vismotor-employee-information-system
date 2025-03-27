@@ -8,10 +8,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 
 const Applicants = () => {
-  // Log environment variables (DEVELOPMENT ONLY - remove in production)
-  console.log("Vite env vars:", import.meta.env);
-  console.log("Process env vars:", process.env);
-
   // State for applicants data
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);

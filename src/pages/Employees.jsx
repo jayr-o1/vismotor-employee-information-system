@@ -5,6 +5,7 @@ import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import ReactPaginate from "react-paginate";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import apiService from "../services/api";
 
 const Employees = () => {
   // State management
@@ -37,24 +38,27 @@ const Employees = () => {
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      // In a real app, replace this with an actual API call
-      setTimeout(() => {
-        const sampleEmployees = Array.from({ length: 50 }, (_, index) => ({
-          id: index + 1,
-          name: `Employee ${index + 1}`,
-          department: ['HR', 'IT', 'Finance', 'Marketing', 'Operations'][Math.floor(Math.random() * 5)],
-          position: ['Manager', 'Associate', 'Director', 'Assistant', 'Specialist'][Math.floor(Math.random() * 5)],
-          email: `employee${index + 1}@example.com`,
-          phone: `(555) ${100 + index}-${1000 + index}`,
-          status: ['Active', 'On Leave', 'Terminated'][Math.floor(Math.random() * 3)],
-          hireDate: new Date(2020, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-        }));
-        setEmployees(sampleEmployees);
-        setLoading(false);
-      }, 800);
+      const response = await apiService.employees.getAll();
+      setEmployees(response.data);
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      toast.error("Failed to load employees. Please try again.");
+      
+      // Fallback to sample data when API is not available
+      console.log("Using sample employee data instead");
+      const sampleEmployees = Array.from({ length: 50 }, (_, index) => ({
+        id: index + 1,
+        name: `Employee ${index + 1}`,
+        department: ['HR', 'IT', 'Finance', 'Marketing', 'Operations'][Math.floor(Math.random() * 5)],
+        position: ['Manager', 'Associate', 'Director', 'Assistant', 'Specialist'][Math.floor(Math.random() * 5)],
+        email: `employee${index + 1}@example.com`,
+        phone: `(555) ${100 + index}-${1000 + index}`,
+        status: ['Active', 'On Leave', 'Terminated'][Math.floor(Math.random() * 3)],
+        hire_date: new Date(2020, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
+      }));
+      
+      setEmployees(sampleEmployees);
+      toast.info("Connected to sample data mode");
       setLoading(false);
     }
   };
@@ -67,10 +71,10 @@ const Employees = () => {
 
   // Filter employees based on search term
   const filteredEmployees = employees.filter(employee =>
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email.toLowerCase().includes(searchTerm.toLowerCase())
+    employee.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Calculate page count for pagination
@@ -120,21 +124,37 @@ const Employees = () => {
   };
 
   // Update employee
-  const handleUpdateEmployee = () => {
-    // In a real app, make an API call to update the employee
-    setEmployees(employees.map(emp => 
-      emp.id === currentEmployee.id ? { ...emp, ...formData } : emp
-    ));
-    setEditModalOpen(false);
-    toast.success("Employee updated successfully!");
+  const handleUpdateEmployee = async () => {
+    try {
+      await apiService.employees.update(currentEmployee.id, formData);
+      
+      // Update the local state
+      setEmployees(employees.map(emp => 
+        emp.id === currentEmployee.id ? { ...emp, ...formData } : emp
+      ));
+      
+      setEditModalOpen(false);
+      toast.success("Employee updated successfully!");
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      toast.error(error.response?.data?.message || error.message || "Failed to update employee. Please try again.");
+    }
   };
 
   // Delete employee
-  const handleDeleteEmployee = () => {
-    // In a real app, make an API call to delete the employee
-    setEmployees(employees.filter(emp => emp.id !== currentEmployee.id));
-    setDeleteModalOpen(false);
-    toast.success("Employee deleted successfully!");
+  const handleDeleteEmployee = async () => {
+    try {
+      await apiService.employees.delete(currentEmployee.id);
+      
+      // Remove the employee from the local state
+      setEmployees(employees.filter(emp => emp.id !== currentEmployee.id));
+      
+      setDeleteModalOpen(false);
+      toast.success("Employee deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      toast.error(error.response?.data?.message || error.message || "Failed to delete employee. Please try again.");
+    }
   };
 
   return (
@@ -266,7 +286,7 @@ const Employees = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Hire Date</p>
-                    <p className="font-medium">{currentEmployee.hireDate}</p>
+                    <p className="font-medium">{currentEmployee.hire_date}</p>
                   </div>
                 </div>
                 <div className="flex justify-end">
