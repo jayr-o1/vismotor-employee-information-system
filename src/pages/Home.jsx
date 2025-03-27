@@ -69,7 +69,7 @@ const Home = () => {
           recentApplicants: Array.from({ length: 5 }, (_, index) => ({
             id: index + 1,
             name: `Applicant ${index + 1}`,
-            position: ['Web Developer', 'UI/UX Designer', 'Project Manager', 'QA Engineer'][Math.floor(Math.random() * 4)],
+            position: `Position ${index + 1}`,
             status: ['Pending', 'Reviewed', 'Interviewed', 'Approved'][Math.floor(Math.random() * 4)],
             date: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString()
           }))

@@ -67,19 +67,19 @@ const Applicants = () => {
       console.error("Error fetching applicants:", error);
       
       // Fallback to sample data when API is not available
-      console.log("Using sample data instead");
+      console.log("Using sample applicant data instead");
       const sampleApplicants = Array.from({ length: 10 }, (_, index) => ({
         id: index + 1,
         name: `Applicant ${index + 1}`,
-        position: ['Web Developer', 'UI/UX Designer', 'Project Manager', 'QA Engineer', 'DevOps Engineer'][Math.floor(Math.random() * 5)],
+        position: `Position ${index + 1}`,
         email: `applicant${index + 1}@example.com`,
         phone: `(555) ${100 + index}-${1000 + index}`,
         status: ['Pending', 'Reviewed', 'Interviewed', 'Rejected', 'Accepted'][Math.floor(Math.random() * 5)],
         applied_date: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
         interview_scheduled: Math.random() > 0.5,
-        education: "Bachelor's in Computer Science",
-        experience: "5 years of software development",
-        skills: "JavaScript\nReact\nNode.js\nTypeScript"
+        education: "Bachelor's Degree",
+        experience: "Previous work experience",
+        skills: "Relevant skills for the position"
       }));
       
       setApplicants(sampleApplicants);
