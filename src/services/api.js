@@ -54,6 +54,10 @@ const apiService = {
     addFeedback: (id, feedbackData) => api.post(`/api/applicants/${id}/feedback`, feedbackData),
     getFeedback: (id) => api.get(`/api/applicants/${id}/feedback`),
     
+    // Notes
+    getNotes: (id) => api.get(`/api/applicants/${id}/notes`),
+    addNote: (id, noteData) => api.post(`/api/applicants/${id}/notes`, noteData),
+    
     // Interviews
     getInterviews: (id) => api.get(`/api/applicants/${id}/interviews`),
   },

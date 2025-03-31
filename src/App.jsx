@@ -12,6 +12,7 @@ const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const Home = lazy(() => import("./pages/Home"));
 const Employees = lazy(() => import("./pages/Employees"));
 const Applicants = lazy(() => import("./pages/Applicants"));
+const ApplicantDetails = lazy(() => import("./pages/ApplicantDetails"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
@@ -38,6 +39,7 @@ function App() {
             <Route path="/home" element={<ProtectedRoute element={<Home />} />} />
             <Route path="/employees" element={<ProtectedRoute element={<Employees />} />} />
             <Route path="/applicants" element={<ProtectedRoute element={<Applicants />} />} />
+            <Route path="/applicants/:id" element={<ProtectedRoute element={<ApplicantDetails />} />} />
             <Route path="/onboarding" element={<ProtectedRoute element={<Onboarding />} />} />
             <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
             

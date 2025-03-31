@@ -6,6 +6,7 @@ import ReactPaginate from "react-paginate";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 const Applicants = () => {
   // State for applicants data
@@ -13,9 +14,9 @@ const Applicants = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
+  const navigate = useNavigate();
   
   // Modal states
-  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -117,10 +118,9 @@ const Applicants = () => {
     setCurrentPage(selected);
   };
 
-  // Open view applicant modal
+  // Navigate to applicant details page
   const handleViewApplicant = (applicant) => {
-    setCurrentApplicant(applicant);
-    setViewModalOpen(true);
+    navigate(`/applicants/${applicant.id}`);
   };
 
   // Open feedback modal
@@ -445,50 +445,6 @@ const Applicants = () => {
               </>
             )}
           </div>
-
-          {/* View Applicant Modal */}
-          {viewModalOpen && currentApplicant && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-                <h2 className="text-2xl font-semibold mb-4">Applicant Details</h2>
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Name</p>
-                    <p className="font-medium">{currentApplicant.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Position Applied For</p>
-                    <p className="font-medium">{currentApplicant.position}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{currentApplicant.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">{currentApplicant.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Application Date</p>
-                    <p className="font-medium">{currentApplicant.applied_date}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <p className="font-medium">{currentApplicant.status}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Skills</p>
-                    <div className="font-medium whitespace-pre-line">{currentApplicant.skills}</div>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <button onClick={() => setViewModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Feedback Modal */}
           {feedbackModalOpen && currentApplicant && (

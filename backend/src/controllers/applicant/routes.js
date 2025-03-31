@@ -506,4 +506,72 @@ router.delete("/api/interviews/:id", async (req, res) => {
   }
 });
 
+// NOTES ENDPOINTS
+
+// Get all notes for an applicant
+router.get("/api/applicants/:id/notes", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await pool.getConnection();
+    
+    // First check if the applicant exists
+    const [applicants] = await connection.query("SELECT * FROM applicants WHERE id = ?", [id]);
+    
+    if (applicants.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Applicant not found" });
+    }
+    
+    // Get notes (using the feedback table for now)
+    const [rows] = await connection.query(
+      "SELECT * FROM feedback WHERE applicant_id = ? ORDER BY created_at DESC",
+      [id]
+    );
+    
+    connection.release();
+    res.json(rows);
+  } catch (error) {
+    console.error("Error fetching notes:", error);
+    res.status(500).json({ message: "Failed to fetch notes" });
+  }
+});
+
+// Add a note for an applicant
+router.post("/api/applicants/:id/notes", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { feedback_text, created_by } = req.body;
+    
+    if (!feedback_text) {
+      return res.status(400).json({ message: "Note text is required" });
+    }
+    
+    const connection = await pool.getConnection();
+    
+    // First check if the applicant exists
+    const [applicants] = await connection.query("SELECT * FROM applicants WHERE id = ?", [id]);
+    
+    if (applicants.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Applicant not found" });
+    }
+    
+    // Add note (using the feedback table for now)
+    const [result] = await connection.query(
+      "INSERT INTO feedback (applicant_id, feedback_text, created_by, created_at) VALUES (?, ?, ?, NOW())",
+      [id, feedback_text, created_by || "HR Team"]
+    );
+    
+    connection.release();
+    
+    res.status(201).json({
+      id: result.insertId,
+      message: "Note added successfully"
+    });
+  } catch (error) {
+    console.error("Error adding note:", error);
+    res.status(500).json({ message: "Failed to add note" });
+  }
+});
+
 module.exports = router; 
