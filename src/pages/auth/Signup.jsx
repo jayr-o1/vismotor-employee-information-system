@@ -1,185 +1,241 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaEye, FaEyeSlash } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import apiService from "../../services/api";
 
 import Logo from "../../assets/vismotor-splash-art.png";
 import FooterLogo from "../../assets/vismotor-logo.jpg";
-import apiService from "../../services/api";
 
 const Signup = () => {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Function to check if passwords match
-  const passwordsMatch = password === confirmPassword;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setError("");
 
-    if (!passwordsMatch) {
-      alert("Passwords do not match!");
+    // Check if passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      toast.error("Passwords do not match", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const response = await apiService.auth.signup({
-        firstName,
-        lastName,
-        username,
-        email,
-        password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password
+      });
+
+      // Show success toast and redirect to login
+      toast.success("Registration successful! Please check your email to verify your account.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
       });
       
-      navigate("/verify-email", { state: { email } });
+      // Delay navigation slightly to allow toast to be visible
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error) {
-      console.error("Signup error:", error);
-      alert(error.response?.data?.message || error.message || "Something went wrong!");
+      const errorMsg = error.response?.data?.message || error.message || "Something went wrong. Please try again.";
+      setError(errorMsg);
+      
+      toast.error(errorMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
     <>
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-[#538b30] to-[#003519]">
-        <div className="bg-white p-10 rounded-xl shadow-lg w-[480px]">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign Up</h2>
-          <p className="text-gray-600 mb-6">Join us today!</p>
+      <div className="flex min-h-screen bg-gradient-to-b from-[#538b30] to-[#003519]">
+        {/* Right Column (Signup Form) */}
+        <div className="flex items-center justify-center w-full p-10">
+          <div className="bg-white p-10 rounded-xl shadow-lg w-[480px]">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Create Account</h2>
+            <p className="text-gray-600 mb-6">Join Vismotor Employee Information System</p>
 
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            {error && <p className="text-red-500 mb-4">{error}</p>}
+
+            <form onSubmit={handleSignup} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
+                    placeholder="First Name"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
+                    placeholder="Last Name"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  First Name
+                  Email
                 </label>
                 <input
-                  type="text"
+                  type="email"
+                  name="email"
                   className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
-                  placeholder="First Name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={handleChange}
                   required
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Last Name
+                  Password
                 </label>
-                <input
-                  type="text"
-                  className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
-                  placeholder="Last Name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
+                    placeholder="Create a password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <FaEyeSlash className="text-gray-500 hover:text-gray-700" />
+                    ) : (
+                      <FaEye className="text-gray-500 hover:text-gray-700" />
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Username Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
-              <input
-                type="text"
-                className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
-                placeholder="Enter your Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
+                    placeholder="Confirm your password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={toggleConfirmPasswordVisibility}
+                  >
+                    {showConfirmPassword ? (
+                      <FaEyeSlash className="text-gray-500 hover:text-gray-700" />
+                    ) : (
+                      <FaEye className="text-gray-500 hover:text-gray-700" />
+                    )}
+                  </button>
+                </div>
+              </div>
 
-            {/* Email Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                E-Mail
-              </label>
-              <input
-                type="email"
-                className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
-                placeholder="Enter your Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                type="password"
-                className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
-                placeholder="Enter your Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Confirm Password Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
-                placeholder="Confirm your Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-              {/* Password Match Indicator */}
-              {confirmPassword && (
-                <p
-                  className={`mt-2 text-sm ${
-                    passwordsMatch ? "text-green-500" : "text-red-500"
-                  }`}
-                >
-                  {passwordsMatch
-                    ? "Passwords match!"
-                    : "Passwords do not match!"}
-                </p>
-              )}
-            </div>
-
-            {/* Sign Up Button */}
-            <button
-              type="submit"
-              className="w-full cursor-pointer bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold transition duration-200"
-            >
-              Sign Up
-            </button>
-          </form>
-
-          {/* Divider Line */}
-          <div className="mt-6 border-t border-gray-300"></div>
-
-          {/* Login Link */}
-          <div className="mt-4 text-sm text-center">
-            <p>
-              Already have an account?{" "}
-              <a
-                href="/login"
-                className="text-orange-500 font-semibold hover:underline"
+              <button
+                type="submit"
+                className="w-full cursor-pointer bg-orange-500 hover:bg-[#538b30] text-white p-3 rounded-lg font-semibold transition duration-200"
+                disabled={isLoading}
               >
-                Login
-              </a>
-            </p>
+                {isLoading ? "Signing up..." : "Sign Up"}
+              </button>
+            </form>
+
+            <div className="mt-6 border-t border-gray-300"></div>
+
+            <div className="mt-4 text-sm text-center">
+              <p>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="text-orange-500 font-semibold hover:underline"
+                >
+                  Login
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
+      <ToastContainer />
+
       <footer className="w-full py-4 md:py-6 bg-orange-500 flex flex-col md:flex-row items-center justify-between px-6 md:px-10 text-white">
         {/* Left - Logo & Address */}
         <div className="flex flex-col md:flex-row items-center md:items-center space-y-4 md:space-y-0 md:space-x-6">
@@ -192,13 +248,22 @@ const Signup = () => {
             <p className="text-md">
               9W68+643, Carmel Drive cor, Gov. M. Cuenco Ave, Cebu City, Cebu
             </p>
-            <p className="text-md">contact@vismotor.com | +123 456 7890</p>
+            <p className="text-md">
+              contact@vismotor.com | +123 456 7890
+            </p>
           </div>
         </div>
 
         {/* Center - Copyright */}
         <p className="text-md font-semibold text-center w-full md:w-auto">
           &copy; {new Date().getFullYear()} Vismotor Employee Information System
+          <br />
+          <button
+            onClick={() => navigate("/documentation")}
+            className="text-white hover:text-gray-200 underline text-sm"
+          >
+            View Documentation
+          </button>
         </p>
 
         {/* Right - Social Media & Links */}

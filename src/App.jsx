@@ -7,6 +7,8 @@ import Spinner from "./components/Layouts/Spinner";
 
 // Lazy loaded components
 const Login = lazy(() => import("./pages/auth/Login"));
+const Signup = lazy(() => import("./pages/auth/Signup"));
+const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const Home = lazy(() => import("./pages/Home"));
 const Employees = lazy(() => import("./pages/Employees"));
 const Applicants = lazy(() => import("./pages/Applicants"));
@@ -14,6 +16,7 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const Documentation = lazy(() => import("./pages/Documentation"));
 const NotFound = lazy(() => import("./components/NotFound"));
 
 function App() {
@@ -25,8 +28,11 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/documentation" element={<Documentation />} />
             
             {/* Protected Routes */}
             <Route path="/home" element={<ProtectedRoute element={<Home />} />} />

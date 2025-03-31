@@ -1,36 +1,66 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Import axios for making HTTP requests
+import { toast, ToastContainer } from "react-toastify";
+import apiService from "../../services/api";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleReset = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!email) {
       setError("Email is required!");
+      toast.error("Email is required!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      setIsLoading(false);
       return;
     }
 
     try {
-      // Send a POST request to the backend
-      const response = await axios.post("http://localhost:5000/api/forgot-password", { email });
+      // Send a request to the backend
+      const response = await apiService.auth.forgotPassword({ email });
 
       // Display success message
-      setMessage(response.data.message);
+      const successMessage = response.data.message || "Password reset link has been sent to your email.";
+      setMessage(successMessage);
       setError("");
+      
+      toast.success(successMessage, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } catch (error) {
       // Handle errors
-      if (error.response) {
-        setError(error.response.data.message);
-      } else {
-        setError("Something went wrong. Please try again later.");
-      }
+      const errorMessage = error.response?.data?.message || "Something went wrong. Please try again later.";
+      setError(errorMessage);
       setMessage("");
+      
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -66,8 +96,9 @@ const ForgotPassword = () => {
           <button
             type="submit"
             className="w-full cursor-pointer bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold transition duration-200"
+            disabled={isLoading}
           >
-            Send Reset Link
+            {isLoading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
 
@@ -76,15 +107,17 @@ const ForgotPassword = () => {
         <div className="mt-4 text-sm text-center">
           <p>
             Remember your password?{" "}
-            <a
-              href="/login"
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
               className="text-orange-500 font-semibold hover:underline"
             >
               Back to Login
-            </a>
+            </button>
           </p>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 };
