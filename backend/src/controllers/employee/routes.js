@@ -334,7 +334,6 @@ router.put("/api/employees/:id", async (req, res) => {
       position, 
       department, 
       hire_date, 
-<<<<<<< HEAD
       salary,
       status
     } = req.body;
@@ -344,13 +343,6 @@ router.put("/api/employees/:id", async (req, res) => {
     // Validate required fields - only if all fields are provided
     // If only partial update, skip validation
     if (req.body.name && (!name || !position || !department)) {
-=======
-      salary 
-    } = req.body;
-    
-    // Validate required fields
-    if (!name || !position || !department) {
->>>>>>> 371cdcc45859d4ad005653b6d4c787f37f532594
       return res.status(400).json({ message: "Name, position, and department are required" });
     }
     
@@ -364,7 +356,6 @@ router.put("/api/employees/:id", async (req, res) => {
       return res.status(404).json({ message: "Employee not found" });
     }
     
-<<<<<<< HEAD
     const existingEmployee = employees[0];
     
     // If this is a status-only update
@@ -393,12 +384,6 @@ router.put("/api/employees/:id", async (req, res) => {
         status || existingEmployee.status, 
         id
       ]
-=======
-    // Update employee
-    const [result] = await connection.query(
-      "UPDATE employees SET name = ?, email = ?, phone = ?, position = ?, department = ?, hire_date = ?, salary = ? WHERE id = ?",
-      [name, email, phone, position, department, hire_date, salary, id]
->>>>>>> 371cdcc45859d4ad005653b6d4c787f37f532594
     );
     
     connection.release();
