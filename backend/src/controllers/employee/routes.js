@@ -25,6 +25,8 @@ router.get("/api/applicants", async (req, res) => {
 // Add a new applicant
 router.post("/api/applicants", async (req, res) => {
   try {
+    console.log("Received applicant data:", req.body);
+    
     const { 
       name, 
       email, 
@@ -40,19 +42,35 @@ router.post("/api/applicants", async (req, res) => {
       return res.status(400).json({ message: "Name, email and position are required" });
     }
     
+    // Process skills (could be string or array)
+    let processedSkills = skills;
+    if (Array.isArray(skills)) {
+      processedSkills = skills.join("\n");
+    }
+    
+    console.log("Connecting to database...");
     const connection = await pool.getConnection();
+    console.log("Connected. Inserting applicant...");
+    
     const [result] = await connection.query(
       "INSERT INTO applicants (name, email, phone, position, education, experience, skills, status, applied_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())",
-      [name, email, phone, position, education, experience, skills ? skills.join("\n") : null, "Pending"]
+      [name, email, phone, position, education, experience, processedSkills, "Pending"]
     );
     connection.release();
     
+    console.log("Applicant added with ID:", result.insertId);
     res.status(201).json({ 
       id: result.insertId,
       message: "Applicant added successfully" 
     });
   } catch (error) {
     console.error("Error adding applicant:", error);
+    if (error.code) {
+      console.error("SQL Error Code:", error.code);
+    }
+    if (error.sqlMessage) {
+      console.error("SQL Error Message:", error.sqlMessage);
+    }
     res.status(500).json({ message: "Failed to add applicant" });
   }
 });
@@ -76,9 +94,12 @@ router.get("/api/applicants/:id", async (req, res) => {
   }
 });
 
-// Update applicant status
-router.patch("/api/applicants/:id", async (req, res) => {
+// Update applicant status (match frontend API path)
+router.patch("/api/applicants/:id/status", async (req, res) => {
   try {
+    console.log("Updating status for applicant ID:", req.params.id);
+    console.log("Status data:", req.body);
+    
     const { id } = req.params;
     const { status } = req.body;
     
@@ -99,8 +120,8 @@ router.patch("/api/applicants/:id", async (req, res) => {
     
     res.json({ message: "Applicant status updated successfully" });
   } catch (error) {
-    console.error("Error updating applicant:", error);
-    res.status(500).json({ message: "Failed to update applicant" });
+    console.error("Error updating applicant status:", error);
+    res.status(500).json({ message: "Failed to update applicant status" });
   }
 });
 
@@ -280,6 +301,161 @@ router.get("/api/employees", async (req, res) => {
   } catch (error) {
     console.error("Error fetching employees:", error);
     res.status(500).json({ message: "Failed to fetch employees" });
+  }
+});
+
+// Get employee by ID
+router.get("/api/employees/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    connection.release();
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("Error fetching employee:", error);
+    res.status(500).json({ message: "Failed to fetch employee" });
+  }
+});
+
+// Update employee
+router.put("/api/employees/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      name, 
+      email, 
+      phone, 
+      position, 
+      department, 
+      hire_date, 
+      salary,
+      status
+    } = req.body;
+    
+    console.log("Updating employee:", id, req.body);
+    
+    // Validate required fields - only if all fields are provided
+    // If only partial update, skip validation
+    if (req.body.name && (!name || !position || !department)) {
+      return res.status(400).json({ message: "Name, position, and department are required" });
+    }
+    
+    const connection = await pool.getConnection();
+    
+    // Check if employee exists
+    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    
+    if (employees.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    const existingEmployee = employees[0];
+    
+    // If this is a status-only update
+    if (status && Object.keys(req.body).length === 1) {
+      console.log("Processing status-only update to:", status);
+      const [result] = await connection.query(
+        "UPDATE employees SET status = ? WHERE id = ?",
+        [status, id]
+      );
+      connection.release();
+      return res.json({ message: "Employee status updated successfully" });
+    }
+    
+    // For full or partial updates
+    const updateQuery = "UPDATE employees SET name = ?, email = ?, phone = ?, position = ?, department = ?, hire_date = ?, salary = ?, status = ? WHERE id = ?";
+    const [result] = await connection.query(
+      updateQuery,
+      [
+        name || existingEmployee.name, 
+        email || existingEmployee.email, 
+        phone || existingEmployee.phone, 
+        position || existingEmployee.position, 
+        department || existingEmployee.department, 
+        hire_date || existingEmployee.hire_date, 
+        salary || existingEmployee.salary,
+        status || existingEmployee.status, 
+        id
+      ]
+    );
+    
+    connection.release();
+    
+    res.json({ 
+      message: "Employee updated successfully" 
+    });
+  } catch (error) {
+    console.error("Error updating employee:", error);
+    res.status(500).json({ message: "Failed to update employee" });
+  }
+});
+
+// Update employee status
+router.patch("/api/employees/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+    
+    const connection = await pool.getConnection();
+    
+    // Check if employee exists
+    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    
+    if (employees.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    // Update employee status
+    const [result] = await connection.query(
+      "UPDATE employees SET status = ? WHERE id = ?",
+      [status, id]
+    );
+    
+    connection.release();
+    
+    res.json({ 
+      message: "Employee status updated successfully" 
+    });
+  } catch (error) {
+    console.error("Error updating employee status:", error);
+    res.status(500).json({ message: "Failed to update employee status" });
+  }
+});
+
+// Delete employee
+router.delete("/api/employees/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await pool.getConnection();
+    
+    // Check if employee exists
+    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    
+    if (employees.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    // Delete employee
+    const [result] = await connection.query("DELETE FROM employees WHERE id = ?", [id]);
+    connection.release();
+    
+    res.json({ message: "Employee deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting employee:", error);
+    res.status(500).json({ message: "Failed to delete employee" });
   }
 });
 

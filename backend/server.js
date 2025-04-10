@@ -6,6 +6,7 @@ const authRoutes = require("./src/controllers/auth/routes/routes");
 const employeeRoutes = require("./src/controllers/employee/routes");
 const applicantRoutes = require("./src/controllers/applicant/routes");
 const userRoutes = require("./src/controllers/user/routes");
+const { validateToken, ensureVerified } = require("./src/utils/authMiddleware");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,6 +15,36 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({ origin: "http://localhost:5173" }));
 
 app.use(express.json());
+
+// Authentication middleware that excludes auth endpoints
+app.use((req, res, next) => {
+  // Skip auth for public endpoints
+  const publicPaths = [
+    '/api/login',
+    '/api/signup',
+    '/api/verify-email',
+    '/api/forgot-password',
+    '/api/reset-password',
+    '/api/resend-verification',
+    '/api/check-user'
+  ];
+  
+  // Check if the request path starts with any of the public paths
+  const isPublicPath = publicPaths.some(path => req.path.startsWith(path));
+  if (isPublicPath) {
+    return next();
+  }
+  
+  // For protected routes, apply both validateToken and ensureVerified
+  validateToken(req, res, (err) => {
+    if (err) return; // Error response was sent by validateToken
+    
+    // Now check if user is verified
+    ensureVerified(req, res, next);
+  });
+});
+
+// Routes
 app.use(authRoutes);
 app.use(employeeRoutes);
 app.use(applicantRoutes);

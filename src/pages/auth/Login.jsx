@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaEye, FaEyeSlash } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
 import apiService from "../../services/api";
 
 import Logo from "../../assets/vismotor-splash-art.png";
@@ -12,6 +13,10 @@ const Login = () => {
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState(null);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +29,8 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setUnverifiedEmail(null);
+    setResendSuccess(false);
     setIsLoading(true);
 
     try {
@@ -40,13 +47,89 @@ const Login = () => {
         sessionStorage.setItem("savedEmail", email);
       }
 
+      // Show success toast
+      toast.success("Login successful! Welcome back.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
       // Redirect to home page
       navigate("/home");
     } catch (error) {
-      setError(error.response?.data?.message || error.message || "Something went wrong. Please try again.");
+      if (error.response?.status === 403 && error.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+        setUnverifiedEmail(error.response.data.email);
+        setError("Your email address has not been verified. Please check your inbox or resend the verification email.");
+        
+        // Show warning toast
+        toast.warning("Email verification required", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      } else {
+        setError(error.response?.data?.message || error.message || "Something went wrong. Please try again.");
+        
+        // Show error toast
+        toast.error(error.response?.data?.message || "Login failed. Please check your credentials.", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleResendVerificationEmail = async () => {
+    if (!unverifiedEmail) return;
+
+    setIsResendingEmail(true);
+    setResendSuccess(false);
+    
+    try {
+      const response = await apiService.auth.resendVerification(unverifiedEmail);
+      setResendSuccess(true);
+      setError(""); // Clear error message
+      
+      // Show success toast
+      toast.success("Verification email has been sent! Please check your inbox.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to resend verification email. Please try again.");
+      
+      // Show error toast
+      toast.error("Failed to resend verification email. Please try again later.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } finally {
+      setIsResendingEmail(false);
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -58,7 +141,29 @@ const Login = () => {
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Login</h2>
             <p className="text-gray-600 mb-6">Welcome back! We missed you!</p>
 
-            {error && <p className="text-red-500 mb-4">{error}</p>}
+            {/* Error message */}
+            {error && (
+              <div className="mb-4">
+                <p className="text-red-500">{error}</p>
+                {unverifiedEmail && (
+                  <button
+                    type="button"
+                    onClick={handleResendVerificationEmail}
+                    disabled={isResendingEmail}
+                    className="mt-2 text-orange-500 hover:text-orange-700 font-semibold text-sm"
+                  >
+                    {isResendingEmail ? "Sending..." : "Resend verification email"}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Success message for resent email */}
+            {resendSuccess && (
+              <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
+                Verification email has been sent! Please check your inbox.
+              </div>
+            )}
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -79,14 +184,27 @@ const Login = () => {
                 <label className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <input
-                  type="password"
-                  className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
-                  placeholder="Enter your Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
+                    placeholder="Enter your Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <FaEyeSlash className="text-gray-500 hover:text-gray-700" />
+                    ) : (
+                      <FaEye className="text-gray-500 hover:text-gray-700" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Remember Me and Forgot Password */}
@@ -141,6 +259,9 @@ const Login = () => {
         </div>
       </div>
 
+      {/* Toast container for alerts */}
+      <ToastContainer />
+
       <footer className="w-full py-4 md:py-6 bg-orange-500 flex flex-col md:flex-row items-center justify-between px-6 md:px-10 text-white">
         {/* Left - Logo & Address */}
         <div className="flex flex-col md:flex-row items-center md:items-center space-y-4 md:space-y-0 md:space-x-6">
@@ -162,6 +283,13 @@ const Login = () => {
         {/* Center - Copyright */}
         <p className="text-md font-semibold text-center w-full md:w-auto">
           &copy; {new Date().getFullYear()} Vismotor Employee Information System
+          <br />
+          <button
+            onClick={() => navigate("/documentation")}
+            className="text-white hover:text-gray-200 underline text-sm"
+          >
+            View Documentation
+          </button>
         </p>
 
         {/* Right - Social Media & Links */}

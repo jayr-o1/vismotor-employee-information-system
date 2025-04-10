@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
@@ -6,6 +6,7 @@ import ReactPaginate from "react-paginate";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
+import { ThemeContext } from "../ThemeContext";
 
 const Employees = () => {
   // State management
@@ -29,6 +30,9 @@ const Employees = () => {
   // Pagination settings
   const itemsPerPage = 10;
 
+  // Add ThemeContext
+  const { isDarkMode } = useContext(ThemeContext);
+
   // Fetch data on component mount
   useEffect(() => {
     fetchEmployees();
@@ -40,25 +44,11 @@ const Employees = () => {
     try {
       const response = await apiService.employees.getAll();
       setEmployees(response.data);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      
-      // Fallback to sample data when API is not available
-      console.log("Using sample employee data instead");
-      const sampleEmployees = Array.from({ length: 50 }, (_, index) => ({
-        id: index + 1,
-        name: `Employee ${index + 1}`,
-        department: `Department ${Math.floor(index/10) + 1}`,
-        position: `Position ${Math.floor(index/5) + 1}`,
-        email: `employee${index + 1}@example.com`,
-        phone: `(555) ${100 + index}-${1000 + index}`,
-        status: ['Active', 'On Leave', 'Terminated'][Math.floor(Math.random() * 3)],
-        hire_date: new Date(2020, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-      }));
-      
-      setEmployees(sampleEmployees);
-      toast.info("Connected to sample data mode");
+      toast.error("Failed to fetch employees. Please check your connection or contact support.");
+      setEmployees([]);
+    } finally {
       setLoading(false);
     }
   };
@@ -164,7 +154,7 @@ const Employees = () => {
         <Header />
         <ToastContainer position="top-right" />
 
-        <main className="bg-gray-100 p-6 flex-1 mt-16">
+        <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
           <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-semibold text-gray-800">Employee Directory</h1>
@@ -181,14 +171,14 @@ const Employees = () => {
             </div>
 
             {loading ? (
-              <div className="bg-white rounded-lg shadow p-6 flex justify-center items-center h-64">
+              <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 flex justify-center items-center h-64`}>
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow overflow-hidden`}>
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       <tr>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
@@ -197,7 +187,7 @@ const Employees = () => {
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                       {currentItems.map((employee) => (
                         <tr key={employee.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.id}</td>
@@ -256,8 +246,8 @@ const Employees = () => {
 
           {/* View Employee Modal */}
           {viewModalOpen && currentEmployee && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
+              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 <h2 className="text-2xl font-semibold mb-4">Employee Details</h2>
                 <div className="grid grid-cols-1 gap-4 mb-4">
                   <div>
@@ -300,8 +290,8 @@ const Employees = () => {
 
           {/* Edit Employee Modal */}
           {editModalOpen && currentEmployee && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
+              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 <h2 className="text-2xl font-semibold mb-4">Edit Employee</h2>
                 <div className="grid grid-cols-1 gap-4 mb-4">
                   <div>
@@ -382,8 +372,8 @@ const Employees = () => {
 
           {/* Delete Confirmation Modal */}
           {deleteModalOpen && currentEmployee && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
+              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 <h2 className="text-2xl font-semibold mb-4">Confirm Delete</h2>
                 <p className="mb-6">Are you sure you want to delete {currentEmployee.name}? This action cannot be undone.</p>
                 <div className="flex justify-end space-x-2">

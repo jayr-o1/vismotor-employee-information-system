@@ -1,1 +1,118 @@
 @import "tailwindcss";
+
+/* Base styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  width: 100%;
+}
+
+body {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+/* Dark mode transitions */
+body, div, nav, main, header, footer, section, aside, article, 
+h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* App container - make sure it covers the entire viewport */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dark mode scrollbar styles */
+.dark-mode::-webkit-scrollbar {
+  width: 12px;
+}
+
+.dark-mode::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark-mode::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 6px;
+}
+
+.dark-mode::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Dark mode for body and root elements */
+.dark-mode,
+.dark-mode body {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+/* Global dark mode overrides */
+.dark-mode .text-black {
+  color: #f9fafb !important;
+}
+
+.dark-mode .bg-white {
+  background-color: #1f2937 !important;
+}
+
+.dark-mode .border-gray-200 {
+  border-color: #4b5563 !important;
+}
+
+.dark-mode .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+.dark-mode .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+.dark-mode .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+.dark-mode .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+.dark-mode .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+.dark-mode .bg-gray-50 {
+  background-color: #1f2937 !important;
+}
+
+/* Table row hover styles based on theme */
+tr.hover\:bg-gray-50:hover {
+  background-color: #f9fafb;
+  transition: background-color 0.2s ease;
+}
+
+.dark-mode tr.hover\:bg-gray-50:hover {
+  background-color: #374151 !important;
+  transition: background-color 0.2s ease;
+}
+
+.dark-mode ::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Force dark background on specific containers */
+.dark-mode .app,
+.dark-mode main,
+.dark-mode .min-h-screen {
+  background-color: #111827 !important;
+}
+
+/* Ensure login and other pages have dark backgrounds too */
+.dark-mode [class*="page"],
+.dark-mode [class*="container"],
+.dark-mode [class*="wrapper"] {
+  color: #f9fafb !important;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
 import { FaEdit, FaTrash, FaEye, FaCheck, FaUserPlus } from "react-icons/fa";
@@ -6,6 +6,8 @@ import ReactPaginate from "react-paginate";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
+import { useNavigate } from "react-router-dom";
+import { ThemeContext } from "../ThemeContext";
 
 const Applicants = () => {
   // State for applicants data
@@ -13,10 +15,9 @@ const Applicants = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
+  const navigate = useNavigate();
   
   // Modal states
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [onboardModalOpen, setOnboardModalOpen] = useState(false);
@@ -26,7 +27,6 @@ const Applicants = () => {
   const [currentApplicant, setCurrentApplicant] = useState(null);
   
   // Form data for various actions
-  const [feedbackData, setFeedbackData] = useState("");
   const [interviewData, setInterviewData] = useState({
     date: "",
     time: "",
@@ -52,12 +52,15 @@ const Applicants = () => {
   // Pagination settings
   const itemsPerPage = 10;
 
+  // Add ThemeContext
+  const { isDarkMode } = useContext(ThemeContext);
+
   // Fetch data on component mount
   useEffect(() => {
     fetchApplicants();
   }, []);
 
-  // API fetch with fallback to sample data
+  // API fetch
   const fetchApplicants = async () => {
     setLoading(true);
     try {
@@ -65,25 +68,8 @@ const Applicants = () => {
       setApplicants(response.data);
     } catch (error) {
       console.error("Error fetching applicants:", error);
-      
-      // Fallback to sample data when API is not available
-      console.log("Using sample applicant data instead");
-      const sampleApplicants = Array.from({ length: 10 }, (_, index) => ({
-        id: index + 1,
-        name: `Applicant ${index + 1}`,
-        position: `Position ${index + 1}`,
-        email: `applicant${index + 1}@example.com`,
-        phone: `(555) ${100 + index}-${1000 + index}`,
-        status: ['Pending', 'Reviewed', 'Interviewed', 'Rejected', 'Accepted'][Math.floor(Math.random() * 5)],
-        applied_date: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-        interview_scheduled: Math.random() > 0.5,
-        education: "Bachelor's Degree",
-        experience: "Previous work experience",
-        skills: "Relevant skills for the position"
-      }));
-      
-      setApplicants(sampleApplicants);
-      toast.info("Connected to sample data mode");
+      toast.error("Failed to fetch applicants. Please check your connection or contact support.");
+      setApplicants([]);
     } finally {
       setLoading(false);
     }
@@ -117,17 +103,9 @@ const Applicants = () => {
     setCurrentPage(selected);
   };
 
-  // Open view applicant modal
+  // Navigate to applicant details page
   const handleViewApplicant = (applicant) => {
-    setCurrentApplicant(applicant);
-    setViewModalOpen(true);
-  };
-
-  // Open feedback modal
-  const handleFeedbackClick = (applicant) => {
-    setCurrentApplicant(applicant);
-    setFeedbackData("");
-    setFeedbackModalOpen(true);
+    navigate(`/applicants/${applicant.id}`);
   };
 
   // Open schedule interview modal
@@ -158,34 +136,6 @@ const Applicants = () => {
       salary: ""
     });
     setOnboardModalOpen(true);
-  };
-
-  // Submit feedback
-  const handleSubmitFeedback = async () => {
-    if (!feedbackData.trim()) {
-      toast.error("Please enter feedback");
-      return;
-    }
-    
-    try {
-      await apiService.applicants.addFeedback(currentApplicant.id, {
-        feedback_text: feedbackData,
-        created_by: "HR User" // In a real app, this would be the current user's name
-      });
-      
-      // Update the applicant status in the local state
-      setApplicants(apps => 
-        apps.map(app => 
-          app.id === currentApplicant.id ? { ...app, status: "Reviewed" } : app
-        )
-      );
-      
-      setFeedbackModalOpen(false);
-      toast.success("Feedback submitted successfully");
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
-      toast.error(error.message || "Failed to submit feedback. Please try again.");
-    }
   };
 
   // Schedule interview
@@ -245,25 +195,35 @@ const Applicants = () => {
     }
     
     try {
+      // Make sure we have the position populated
+      const position = onboardData.position || currentApplicant.position;
+      
+      // Make sure salary is a number
+      const salary = parseFloat(onboardData.salary);
+      if (isNaN(salary)) {
+        toast.error("Salary must be a valid number");
+        return;
+      }
+      
       // Create employee record
       await apiService.employees.create({
         applicant_id: currentApplicant.id,
         name: currentApplicant.name,
         email: currentApplicant.email,
-        phone: currentApplicant.phone,
-        position: onboardData.position,
+        phone: currentApplicant.phone || '',
+        position: position,
         department: onboardData.department,
         hire_date: onboardData.startDate,
-        salary: onboardData.salary
+        salary: salary
       });
       
       // Update applicant status
-      await apiService.applicants.updateStatus(currentApplicant.id, "Onboarded");
+      await apiService.applicants.updateStatus(currentApplicant.id, "Accepted");
       
       // Update the applicant status in the local state
       setApplicants(apps => 
         apps.map(app => 
-          app.id === currentApplicant.id ? { ...app, status: "Onboarded" } : app
+          app.id === currentApplicant.id ? { ...app, status: "Accepted" } : app
         )
       );
       
@@ -271,7 +231,25 @@ const Applicants = () => {
       toast.success("Applicant onboarded successfully");
     } catch (error) {
       console.error("Error onboarding applicant:", error);
-      toast.error(error.message || "Failed to onboard applicant. Please try again.");
+      
+      // More detailed error handling
+      let errorMessage = "Failed to onboard applicant. Please try again.";
+      
+      if (error.response) {
+        // Server responded with an error
+        errorMessage = error.response.data?.message || errorMessage;
+        console.log("Server error data:", error.response.data);
+        console.log("Server error status:", error.response.status);
+      } else if (error.request) {
+        // Request was made but no response
+        errorMessage = "No response from server. Please check your connection.";
+        console.log("No response received:", error.request);
+      } else {
+        // Something else happened
+        errorMessage = error.message || errorMessage;
+      }
+      
+      toast.error(errorMessage);
     }
   };
 
@@ -327,7 +305,7 @@ const Applicants = () => {
         <Header />
         <ToastContainer position="top-right" />
 
-        <main className="bg-gray-100 p-6 flex-1 mt-16">
+        <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
           <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-semibold text-gray-800">Applicant Tracking</h1>
@@ -352,14 +330,14 @@ const Applicants = () => {
             </div>
 
             {loading ? (
-              <div className="bg-white rounded-lg shadow p-6 flex justify-center items-center h-64">
+              <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 flex justify-center items-center h-64`}>
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow overflow-hidden`}>
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                       <tr>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
@@ -369,7 +347,7 @@ const Applicants = () => {
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                       {currentItems.map((applicant) => (
                         <tr key={applicant.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{applicant.id}</td>
@@ -399,11 +377,6 @@ const Applicants = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <button onClick={() => handleViewApplicant(applicant)} className="text-blue-500 hover:text-blue-700 mr-2">
                               <FaEye />
-                            </button>
-                            <button 
-                              onClick={() => handleFeedbackClick(applicant)} 
-                              className="text-blue-500 hover:text-blue-700 mr-2">
-                              <FaEdit />
                             </button>
                             <button 
                               onClick={() => handleScheduleClick(applicant)} 
@@ -446,80 +419,10 @@ const Applicants = () => {
             )}
           </div>
 
-          {/* View Applicant Modal */}
-          {viewModalOpen && currentApplicant && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-                <h2 className="text-2xl font-semibold mb-4">Applicant Details</h2>
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Name</p>
-                    <p className="font-medium">{currentApplicant.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Position Applied For</p>
-                    <p className="font-medium">{currentApplicant.position}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{currentApplicant.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">{currentApplicant.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Application Date</p>
-                    <p className="font-medium">{currentApplicant.applied_date}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <p className="font-medium">{currentApplicant.status}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Skills</p>
-                    <div className="font-medium whitespace-pre-line">{currentApplicant.skills}</div>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <button onClick={() => setViewModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Feedback Modal */}
-          {feedbackModalOpen && currentApplicant && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-                <h2 className="text-2xl font-semibold mb-4">Add Feedback for {currentApplicant.name}</h2>
-                <div className="mb-4">
-                  <label className="block text-sm text-gray-500 mb-1">Feedback</label>
-                  <textarea
-                    value={feedbackData}
-                    onChange={(e) => setFeedbackData(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 h-40"
-                    placeholder="Enter your feedback on this applicant..."
-                  ></textarea>
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <button onClick={() => setFeedbackModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                    Cancel
-                  </button>
-                  <button onClick={handleSubmitFeedback} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    Submit Feedback
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Schedule Interview Modal */}
           {scheduleModalOpen && currentApplicant && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
+              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 <h2 className="text-2xl font-semibold mb-4">Schedule Interview for {currentApplicant.name}</h2>
                 <div className="grid grid-cols-1 gap-4 mb-4">
                   <div>
@@ -575,8 +478,8 @@ const Applicants = () => {
 
           {/* Delete Confirmation Modal */}
           {deleteModalOpen && currentApplicant && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
+              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 <h2 className="text-2xl font-semibold mb-4">Confirm Delete</h2>
                 <p className="mb-6">Are you sure you want to delete {currentApplicant.name}'s application? This action cannot be undone.</p>
                 <div className="flex justify-end space-x-2">
@@ -593,8 +496,8 @@ const Applicants = () => {
 
           {/* Onboarding Modal */}
           {onboardModalOpen && currentApplicant && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
+              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 <h2 className="text-2xl font-semibold mb-4">Onboard {currentApplicant.name}</h2>
                 <div className="grid grid-cols-1 gap-4 mb-4">
                   <div>
@@ -649,7 +552,7 @@ const Applicants = () => {
           {/* Add Applicant Modal */}
           {addModalOpen && (
             <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl">
+              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-3xl ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 <h2 className="text-2xl font-semibold mb-6 text-center">Add New Applicant</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
                   {/* Left Column */}

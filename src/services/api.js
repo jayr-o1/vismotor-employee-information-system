@@ -31,6 +31,8 @@ const apiService = {
     signup: (userData) => api.post('/api/signup', userData),
     forgotPassword: (email) => api.post('/api/forgot-password', { email }),
     resetPassword: (resetData) => api.post('/api/reset-password', resetData),
+    verifyEmail: (token) => api.get(`/api/verify-email?token=${token}`),
+    resendVerification: (email) => api.post('/api/resend-verification', { email }),
   },
   
   // Dashboard endpoints
@@ -52,6 +54,10 @@ const apiService = {
     addFeedback: (id, feedbackData) => api.post(`/api/applicants/${id}/feedback`, feedbackData),
     getFeedback: (id) => api.get(`/api/applicants/${id}/feedback`),
     
+    // Notes
+    getNotes: (id) => api.get(`/api/applicants/${id}/notes`),
+    addNote: (id, noteData) => api.post(`/api/applicants/${id}/notes`, noteData),
+    
     // Interviews
     getInterviews: (id) => api.get(`/api/applicants/${id}/interviews`),
   },
@@ -72,6 +78,7 @@ const apiService = {
     getById: (id) => api.get(`/api/employees/${id}`),
     create: (employeeData) => api.post('/api/employees', employeeData),
     update: (id, employeeData) => api.put(`/api/employees/${id}`, employeeData),
+    updateStatus: (id, status) => api.put(`/api/employees/${id}`, { status }),
     delete: (id) => api.delete(`/api/employees/${id}`),
   },
   
