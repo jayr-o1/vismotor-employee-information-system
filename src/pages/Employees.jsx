@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
@@ -6,8 +6,12 @@ import ReactPaginate from "react-paginate";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
+import { ThemeContext } from "../ThemeContext";
 
 const Employees = () => {
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
+  
   // State management
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -157,76 +161,142 @@ const Employees = () => {
     }
   };
 
+  // Function to determine status style based on status
+  const getStatusStyle = (status) => {
+    if (status === 'Active') {
+      return isDark 
+        ? "bg-green-900/30 text-green-400" 
+        : "bg-green-200 text-green-800";
+    } else if (status === 'On Leave') {
+      return isDark 
+        ? "bg-yellow-900/30 text-yellow-400" 
+        : "bg-yellow-200 text-yellow-800";
+    } else {
+      return isDark 
+        ? "bg-red-900/30 text-red-400" 
+        : "bg-red-200 text-red-800";
+    }
+  };
+
   return (
-    <div className="flex">
+    <div className={`flex h-screen overflow-hidden ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <Sidebar />
-      <div className="flex flex-col flex-1 ml-64">
+      <div className="flex flex-col flex-1 lg:ml-64">
         <Header />
         <ToastContainer position="top-right" />
 
-        <main className="bg-gray-100 p-6 flex-1 mt-16">
+        <main className={`flex-1 p-4 sm:p-6 pt-16 md:pt-20 overflow-y-auto transition-colors duration-200 ${
+          isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800'
+        }`}>
           <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-semibold text-gray-800">Employee Directory</h1>
+              <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                Employee Directory
+              </h1>
               <div className="relative">
                 <input
                   type="text"
                   placeholder="Search employees..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+                  }`}
                 />
                 <i className="fas fa-search absolute right-3 top-3 text-gray-400"></i>
               </div>
             </div>
 
             {loading ? (
-              <div className="bg-white rounded-lg shadow p-6 flex justify-center items-center h-64">
+              <div className={`rounded-lg shadow p-6 flex justify-center items-center h-64 ${
+                isDark ? 'bg-slate-800' : 'bg-white'
+              }`}>
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className={`rounded-lg shadow overflow-hidden ${
+                  isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white'
+                }`}>
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-gray-300' : 'text-gray-500'
+                        }`}>ID</th>
+                        <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-gray-300' : 'text-gray-500'
+                        }`}>Name</th>
+                        <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-gray-300' : 'text-gray-500'
+                        }`}>Department</th>
+                        <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-gray-300' : 'text-gray-500'
+                        }`}>Status</th>
+                        <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-gray-300' : 'text-gray-500'
+                        }`}>Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className={`divide-y ${
+                      isDark ? 'bg-slate-800 divide-slate-700' : 'bg-white divide-gray-200'
+                    }`}>
                       {currentItems.map((employee) => (
-                        <tr key={employee.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{employee.name}</div>
-                            <div className="text-sm text-gray-500">{employee.position}</div>
+                        <tr key={employee.id} className={isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'}>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                            isDark ? 'text-gray-300' : 'text-gray-500'
+                          }`}>
+                            {employee.id}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.department}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              employee.status === "Active" 
-                                ? "bg-green-100 text-green-800" 
-                                : employee.status === "On Leave" 
-                                ? "bg-yellow-100 text-yellow-800" 
-                                : "bg-red-100 text-red-800"
-                            }`}>
+                            <div className="flex items-center">
+                              <div>
+                                <div className={`text-sm font-medium ${
+                                  isDark ? 'text-white' : 'text-gray-900'
+                                }`}>{employee.name}</div>
+                                <div className={`text-sm ${
+                                  isDark ? 'text-gray-400' : 'text-gray-500'
+                                }`}>{employee.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                            isDark ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {employee.department}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusStyle(employee.status)}`}>
                               {employee.status}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onClick={() => handleViewEmployee(employee)} className="text-blue-500 hover:text-blue-700 mr-2">
-                              <FaEye />
-                            </button>
-                            <button onClick={() => handleEditEmployee(employee)} className="text-blue-500 hover:text-blue-700 mr-2">
-                              <FaEdit />
-                            </button>
-                            <button onClick={() => handleDeleteClick(employee)} className="text-red-500 hover:text-red-700">
-                              <FaTrash />
-                            </button>
+                            <div className="flex space-x-2">
+                              <button 
+                                onClick={() => handleViewEmployee(employee)}
+                                className={`p-1.5 rounded-full ${
+                                  isDark ? 'text-blue-400 hover:bg-slate-700' : 'text-blue-600 hover:bg-gray-100'
+                                }`}
+                              >
+                                <FaEye className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => handleEditEmployee(employee)}
+                                className={`p-1.5 rounded-full ${
+                                  isDark ? 'text-yellow-400 hover:bg-slate-700' : 'text-yellow-600 hover:bg-gray-100'
+                                }`}
+                              >
+                                <FaEdit className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteClick(employee)}
+                                className={`p-1.5 rounded-full ${
+                                  isDark ? 'text-red-400 hover:bg-slate-700' : 'text-red-600 hover:bg-gray-100'
+                                }`}
+                              >
+                                <FaTrash className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -235,170 +305,225 @@ const Employees = () => {
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-6">
+                <div className="flex justify-center mt-6">
                   <ReactPaginate
-                    previousLabel="← Previous"
-                    nextLabel="Next →"
+                    previousLabel={"← Previous"}
+                    nextLabel={"Next →"}
                     pageCount={pageCount}
                     onPageChange={handlePageChange}
-                    containerClassName="flex justify-center items-center mt-6 space-x-1"
-                    pageLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    previousLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    nextLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    activeLinkClassName="bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
-                    disabledLinkClassName="opacity-50 cursor-not-allowed"
-                    breakClassName="px-3 py-2 rounded border border-gray-300"
+                    forcePage={currentPage}
+                    containerClassName={`flex space-x-2 overflow-x-auto ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    }`}
+                    pageClassName={`border rounded-md ${
+                      isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
+                    }`}
+                    previousClassName={`border rounded-md px-4 py-2 ${
+                      isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
+                    }`}
+                    nextClassName={`border rounded-md px-4 py-2 ${
+                      isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
+                    }`}
+                    pageLinkClassName="px-4 py-2 block"
+                    previousLinkClassName=""
+                    nextLinkClassName=""
+                    activeClassName={isDark ? 'bg-gray-700 text-white' : 'bg-green-600 text-white'}
+                    disabledClassName="opacity-50 cursor-not-allowed"
                   />
                 </div>
               </>
             )}
           </div>
-
-          {/* View Employee Modal */}
-          {viewModalOpen && currentEmployee && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-                <h2 className="text-2xl font-semibold mb-4">Employee Details</h2>
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Name</p>
-                    <p className="font-medium">{currentEmployee.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Department</p>
-                    <p className="font-medium">{currentEmployee.department}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Position</p>
-                    <p className="font-medium">{currentEmployee.position}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{currentEmployee.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">{currentEmployee.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <p className="font-medium">{currentEmployee.status}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Hire Date</p>
-                    <p className="font-medium">{currentEmployee.hire_date}</p>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <button onClick={() => setViewModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Edit Employee Modal */}
-          {editModalOpen && currentEmployee && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-                <h2 className="text-2xl font-semibold mb-4">Edit Employee</h2>
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Department</label>
-                    <input
-                      type="text"
-                      name="department"
-                      value={formData.department}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Position</label>
-                    <input
-                      type="text"
-                      name="position"
-                      value={formData.position}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Phone</label>
-                    <input
-                      type="text"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Status</label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                      <option value="Active">Active</option>
-                      <option value="On Leave">On Leave</option>
-                      <option value="Terminated">Terminated</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <button onClick={() => setEditModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                    Cancel
-                  </button>
-                  <button onClick={handleUpdateEmployee} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    Update
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Delete Confirmation Modal */}
-          {deleteModalOpen && currentEmployee && (
-            <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm bg-gray-900">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-                <h2 className="text-2xl font-semibold mb-4">Confirm Delete</h2>
-                <p className="mb-6">Are you sure you want to delete {currentEmployee.name}? This action cannot be undone.</p>
-                <div className="flex justify-end space-x-2">
-                  <button onClick={() => setDeleteModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                    Cancel
-                  </button>
-                  <button onClick={handleDeleteEmployee} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </main>
       </div>
+
+      {/* View Modal */}
+      {viewModalOpen && currentEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`rounded-lg shadow-lg p-6 max-w-md w-full ${
+            isDark ? 'bg-slate-800 text-white' : 'bg-white text-gray-800'
+          }`}>
+            <h2 className="text-xl font-semibold mb-4">Employee Details</h2>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Name:</span>
+                <span className="font-medium">{currentEmployee.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Department:</span>
+                <span>{currentEmployee.department}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Position:</span>
+                <span>{currentEmployee.position}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Email:</span>
+                <span>{currentEmployee.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Phone:</span>
+                <span>{currentEmployee.phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Status:</span>
+                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusStyle(currentEmployee.status)}`}>
+                  {currentEmployee.status}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Hire Date:</span>
+                <span>{new Date(currentEmployee.hire_date).toLocaleDateString()}</span>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setViewModalOpen(false)}
+                className={`px-4 py-2 rounded ${
+                  isDark ? 'bg-slate-700 hover:bg-slate-600' : 'bg-gray-200 hover:bg-gray-300'
+                }`}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editModalOpen && currentEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`rounded-lg shadow-lg p-6 max-w-md w-full ${
+            isDark ? 'bg-slate-800 text-white' : 'bg-white text-gray-800'
+          }`}>
+            <h2 className="text-xl font-semibold mb-4">Edit Employee</h2>
+            <div className="space-y-4">
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded ${
+                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Department</label>
+                <input
+                  type="text"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded ${
+                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Position</label>
+                <input
+                  type="text"
+                  name="position"
+                  value={formData.position}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded ${
+                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded ${
+                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Phone</label>
+                <input
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded ${
+                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Status</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2.5 border rounded ${
+                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+                  }`}
+                >
+                  <option value="Active">Active</option>
+                  <option value="On Leave">On Leave</option>
+                  <option value="Terminated">Terminated</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className={`px-4 py-2 rounded ${
+                  isDark ? 'bg-slate-700 hover:bg-slate-600' : 'bg-gray-200 hover:bg-gray-300'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateEmployee}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && currentEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`rounded-lg shadow-lg p-6 max-w-md w-full ${
+            isDark ? 'bg-slate-800 text-white' : 'bg-white text-gray-800'
+          }`}>
+            <h2 className="text-xl font-semibold mb-4">Confirm Delete</h2>
+            <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>
+              Are you sure you want to delete <span className="font-semibold">{currentEmployee.name}</span>? 
+              This action cannot be undone.
+            </p>
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => setDeleteModalOpen(false)}
+                className={`px-4 py-2 rounded ${
+                  isDark ? 'bg-slate-700 hover:bg-slate-600' : 'bg-gray-200 hover:bg-gray-300'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteEmployee}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

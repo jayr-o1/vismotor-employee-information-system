@@ -12,10 +12,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
 import { Link } from "react-router-dom";
-import { UserGroupIcon, FolderOpenIcon, BriefcaseIcon, ArrowDownTrayIcon, ArrowUpIcon, EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 
 const Home = () => {
   const { theme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState({
@@ -165,7 +165,6 @@ const Home = () => {
 
     try {
       // Set chart colors based on theme
-      const isDark = theme === 'dark';
       const textColor = isDark ? '#e2e8f0' : '#333';
       const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
       
@@ -325,7 +324,7 @@ const Home = () => {
               <DashboardCard
                 value={stats.employees}
                 title="Total Employees"
-                icon={<UserGroupIcon />}
+                icon="fas fa-users"
                 color="blue"
                 trend={{
                   value: 3.6,
@@ -355,70 +354,124 @@ const Home = () => {
             </div>
 
             {/* Link Click Analytics Section */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out">
+            <div className={`rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border ${
+              isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
+            }`}>
               <div className="p-4 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">Link Click Analytics</h2>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Number of clicks on application links over the last 12 months</p>
+                    <h2 className={`text-lg sm:text-xl font-bold ${
+                      isDark ? 'text-white' : 'text-slate-800'
+                    }`}>Link Click Analytics</h2>
+                    <p className={`text-xs sm:text-sm ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}>Number of clicks on application links over the last 12 months</p>
                   </div>
-                  <button className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">
-                    <ArrowDownTrayIcon className="w-4 h-4" />
+                  <button className={`p-1.5 rounded-md transition-all ${
+                    isDark 
+                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}>
+                    <i className="fas fa-download w-4 h-4"></i>
                   </button>
                 </div>
 
                 {/* Link Click Stats Summary */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
-                  <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-emerald-100 dark:border-emerald-800/30">
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mb-1">Total Clicks</p>
+                  <div className={`p-3 rounded-lg border ${
+                    isDark 
+                      ? 'bg-emerald-900/20 border-emerald-800/30' 
+                      : 'bg-emerald-50 border-emerald-100'
+                  }`}>
+                    <p className={`text-xs font-medium mb-1 ${
+                      isDark ? 'text-emerald-400' : 'text-emerald-600'
+                    }`}>Total Clicks</p>
                     <div className="flex justify-between items-center">
-                      <p className="text-lg font-bold text-slate-800 dark:text-white">{clickStats.total}</p>
-                      <span className="text-xs font-medium px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-800/30 text-emerald-600 dark:text-emerald-400 rounded flex items-center">
-                        <ArrowUpIcon className="w-3 h-3 mr-0.5" />12.4%
+                      <p className={`text-lg font-bold ${
+                        isDark ? 'text-white' : 'text-slate-800'
+                      }`}>{clickStats.total}</p>
+                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded flex items-center ${
+                        isDark 
+                          ? 'bg-emerald-800/30 text-emerald-400' 
+                          : 'bg-emerald-100 text-emerald-600'
+                      }`}>
+                        <i className="fas fa-arrow-up w-3 h-3 mr-0.5"></i>12.4%
                       </span>
                     </div>
                   </div>
                   
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800/30">
-                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Highest Month</p>
+                  <div className={`p-3 rounded-lg border ${
+                    isDark 
+                      ? 'bg-blue-900/20 border-blue-800/30' 
+                      : 'bg-blue-50 border-blue-100'
+                  }`}>
+                    <p className={`text-xs font-medium mb-1 ${
+                      isDark ? 'text-blue-400' : 'text-blue-600'
+                    }`}>Highest Month</p>
                     <div className="flex justify-between items-center">
-                      <p className="text-lg font-bold text-slate-800 dark:text-white">{clickStats.highest}</p>
-                      <span className="text-xs text-blue-600 dark:text-blue-400">{clickStats.month}</span>
+                      <p className={`text-lg font-bold ${
+                        isDark ? 'text-white' : 'text-slate-800'
+                      }`}>{clickStats.highest}</p>
+                      <span className={`text-xs ${
+                        isDark ? 'text-blue-400' : 'text-blue-600'
+                      }`}>{clickStats.month}</span>
                     </div>
                   </div>
                   
-                  <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-100 dark:border-purple-800/30">
-                    <p className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-1">Average per Month</p>
+                  <div className={`p-3 rounded-lg border ${
+                    isDark 
+                      ? 'bg-purple-900/20 border-purple-800/30' 
+                      : 'bg-purple-50 border-purple-100'
+                  }`}>
+                    <p className={`text-xs font-medium mb-1 ${
+                      isDark ? 'text-purple-400' : 'text-purple-600'
+                    }`}>Average per Month</p>
                     <div className="flex justify-between items-center">
-                      <p className="text-lg font-bold text-slate-800 dark:text-white">{clickStats.average}</p>
+                      <p className={`text-lg font-bold ${
+                        isDark ? 'text-white' : 'text-slate-800'
+                      }`}>{clickStats.average}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Chart Container */}
-                <div className="h-48 sm:h-56 md:h-64 w-full overflow-hidden px-4 pt-2 pb-4">
+                <div className={`h-48 sm:h-56 md:h-64 w-full overflow-hidden px-4 pt-2 pb-4 ${
+                  isDark ? 'bg-slate-800' : 'bg-white'
+                }`}>
                   <canvas id="applicantChart"></canvas>
                 </div>
               </div>
             </div>
 
             {/* Recent Applicants */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out">
+            <div className={`rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border ${
+              isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
+            }`}>
               <div className="p-4 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">Recent Applicants</h2>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Latest job applicants in the last 30 days</p>
+                    <h2 className={`text-lg sm:text-xl font-bold ${
+                      isDark ? 'text-white' : 'text-slate-800'
+                    }`}>Recent Applicants</h2>
+                    <p className={`text-xs sm:text-sm ${
+                      isDark ? 'text-slate-400' : 'text-slate-500'
+                    }`}>Latest job applicants in the last 30 days</p>
                   </div>
-                  <Link to="/applicants" className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium">View All</Link>
+                  <Link to="/applicants" className={`text-sm font-medium ${
+                    isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-700'
+                  }`}>View All</Link>
                 </div>
                 <div className="overflow-x-auto">
                   <ul className="space-y-3">
                     {stats.recentApplicants.length > 0 ? (
                       stats.recentApplicants.map((applicant, index) => (
-                        <li key={index} className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3 flex items-center justify-between">
+                        <li key={index} className={`rounded-lg p-3 flex items-center justify-between ${
+                          isDark ? 'bg-slate-700/30' : 'bg-slate-50'
+                        }`}>
                           <div className="flex items-center">
-                            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm overflow-hidden">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm overflow-hidden ${
+                              isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                            }`}>
                               {applicant.avatar ? (
                                 <img src={applicant.avatar} alt={applicant.name} className="w-full h-full object-cover" />
                               ) : (
@@ -426,29 +479,31 @@ const Home = () => {
                               )}
                             </div>
                             <div className="ml-3">
-                              <p className="font-medium text-slate-800 dark:text-white">{applicant.name}</p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">{applicant.position}</p>
+                              <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{applicant.name}</p>
+                              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{applicant.position}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={`text-xs px-2 py-1 rounded ${
                               applicant.status === 'Interview' 
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                                ? isDark ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'
                                 : applicant.status === 'Shortlisted' 
-                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                                : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                                ? isDark ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-600'
+                                : isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
                             }`}>
                               {applicant.status}
                             </span>
-                            <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors">
-                              <EllipsisVerticalIcon className="w-4 h-4" />
+                            <button className={`p-1.5 transition-colors ${
+                              isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
+                            }`}>
+                              <i className="fas fa-ellipsis-vertical w-4 h-4"></i>
                             </button>
                           </div>
                         </li>
                       ))
                     ) : (
                       <div className="text-center py-8">
-                        <p className="text-slate-500 dark:text-slate-400">No recent applicants found</p>
+                        <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>No recent applicants found</p>
                       </div>
                     )}
                   </ul>
@@ -467,13 +522,15 @@ const Home = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div className={`flex h-screen overflow-hidden ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <Sidebar />
       <div className="flex flex-col flex-1 lg:ml-64">
         <Header />
         <ToastContainer position="top-right" />
 
-        <main className={`flex-1 p-4 sm:p-6 pt-16 md:pt-20 overflow-y-auto transition-colors duration-200 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'}`}>
+        <main className={`flex-1 p-4 sm:p-6 pt-16 md:pt-20 overflow-y-auto transition-colors duration-200 ${
+          isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'
+        }`}>
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <h1 className="text-2xl font-bold">Dashboard</h1>
@@ -484,18 +541,10 @@ const Home = () => {
                   className={`px-3 py-2 rounded-lg transition-colors text-sm ${
                     activeTab === 'dashboard' 
                       ? 'bg-green-600 text-white' 
-                      : theme === 'dark' ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100'
+                      : isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <i className="fas fa-th-large mr-2"></i> Overview
-                </button>
-                <button
-                  className={`px-3 py-2 rounded-lg transition-colors text-sm ${
-                    theme === 'dark' ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
-                  onClick={() => toast.info("Coming soon!")}
-                >
-                  <i className="fas fa-sliders-h mr-2"></i> Settings
                 </button>
               </div>
             </div>

@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from "react-toastify";
+import { ThemeContext } from "../ThemeContext";
 
 const Settings = () => {
+  const { theme, toggleTheme } = useContext(ThemeContext);
   const [form, setForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -44,54 +46,113 @@ const Settings = () => {
     });
   };
 
+  const isDark = theme === 'dark';
+
   return (
-    <div className="flex">
+    <div className={`flex h-screen overflow-hidden ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <Sidebar />
-      <div className="flex flex-col flex-1 ml-64">
+      <div className="flex flex-col flex-1 lg:ml-64">
         <Header />
         <ToastContainer position="top-right" autoClose={3000} />
 
-        <main className="bg-gray-100 p-6 flex-1 mt-16">
-          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
-            <h1 className="text-2xl font-semibold text-gray-800 mb-6">Settings</h1>
+        <main className={`flex-1 p-4 sm:p-6 pt-16 md:pt-20 overflow-y-auto transition-colors duration-200 ${
+          isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'
+        }`}>
+          <div className="max-w-3xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Settings</h1>
+              
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors ${
+                  isDark 
+                    ? 'bg-slate-700 text-white hover:bg-slate-600 border border-slate-600' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 shadow-sm'
+                }`}
+              >
+                {isDark ? (
+                  <>
+                    <i className="fas fa-sun mr-2 text-yellow-400"></i>
+                    Light Mode
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-moon mr-2 text-indigo-500"></i>
+                    Dark Mode
+                  </>
+                )}
+              </button>
+            </div>
             
             {/* Change Password Form */}
-            <div className="mb-8">
-              <h2 className="text-xl font-medium text-gray-700 mb-4">Change Password</h2>
+            <div className={`rounded-xl shadow-md p-6 mb-6 ${
+              isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
+            }`}>
+              <h2 className={`text-xl font-medium mb-4 ${
+                isDark ? 'text-white' : 'text-gray-800'
+              }`}>Change Password</h2>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label htmlFor="currentPassword" className="block text-gray-600 mb-2">Current Password</label>
+                  <label 
+                    htmlFor="currentPassword" 
+                    className={`block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+                  >
+                    Current Password
+                  </label>
                   <input
                     type="password"
                     id="currentPassword"
                     name="currentPassword"
                     value={form.currentPassword}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      isDark 
+                        ? 'bg-slate-700 border-slate-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-800'
+                    }`}
                   />
                 </div>
                 
                 <div className="mb-4">
-                  <label htmlFor="newPassword" className="block text-gray-600 mb-2">New Password</label>
+                  <label 
+                    htmlFor="newPassword" 
+                    className={`block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+                  >
+                    New Password
+                  </label>
                   <input
                     type="password"
                     id="newPassword"
                     name="newPassword"
                     value={form.newPassword}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      isDark 
+                        ? 'bg-slate-700 border-slate-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-800'
+                    }`}
                   />
                 </div>
                 
                 <div className="mb-6">
-                  <label htmlFor="confirmPassword" className="block text-gray-600 mb-2">Confirm New Password</label>
+                  <label 
+                    htmlFor="confirmPassword" 
+                    className={`block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+                  >
+                    Confirm New Password
+                  </label>
                   <input
                     type="password"
                     id="confirmPassword"
                     name="confirmPassword"
                     value={form.confirmPassword}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      isDark 
+                        ? 'bg-slate-700 border-slate-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-800'
+                    }`}
                   />
                 </div>
                 
