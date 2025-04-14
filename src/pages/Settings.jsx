@@ -1,12 +1,11 @@
 import React, { useState, useContext } from "react";
-import Header from "../components/Layouts/Header";
-import Sidebar from "../components/Layouts/Sidebar";
-import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { ThemeContext } from "../ThemeContext";
 
 const Settings = () => {
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
   const [form, setForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -46,126 +45,127 @@ const Settings = () => {
     });
   };
 
-  const isDark = theme === 'dark';
-
   return (
-    <div className={`flex h-screen overflow-hidden ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Sidebar />
-      <div className="flex flex-col flex-1 lg:ml-64">
-        <Header />
-        <ToastContainer position="top-right" autoClose={3000} />
+    <div className="w-full">
+      <ToastContainer position="top-right" autoClose={3000} />  
 
-        <main className={`flex-1 p-4 sm:p-6 pt-16 md:pt-20 overflow-y-auto transition-colors duration-200 ${
-          isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'
-        }`}>
-          <div className="max-w-3xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Settings</h1>
-              
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className={`px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors ${
-                  isDark 
-                    ? 'bg-slate-700 text-white hover:bg-slate-600 border border-slate-600' 
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 shadow-sm'
-                }`}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
+          Settings
+        </h1>
+        
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className={`px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors ${
+            isDark 
+              ? 'bg-slate-700 text-white hover:bg-slate-600 border border-slate-600' 
+              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 shadow-sm'
+          }`}
+        >
+          {isDark ? (
+            <>
+              <i className="fas fa-sun mr-2 text-yellow-400"></i>
+              Light Mode
+            </>
+          ) : (
+            <>
+              <i className="fas fa-moon mr-2 text-indigo-500"></i>
+              Dark Mode
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border mb-6 ${
+        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
+      }`}>
+        {/* Change Password Form */}
+        <div className="p-6">
+          <h2 className={`text-xl font-medium mb-4 ${
+            isDark ? 'text-white' : 'text-gray-800'
+          }`}>Change Password</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label 
+                htmlFor="currentPassword" 
+                className={`block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
               >
-                {isDark ? (
-                  <>
-                    <i className="fas fa-sun mr-2 text-yellow-400"></i>
-                    Light Mode
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-moon mr-2 text-indigo-500"></i>
-                    Dark Mode
-                  </>
-                )}
-              </button>
+                Current Password
+              </label>
+              <input
+                type="password"
+                id="currentPassword"
+                name="currentPassword"
+                value={form.currentPassword}
+                onChange={handleChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  isDark 
+                    ? 'bg-slate-700 border-slate-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-800'
+                }`}
+                style={{
+                  backgroundColor: isDark ? '#334155' : '#ffffff'
+                }}
+              />
             </div>
             
-            {/* Change Password Form */}
-            <div className={`rounded-xl shadow-md p-6 mb-6 ${
-              isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
-            }`}>
-              <h2 className={`text-xl font-medium mb-4 ${
-                isDark ? 'text-white' : 'text-gray-800'
-              }`}>Change Password</h2>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label 
-                    htmlFor="currentPassword" 
-                    className={`block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
-                  >
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    id="currentPassword"
-                    name="currentPassword"
-                    value={form.currentPassword}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isDark 
-                        ? 'bg-slate-700 border-slate-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-800'
-                    }`}
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <label 
-                    htmlFor="newPassword" 
-                    className={`block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
-                  >
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    id="newPassword"
-                    name="newPassword"
-                    value={form.newPassword}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isDark 
-                        ? 'bg-slate-700 border-slate-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-800'
-                    }`}
-                  />
-                </div>
-                
-                <div className="mb-6">
-                  <label 
-                    htmlFor="confirmPassword" 
-                    className={`block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
-                  >
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={form.confirmPassword}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isDark 
-                        ? 'bg-slate-700 border-slate-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-800'
-                    }`}
-                  />
-                </div>
-                
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                >
-                  Update Password
-                </button>
-              </form>
+            <div className="mb-4">
+              <label 
+                htmlFor="newPassword" 
+                className={`block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
+                New Password
+              </label>
+              <input
+                type="password"
+                id="newPassword"
+                name="newPassword"
+                value={form.newPassword}
+                onChange={handleChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  isDark 
+                    ? 'bg-slate-700 border-slate-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-800'
+                }`}
+                style={{
+                  backgroundColor: isDark ? '#334155' : '#ffffff'
+                }}
+              />
             </div>
-          </div>
-        </main>
+            
+            <div className="mb-6">
+              <label 
+                htmlFor="confirmPassword" 
+                className={`block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  isDark 
+                    ? 'bg-slate-700 border-slate-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-800'
+                }`}
+                style={{
+                  backgroundColor: isDark ? '#334155' : '#ffffff'
+                }}
+              />
+            </div>
+            
+            <button
+              type="submit"
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              Update Password
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

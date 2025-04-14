@@ -32,13 +32,13 @@ const Sidebar = () => {
   };
 
   return (
-    <div className={`flex flex-col min-h-screen w-64 border-r-2 fixed z-50 ${
+    <div className={`flex flex-col min-h-screen border-r-2 fixed z-50 w-64 ${
       isDark ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-200 bg-gray-50 text-black'
     }`}>
       {/* Profile Picture */}
-      <div className="flex flex-col items-center mt-6 space-y-3">
+      <div className="flex flex-col items-center pt-6 pb-4 space-y-3 px-3">
         <img
-          className="w-24 h-24 rounded-full shadow-lg"
+          className="rounded-full shadow-lg w-24 h-24"
           src={logo}
           alt="Profile"
         />
@@ -50,14 +50,14 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 pl-4 lg:pl-4 mt-5 overflow-y-auto ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      <nav className={`flex-1 px-4 mt-3 overflow-y-auto ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <ul className="w-full flex flex-col">
           {/* Home */}
-          <li className="my-2">
+          <li className="my-1">
             <NavLink
               to="/home"
               className={({ isActive }) =>
-                `flex items-center py-4 px-4 rounded-l ${
+                `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
                     : isDark
@@ -65,17 +65,19 @@ const Sidebar = () => {
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
+              title="Dashboard"
             >
-              <i className="fas fa-home mr-4"></i> Dashboard
+              <i className="fas fa-home mr-4"></i>
+              Dashboard
             </NavLink>
           </li>
 
           {/* Applicants */}
-          <li className="my-2">
+          <li className="my-1">
             <NavLink
               to="/applicants"
               className={({ isActive }) =>
-                `flex items-center py-4 px-4 rounded-l ${
+                `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
                     : isDark
@@ -83,17 +85,19 @@ const Sidebar = () => {
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
+              title="Applicants"
             >
-              <i className="fas fa-user-tie mr-4"></i> Applicants
+              <i className="fas fa-user-tie mr-4"></i>
+              Applicants
             </NavLink>
           </li>
 
           {/* Onboarding */}
-          <li className="my-2">
+          <li className="my-1">
             <NavLink
               to="/onboarding"
               className={({ isActive }) =>
-                `flex items-center py-4 px-4 rounded-l ${
+                `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
                     : isDark
@@ -101,17 +105,19 @@ const Sidebar = () => {
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
+              title="Onboarding"
             >
-              <i className="fas fa-clipboard-check mr-4"></i> Onboarding
+              <i className="fas fa-clipboard-check mr-4"></i>
+              Onboarding
             </NavLink>
           </li>
 
           {/* Staff */}
-          <li className="my-2">
+          <li className="my-1">
             <NavLink
               to="/employees"
               className={({ isActive }) =>
-                `flex items-center py-4 px-4 rounded-l ${
+                `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
                     : isDark
@@ -119,17 +125,19 @@ const Sidebar = () => {
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
+              title="Staff Directory"
             >
-              <i className="fas fa-id-badge mr-4"></i> Staff Directory
+              <i className="fas fa-id-badge mr-4"></i> 
+              Staff Directory
             </NavLink>
           </li>
 
           {/* Settings */}
-          <li className="my-2">
+          <li className="my-1">
             <NavLink
               to="/settings"
               className={({ isActive }) =>
-                `flex items-center py-4 px-4 rounded-l ${
+                `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
                     : isDark
@@ -137,25 +145,27 @@ const Sidebar = () => {
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
+              title="Settings"
             >
-              <i className="fas fa-cog mr-4"></i> Settings
+              <i className="fas fa-cog mr-4"></i>
+              Settings
             </NavLink>
           </li>
 
           {/* Divider */}
-          <hr className={isDark ? 'border-gray-700' : 'bg-gray-100'} />
+          <hr className={`my-3 ${isDark ? 'border-gray-700' : 'bg-gray-100'}`} />
 
           {/* Logout */}
-          <li className="my-2">
+          <li className="my-1">
             <a
               href="#"
               id="logoutLink"
               onClick={handleLogout}
-              className={`flex items-center py-4 px-4 rounded-l text-red-500 hover:text-red-500 hover:no-underline hover:scale-105 transition-transform duration-200 ${
-                isDark ? 'hover:bg-red-900/20' : ''
-              }`}
+              title="Logout"
+              className="flex items-center py-3 px-4 rounded-l text-red-500 hover:text-red-500 hover:no-underline hover:scale-105 transition-transform duration-200"
             >
-              <i className="fas fa-sign-out-alt mr-4 text-red-500"></i> Logout
+              <i className="fas fa-sign-out-alt text-red-500 mr-4"></i>
+              Logout
             </a>
           </li>
         </ul>

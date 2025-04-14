@@ -26,21 +26,23 @@ const Header = () => {
   };
 
   return (
-    <header className={`px-4 py-3 w-full z-40 fixed top-0 right-0 left-0 lg:left-64 border-b border-gray-200 transition-colors duration-200 ${
-      theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
+    <header className={`px-4 py-3 w-full z-40 fixed top-0 right-0 left-0 lg:left-64 border-b ${
+      theme === 'dark' ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-800 border-gray-200'
     }`}>
       <div className="flex justify-between items-center">
         {/* Title */}
-        <h1 className="text-xl font-bold hidden lg:block">HR Recruitment & Onboarding System</h1>
+        <div className="flex items-center">
+          <h1 className="text-xl font-bold">HR Recruitment & Onboarding System</h1>
+        </div>
         
-        <div className="flex items-center ml-auto gap-3">
+        <div className="flex items-center gap-3">
           {/* Search Bar */}
           <form onSubmit={handleSearchSubmit} className="relative hidden sm:block">
             <div className={`flex items-center rounded-full overflow-hidden border ${
               isSearchFocused 
                 ? 'border-green-500 shadow-sm' 
                 : theme === 'dark' ? 'border-gray-700' : 'border-gray-300'
-            } px-3 py-1.5 transition-all duration-200 sm:w-40 md:w-48 lg:w-60`}>
+            } px-3 py-1.5 transition-all duration-200 sm:w-40 md:w-48 lg:w-64`}>
               <input
                 type="text"
                 placeholder="Search..."
@@ -48,8 +50,8 @@ const Header = () => {
                 onChange={handleSearchChange}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
-                className={`outline-none w-full ${
-                  theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'
+                className={`outline-none w-full text-sm ${
+                  theme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-800 placeholder-gray-500'
                 }`}
               />
               {searchValue ? (

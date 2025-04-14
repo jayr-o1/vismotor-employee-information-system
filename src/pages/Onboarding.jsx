@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useContext } from "react";
-import Header from "../components/Layouts/Header";
-import Sidebar from "../components/Layouts/Sidebar";
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from "react-toastify";
 import apiService from "../services/api";
@@ -121,147 +119,137 @@ const Onboarding = () => {
   };
 
   return (
-    <div className={`flex h-screen overflow-hidden ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Sidebar />
-      <div className="flex flex-col flex-1 lg:ml-64">
-        <Header />
-        <ToastContainer position="top-right" />
+    <div className="w-full">
+      <ToastContainer position="top-right" />
 
-        <main className={`flex-1 p-4 sm:p-6 pt-16 md:pt-20 overflow-y-auto transition-colors duration-200 ${
-          isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800'
-        }`}>
-          <div className="container mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                Employee Onboarding
-              </h1>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search employees..."
-                  className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                  value={searchTerm}
-                  onChange={handleSearch}
-                />
-                <i className={`fas fa-search absolute right-3 top-3 ${
-                  isDark ? 'text-gray-400' : 'text-gray-400'
-                }`}></i>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className={`rounded-lg shadow p-6 flex justify-center items-center h-64 ${
-                isDark ? 'bg-slate-800' : 'bg-white'
-              }`}>
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-              </div>
-            ) : filteredEmployees.length === 0 ? (
-              <div className={`rounded-lg shadow p-6 flex justify-center items-center h-64 ${
-                isDark ? 'bg-slate-800' : 'bg-white'
-              }`}>
-                <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>No employees in onboarding process</p>
-              </div>
-            ) : (
-              <div className={`rounded-lg shadow overflow-hidden ${
-                isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white'
-              }`}>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
-                    <tr>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
-                      }`}>
-                        Employee
-                      </th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
-                      }`}>
-                        Start Date
-                      </th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
-                      }`}>
-                        Status
-                      </th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
-                      }`}>
-                        Progress
-                      </th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
-                      }`}>
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${
-                    isDark ? 'bg-slate-800 divide-slate-700' : 'bg-white divide-gray-200'
-                  }`}>
-                    {filteredEmployees.map((employee) => (
-                      <tr key={employee.id} className={isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div>
-                              <div className={`text-sm font-medium ${
-                                isDark ? 'text-white' : 'text-gray-900'
-                              }`}>{employee.name}</div>
-                              <div className={`text-sm ${
-                                isDark ? 'text-gray-400' : 'text-gray-500'
-                              }`}>{employee.position}</div>
-                              <div className={`text-sm ${
-                                isDark ? 'text-gray-400' : 'text-gray-500'
-                              }`}>{employee.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm ${
-                            isDark ? 'text-white' : 'text-gray-900'
-                          }`}>{new Date(employee.startDate).toLocaleDateString()}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(employee.progress)}`}>
-                            {employee.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`w-full rounded-full h-2.5 ${
-                            isDark ? 'bg-gray-700' : 'bg-gray-200'
-                          }`}>
-                            <div 
-                              className="bg-green-600 h-2.5 rounded-full" 
-                              style={{ width: `${employee.progress}%` }}
-                            ></div>
-                          </div>
-                          <span className={`text-xs mt-1 ${
-                            isDark ? 'text-gray-400' : 'text-gray-500'
-                          }`}>{employee.progress}% Complete</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button 
-                            onClick={() => handleCompleteOnboarding(employee.id)}
-                            disabled={employee.progress === 100}
-                            className={`px-3 py-1 rounded ${
-                              employee.progress === 100 
-                                ? isDark ? "bg-gray-700 text-gray-400 cursor-not-allowed" : "bg-gray-100 text-gray-400 cursor-not-allowed" 
-                                : "bg-green-600 text-white hover:bg-green-700"
-                            }`}
-                          >
-                            {employee.progress === 100 ? "Completed" : "Mark Complete"}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </main>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
+          Employee Onboarding
+        </h1>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search employees..."
+            className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+            }`}
+            value={searchTerm}
+            onChange={handleSearch}
+          />
+          <i className={`fas fa-search absolute right-3 top-3 ${
+            isDark ? 'text-gray-400' : 'text-gray-400'
+          }`}></i>
+        </div>
       </div>
+
+      {isLoading ? (
+        <div className={`rounded-lg shadow p-6 flex justify-center items-center h-64 ${
+          isDark ? 'bg-slate-800' : 'bg-white'
+        }`}>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        </div>
+      ) : filteredEmployees.length === 0 ? (
+        <div className={`rounded-lg shadow p-6 flex justify-center items-center h-64 ${
+          isDark ? 'bg-slate-800' : 'bg-white'
+        }`}>
+          <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>No employees in onboarding process</p>
+        </div>
+      ) : (
+        <div className={`rounded-lg shadow overflow-hidden ${
+          isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white'
+        }`}>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
+              <tr>
+                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  isDark ? 'text-gray-300' : 'text-gray-500'
+                }`}>
+                  Employee
+                </th>
+                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  isDark ? 'text-gray-300' : 'text-gray-500'
+                }`}>
+                  Start Date
+                </th>
+                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  isDark ? 'text-gray-300' : 'text-gray-500'
+                }`}>
+                  Status
+                </th>
+                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  isDark ? 'text-gray-300' : 'text-gray-500'
+                }`}>
+                  Progress
+                </th>
+                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                  isDark ? 'text-gray-300' : 'text-gray-500'
+                }`}>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className={`divide-y ${
+              isDark ? 'bg-slate-800 divide-slate-700' : 'bg-white divide-gray-200'
+            }`}>
+              {filteredEmployees.map((employee) => (
+                <tr key={employee.id} className={isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div>
+                        <div className={`text-sm font-medium ${
+                          isDark ? 'text-white' : 'text-gray-900'
+                        }`}>{employee.name}</div>
+                        <div className={`text-sm ${
+                          isDark ? 'text-gray-400' : 'text-gray-500'
+                        }`}>{employee.position}</div>
+                        <div className={`text-sm ${
+                          isDark ? 'text-gray-400' : 'text-gray-500'
+                        }`}>{employee.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className={`text-sm ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>{new Date(employee.startDate).toLocaleDateString()}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(employee.progress)}`}>
+                      {employee.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className={`w-full rounded-full h-2.5 ${
+                      isDark ? 'bg-gray-700' : 'bg-gray-200'
+                    }`}>
+                      <div 
+                        className="bg-green-600 h-2.5 rounded-full" 
+                        style={{ width: `${employee.progress}%` }}
+                      ></div>
+                    </div>
+                    <span className={`text-xs mt-1 ${
+                      isDark ? 'text-gray-400' : 'text-gray-500'
+                    }`}>{employee.progress}% Complete</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button 
+                      onClick={() => handleCompleteOnboarding(employee.id)}
+                      disabled={employee.progress === 100}
+                      className={`px-3 py-1 rounded ${
+                        employee.progress === 100 
+                          ? isDark ? "bg-gray-700 text-gray-400 cursor-not-allowed" : "bg-gray-100 text-gray-400 cursor-not-allowed" 
+                          : "bg-green-600 text-white hover:bg-green-700"
+                      }`}
+                    >
+                      {employee.progress === 100 ? "Completed" : "Mark Complete"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

@@ -149,9 +149,7 @@ const ApplicantDetails = () => {
 
   return (
     <div className="flex">
-      <Sidebar />
       <div className="flex flex-col flex-1 ml-64">
-        <Header />
         <ToastContainer position="top-right" />
 
         <main className="bg-gray-100 p-6 flex-1 mt-16">

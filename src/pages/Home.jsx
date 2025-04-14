@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Chart from 'chart.js/auto';
-import Header from "../components/Layouts/Header";
-import Sidebar from "../components/Layouts/Sidebar";
 import DashboardCard from "../components/Layouts/DashboardCard";
 import DashboardTable from "../components/Layouts/DashboardTable";
 import DashboardList from "../components/Layouts/DashboardList";
@@ -319,7 +317,7 @@ const Home = () => {
     switch(activeTab) {
       case 'dashboard':
         return (
-          <div className="p-2 sm:p-4 flex flex-col gap-4 overflow-hidden">
+          <div className="flex flex-col gap-6 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <DashboardCard
                 value={stats.employees}
@@ -522,41 +520,29 @@ const Home = () => {
   };
 
   return (
-    <div className={`flex h-screen overflow-hidden ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Sidebar />
-      <div className="flex flex-col flex-1 lg:ml-64">
-        <Header />
-        <ToastContainer position="top-right" />
-
-        <main className={`flex-1 p-4 sm:p-6 pt-16 md:pt-20 overflow-y-auto transition-colors duration-200 ${
-          isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'
-        }`}>
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <h1 className="text-2xl font-bold">Dashboard</h1>
-              
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setActiveTab('dashboard')}
-                  className={`px-3 py-2 rounded-lg transition-colors text-sm ${
-                    activeTab === 'dashboard' 
-                      ? 'bg-green-600 text-white' 
-                      : isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <i className="fas fa-th-large mr-2"></i> Overview
-                </button>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center h-96">
-                <Spinner />
-              </div>
-            ) : renderTabContent()}
-          </div>
-        </main>
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-3 py-2 rounded-lg transition-colors text-sm ${
+              activeTab === 'dashboard' 
+                ? 'bg-green-600 text-white' 
+                : isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <i className="fas fa-th-large mr-2"></i> Overview
+          </button>
+        </div>
       </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center h-96">
+          <Spinner />
+        </div>
+      ) : renderTabContent()}
     </div>
   );
 };

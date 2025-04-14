@@ -5,70 +5,100 @@ const DashboardCard = ({ title, value, icon, color, trend }) => {
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
   
-  // Color mapping for different card types
-  const getColors = () => {
-    switch (color) {
-      case 'blue':
-        return {
-          bg: isDark ? 'bg-blue-900/20' : 'bg-blue-50',
-          border: isDark ? 'border-blue-800/30' : 'border-blue-100',
-          text: isDark ? 'text-blue-400' : 'text-blue-600',
-          icon: isDark ? 'text-blue-400' : 'text-blue-600'
-        };
-      case 'yellow':
-        return {
-          bg: isDark ? 'bg-amber-900/20' : 'bg-amber-50',
-          border: isDark ? 'border-amber-800/30' : 'border-amber-100',
-          text: isDark ? 'text-amber-400' : 'text-amber-600',
-          icon: isDark ? 'text-amber-400' : 'text-amber-600'
-        };
-      case 'red':
-        return {
-          bg: isDark ? 'bg-red-900/20' : 'bg-red-50',
-          border: isDark ? 'border-red-800/30' : 'border-red-100',
-          text: isDark ? 'text-red-400' : 'text-red-600',
-          icon: isDark ? 'text-red-400' : 'text-red-600'
-        };
-      default:
-        return {
-          bg: isDark ? 'bg-emerald-900/20' : 'bg-emerald-50',
-          border: isDark ? 'border-emerald-800/30' : 'border-emerald-100',
-          text: isDark ? 'text-emerald-400' : 'text-emerald-600',
-          icon: isDark ? 'text-emerald-400' : 'text-emerald-600'
-        };
+  // Generate background color based on the color prop
+  const getBgColor = () => {
+    if (isDark) {
+      switch(color) {
+        case 'blue': return 'bg-blue-900/20 border-blue-800/30';
+        case 'green': return 'bg-emerald-900/20 border-emerald-800/30';
+        case 'red': return 'bg-red-900/20 border-red-800/30';
+        case 'yellow': return 'bg-amber-900/20 border-amber-800/30';
+        case 'purple': return 'bg-purple-900/20 border-purple-800/30';
+        default: return 'bg-slate-800 border-slate-700';
+      }
+    } else {
+      switch(color) {
+        case 'blue': return 'bg-blue-50 border-blue-100';
+        case 'green': return 'bg-emerald-50 border-emerald-100';
+        case 'red': return 'bg-red-50 border-red-100';
+        case 'yellow': return 'bg-amber-50 border-amber-100';
+        case 'purple': return 'bg-purple-50 border-purple-100';
+        default: return 'bg-white border-gray-200';
+      }
     }
   };
-  
-  const colors = getColors();
-  
+
+  // Generate text color based on the color prop
+  const getTextColor = () => {
+    if (isDark) {
+      switch(color) {
+        case 'blue': return 'text-blue-400';
+        case 'green': return 'text-emerald-400';
+        case 'red': return 'text-red-400';
+        case 'yellow': return 'text-amber-400';
+        case 'purple': return 'text-purple-400';
+        default: return 'text-slate-300';
+      }
+    } else {
+      switch(color) {
+        case 'blue': return 'text-blue-600';
+        case 'green': return 'text-emerald-600';
+        case 'red': return 'text-red-600';
+        case 'yellow': return 'text-amber-600';
+        case 'purple': return 'text-purple-600';
+        default: return 'text-slate-600';
+      }
+    }
+  };
+
+  // Generate icon color based on the color prop
+  const getIconBgColor = () => {
+    if (isDark) {
+      switch(color) {
+        case 'blue': return 'bg-blue-800/30 text-blue-300';
+        case 'green': return 'bg-emerald-800/30 text-emerald-300';
+        case 'red': return 'bg-red-800/30 text-red-300';
+        case 'yellow': return 'bg-amber-800/30 text-amber-300';
+        case 'purple': return 'bg-purple-800/30 text-purple-300';
+        default: return 'bg-slate-700 text-slate-300';
+      }
+    } else {
+      switch(color) {
+        case 'blue': return 'bg-blue-100 text-blue-600';
+        case 'green': return 'bg-emerald-100 text-emerald-600';
+        case 'red': return 'bg-red-100 text-red-600';
+        case 'yellow': return 'bg-amber-100 text-amber-600';
+        case 'purple': return 'bg-purple-100 text-purple-600';
+        default: return 'bg-slate-100 text-slate-600';
+      }
+    }
+  };
+
   return (
-    <div className={`rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border ${
-      isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
-    }`}>
+    <div className={`rounded-xl overflow-hidden shadow-md border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
       <div className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-            {title.toUpperCase()}
-          </p>
-          <div className={`p-2 rounded-lg ${colors.bg}`}>
-            <i className={`${icon} ${colors.icon}`}></i>
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className={`text-xs font-semibold uppercase tracking-wider ${getTextColor()}`}>{title}</h2>
+            <h3 className={`mt-1 text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{value}</h3>
+            {trend && (
+              <p className="mt-2 flex items-center text-xs font-medium">
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded ${
+                  trend.isUpward 
+                    ? isDark ? 'bg-emerald-800/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                    : isDark ? 'bg-red-800/30 text-red-400' : 'bg-red-100 text-red-600'
+                }`}>
+                  <i className={`fas fa-arrow-${trend.isUpward ? 'up' : 'down'} mr-1 w-3 h-3`}></i>
+                  {trend.value}%
+                </span>
+                <span className={`ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>vs last month</span>
+              </p>
+            )}
+          </div>
+          <div className={`rounded-full p-3 ${getIconBgColor()}`}>
+            <i className={`${icon} text-lg`}></i>
           </div>
         </div>
-        <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          {value}
-        </h3>
-        {trend && (
-          <div className="flex items-center mt-2">
-            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full flex items-center ${
-              isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-            }`}>
-              <i className="fas fa-arrow-up mr-0.5"></i>{trend.value}%
-            </span>
-            <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-              vs last month
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
