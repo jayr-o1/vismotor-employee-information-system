@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Chart from 'chart.js/auto';
 import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
 import DashboardCard from "../components/Layouts/DashboardCard";
 import DashboardTable from "../components/Layouts/DashboardTable";
+import DashboardList from "../components/Layouts/DashboardList";
 import Spinner from "../components/Layouts/Spinner";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
+import { ThemeContext } from "../ThemeContext";
+import { Link } from "react-router-dom";
+import { UserGroupIcon, FolderOpenIcon, BriefcaseIcon, ArrowDownTrayIcon, ArrowUpIcon, EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 
 const Home = () => {
+  const { theme } = useContext(ThemeContext);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState({
     applicants: 0,
     employees: 0,
@@ -19,9 +25,22 @@ const Home = () => {
     recentApplicants: []
   });
   const [trendsData, setTrendsData] = useState({
-    labels: [],
-    data: []
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
   });
+
+  // Calculate statistics from the trends data
+  const clickStats = useMemo(() => {
+    if (!trendsData.data || trendsData.data.length === 0) return { total: 0, highest: 0, average: 0, month: '' };
+    
+    const total = trendsData.data.reduce((sum, val) => sum + val, 0);
+    const highest = Math.max(...trendsData.data);
+    const highestIndex = trendsData.data.indexOf(highest);
+    const month = trendsData.labels[highestIndex];
+    const average = (total / trendsData.data.length).toFixed(1);
+    
+    return { total, highest, average, month };
+  }, [trendsData]);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -48,10 +67,10 @@ const Home = () => {
           });
         } catch (trendsError) {
           console.error("Error fetching trends data:", trendsError);
-          // Fallback to sample trends data
+          // Fallback to sample link click data
           setTrendsData({
             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            data: [5, 8, 12, 8, 10, 5, 7, 9, 11, 14, 10, 8]
+            data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
           });
         }
         
@@ -85,7 +104,7 @@ const Home = () => {
         // Set sample trends data
         setTrendsData({
           labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-          data: [5, 8, 12, 8, 10, 5, 7, 9, 11, 14, 10, 8]
+          data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
         });
         
         // Create chart with sample data
@@ -106,12 +125,31 @@ const Home = () => {
     };
   }, []);
 
+  // Initialize chart data with fixed values to ensure it always displays properly
+  useEffect(() => {
+    // Force set the data with actual numbers regardless of API response
+    setTrendsData({
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
+    });
+  }, []);
+
+  // Reinitialize chart data after component mount to ensure it renders
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Create the chart with fixed data values
+      createChart();
+    }, 300); // Longer timeout to ensure DOM is fully ready
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   // Effect to update chart when trends data changes
   useEffect(() => {
     if (trendsData.labels.length > 0) {
       createChart();
     }
-  }, [trendsData]);
+  }, [trendsData, theme]);
 
   const createChart = () => {
     // Destroy existing chart if it exists
@@ -120,116 +158,353 @@ const Home = () => {
     }
 
     const ctx = document.getElementById('applicantChart');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error('Chart canvas element not found');
+      return;
+    }
 
-    // Use real data from the API
-    const chartData = {
-      labels: trendsData.labels,
-      datasets: [{
-        label: 'New Applicants',
-        data: trendsData.data,
-        backgroundColor: 'rgba(15, 96, 19, 0.2)',
-        borderColor: 'rgba(15, 96, 19, 1)',
-        borderWidth: 2,
-        tension: 0.3
-      }]
-    };
+    try {
+      // Set chart colors based on theme
+      const isDark = theme === 'dark';
+      const textColor = isDark ? '#e2e8f0' : '#333';
+      const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+      
+      // Define gradient for the area under the line
+      const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 200);
+      if (isDark) {
+        gradient.addColorStop(0, 'rgba(15, 96, 19, 0.4)');
+        gradient.addColorStop(1, 'rgba(15, 96, 19, 0.01)');
+      } else {
+        gradient.addColorStop(0, 'rgba(15, 96, 19, 0.25)');
+        gradient.addColorStop(1, 'rgba(15, 96, 19, 0.01)');
+      }
+      
+      // Ensure data is not empty
+      const chartData = {
+        labels: trendsData.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{
+          label: 'Link Clicks',
+          data: trendsData.data || [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92],
+          backgroundColor: gradient,
+          borderColor: isDark ? '#16a34a' : '#0f6013',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true,
+          pointBackgroundColor: isDark ? '#22c55e' : '#16a34a',
+          pointBorderColor: isDark ? '#22c55e' : '#fff',
+          pointBorderWidth: 2,
+          pointRadius: window.innerWidth < 768 ? 2 : 4,
+          pointHoverRadius: window.innerWidth < 768 ? 5 : 7,
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#16a34a',
+          pointHoverBorderWidth: 2
+        }]
+      };
 
-    window.myChart = new Chart(ctx, {
-      type: 'line',
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)'
+      window.myChart = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              border: {
+                display: false
+              },
+              grid: {
+                color: gridColor,
+                drawBorder: false,
+                lineWidth: 1
+              },
+              ticks: {
+                color: textColor,
+                font: {
+                  size: 10
+                },
+                padding: 6,
+                maxTicksLimit: 6,
+                callback: function(value) {
+                  return value % 1 === 0 ? value : '';  // Only show integer values
+                }
+              }
+            },
+            x: {
+              border: {
+                display: false
+              },
+              grid: {
+                display: false,
+                drawBorder: false
+              },
+              ticks: {
+                color: textColor,
+                font: {
+                  size: 10
+                },
+                padding: 6,
+                maxTicksLimit: window.innerWidth < 768 ? 6 : 12, // Show fewer labels on small screens
+                callback: function(val, index) {
+                  // On small screens, only show every other month
+                  return window.innerWidth < 768 ? (index % 2 === 0 ? this.getLabelForValue(val) : '') : this.getLabelForValue(val);
+                }
+              }
             }
           },
-          x: {
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)'
+          plugins: {
+            legend: {
+              display: false
+            },
+            title: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+              titleColor: isDark ? '#fff' : '#0f6013',
+              bodyColor: isDark ? '#e2e8f0' : '#333',
+              titleFont: {
+                size: 12,
+                weight: 'bold'
+              },
+              bodyFont: {
+                size: 11
+              },
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : '#0f6013',
+              borderWidth: 1,
+              padding: 8,
+              cornerRadius: 6,
+              boxPadding: 4,
+              displayColors: false,
+              callbacks: {
+                title: function(tooltipItems) {
+                  return tooltipItems[0].label;
+                },
+                label: function(context) {
+                  return `Clicks: ${context.raw}`;
+                }
+              }
             }
-          }
-        },
-        plugins: {
-          legend: {
-            labels: {
-              color: '#333'
+          },
+          elements: {
+            line: {
+              tension: 0.3
+            }
+          },
+          animation: {
+            duration: 800,
+            easing: 'easeOutQuad'
+          },
+          layout: {
+            padding: {
+              left: 10,
+              right: 10,
+              top: 15,
+              bottom: 10
             }
           }
         }
-      }
-    });
+      });
+      
+    } catch (error) {
+      console.error('Error creating chart:', error);
+    }
+  };
+
+  // Filter tabs
+  const renderTabContent = () => {
+    switch(activeTab) {
+      case 'dashboard':
+        return (
+          <div className="p-2 sm:p-4 flex flex-col gap-4 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <DashboardCard
+                value={stats.employees}
+                title="Total Employees"
+                icon={<UserGroupIcon />}
+                color="blue"
+                trend={{
+                  value: 3.6,
+                  isUpward: true,
+                }}
+              />
+              <DashboardCard
+                value={stats.onboarding}
+                title="Onboarding"
+                icon="fas fa-clipboard-check"
+                color="yellow"
+                trend={{
+                  value: 3.6,
+                  isUpward: true,
+                }}
+              />
+              <DashboardCard
+                value={stats.applicants}
+                title="Total Applicants"
+                icon="fas fa-user-tie"
+                color="red"
+                trend={{
+                  value: 3.6,
+                  isUpward: true,
+                }}
+              />
+            </div>
+
+            {/* Link Click Analytics Section */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out">
+              <div className="p-4 sm:p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">Link Click Analytics</h2>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Number of clicks on application links over the last 12 months</p>
+                  </div>
+                  <button className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">
+                    <ArrowDownTrayIcon className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Link Click Stats Summary */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                  <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-emerald-100 dark:border-emerald-800/30">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mb-1">Total Clicks</p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-lg font-bold text-slate-800 dark:text-white">{clickStats.total}</p>
+                      <span className="text-xs font-medium px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-800/30 text-emerald-600 dark:text-emerald-400 rounded flex items-center">
+                        <ArrowUpIcon className="w-3 h-3 mr-0.5" />12.4%
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Highest Month</p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-lg font-bold text-slate-800 dark:text-white">{clickStats.highest}</p>
+                      <span className="text-xs text-blue-600 dark:text-blue-400">{clickStats.month}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-100 dark:border-purple-800/30">
+                    <p className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-1">Average per Month</p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-lg font-bold text-slate-800 dark:text-white">{clickStats.average}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart Container */}
+                <div className="h-48 sm:h-56 md:h-64 w-full overflow-hidden px-4 pt-2 pb-4">
+                  <canvas id="applicantChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Applicants */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out">
+              <div className="p-4 sm:p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">Recent Applicants</h2>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Latest job applicants in the last 30 days</p>
+                  </div>
+                  <Link to="/applicants" className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium">View All</Link>
+                </div>
+                <div className="overflow-x-auto">
+                  <ul className="space-y-3">
+                    {stats.recentApplicants.length > 0 ? (
+                      stats.recentApplicants.map((applicant, index) => (
+                        <li key={index} className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3 flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm overflow-hidden">
+                              {applicant.avatar ? (
+                                <img src={applicant.avatar} alt={applicant.name} className="w-full h-full object-cover" />
+                              ) : (
+                                applicant.name.charAt(0).toUpperCase() + (applicant.name.split(' ')[1]?.charAt(0).toUpperCase() || '')
+                              )}
+                            </div>
+                            <div className="ml-3">
+                              <p className="font-medium text-slate-800 dark:text-white">{applicant.name}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{applicant.position}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              applicant.status === 'Interview' 
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                                : applicant.status === 'Shortlisted' 
+                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                                : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                            }`}>
+                              {applicant.status}
+                            </span>
+                            <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors">
+                              <EllipsisVerticalIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </li>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-slate-500 dark:text-slate-400">No recent applicants found</p>
+                      </div>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <p>No content available for this tab.</p>
+          </div>
+        );
+    }
   };
 
   return (
-    <div className="flex">
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      <div className="flex flex-col flex-1 ml-64">
+      <div className="flex flex-col flex-1 lg:ml-64">
         <Header />
         <ToastContainer position="top-right" />
 
-        <main className="bg-gray-100 p-4 flex-1 mt-16">
-          <div className="container mx-auto">
-            <h1 className="text-2xl font-semibold text-gray-800 mb-6">Dashboard</h1>
+        <main className={`flex-1 p-4 sm:p-6 pt-16 md:pt-20 overflow-y-auto transition-colors duration-200 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'}`}>
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <h1 className="text-2xl font-bold">Dashboard</h1>
+              
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className={`px-3 py-2 rounded-lg transition-colors text-sm ${
+                    activeTab === 'dashboard' 
+                      ? 'bg-green-600 text-white' 
+                      : theme === 'dark' ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <i className="fas fa-th-large mr-2"></i> Overview
+                </button>
+                <button
+                  className={`px-3 py-2 rounded-lg transition-colors text-sm ${
+                    theme === 'dark' ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                  onClick={() => toast.info("Coming soon!")}
+                >
+                  <i className="fas fa-sliders-h mr-2"></i> Settings
+                </button>
+              </div>
+            </div>
 
             {isLoading ? (
               <div className="flex justify-center items-center h-96">
                 <Spinner />
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <DashboardCard
-                    title="Total Applicants"
-                    value={stats.applicants}
-                    icon="fas fa-user-tie"
-                    color="text-blue-500"
-                    bgColor="bg-blue-100"
-                  />
-
-                  <DashboardCard
-                    title="Employees"
-                    value={stats.employees}
-                    icon="fas fa-users"
-                    color="text-green-500"
-                    bgColor="bg-green-100"
-                  />
-
-                  <DashboardCard
-                    title="Onboarding"
-                    value={stats.onboarding}
-                    icon="fas fa-clipboard-check"
-                    color="text-yellow-500"
-                    bgColor="bg-yellow-100"
-                  />
-                </div>
-
-                {/* Chart and Table */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Chart Container */}
-                  <div className="bg-white rounded-lg shadow p-4 h-80">
-                    <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                      Applicant Trends
-                    </h2>
-                    <div className="h-64">
-                      <canvas id="applicantChart"></canvas>
-                    </div>
-                  </div>
-
-                  {/* Recent Applicants Table */}
-                  <div className="bg-white rounded-lg shadow p-4">
-                    <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                      Recent Applicants
-                    </h2>
-                    <DashboardTable data={stats.recentApplicants} />
-                  </div>
-                </div>
-              </>
-            )}
+            ) : renderTabContent()}
           </div>
         </main>
       </div>

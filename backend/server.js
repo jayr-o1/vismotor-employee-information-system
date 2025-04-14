@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
+require('dotenv').config(); // Load environment variables
 const dbConfig = require("./src/configs/database");
 const authRoutes = require("./src/controllers/auth/routes/routes");
 const employeeRoutes = require("./src/controllers/employee/routes");
@@ -10,9 +11,10 @@ const { validateToken, ensureVerified } = require("./src/utils/authMiddleware");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 // Allow requests from the frontend
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: FRONTEND_URL }));
 
 app.use(express.json());
 
