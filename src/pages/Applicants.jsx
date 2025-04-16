@@ -19,7 +19,6 @@ const Applicants = () => {
   
   // Modal states
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [onboardModalOpen, setOnboardModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   
@@ -27,12 +26,6 @@ const Applicants = () => {
   const [currentApplicant, setCurrentApplicant] = useState(null);
   
   // Form data for various actions
-  const [interviewData, setInterviewData] = useState({
-    date: "",
-    time: "",
-    location: "",
-    interviewer: ""
-  });
   const [onboardData, setOnboardData] = useState({
     position: "",
     department: "",
@@ -108,18 +101,6 @@ const Applicants = () => {
     navigate(`/applicants/${applicant.id}`);
   };
 
-  // Open schedule interview modal
-  const handleScheduleClick = (applicant) => {
-    setCurrentApplicant(applicant);
-    setInterviewData({
-      date: "",
-      time: "",
-      location: "",
-      interviewer: ""
-    });
-    setScheduleModalOpen(true);
-  };
-
   // Open delete confirmation modal
   const handleDeleteClick = (applicant) => {
     setCurrentApplicant(applicant);
@@ -136,38 +117,6 @@ const Applicants = () => {
       salary: ""
     });
     setOnboardModalOpen(true);
-  };
-
-  // Schedule interview
-  const handleScheduleInterview = async () => {
-    // Validate form
-    if (!interviewData.date || !interviewData.time || !interviewData.location || !interviewData.interviewer) {
-      toast.error("Please fill all interview details");
-      return;
-    }
-    
-    try {
-      await apiService.interviews.schedule({
-        applicant_id: currentApplicant.id,
-        interview_date: interviewData.date,
-        interview_time: interviewData.time,
-        location: interviewData.location,
-        interviewer: interviewData.interviewer
-      });
-      
-      // Update the applicant status in the local state
-      setApplicants(apps => 
-        apps.map(app => 
-          app.id === currentApplicant.id ? { ...app, status: "Scheduled", interview_scheduled: true } : app
-        )
-      );
-      
-      setScheduleModalOpen(false);
-      toast.success("Interview scheduled successfully");
-    } catch (error) {
-      console.error("Error scheduling interview:", error);
-      toast.error(error.message || "Failed to schedule interview. Please try again.");
-    }
   };
 
   // Delete applicant
@@ -379,11 +328,6 @@ const Applicants = () => {
                               <FaEye />
                             </button>
                             <button 
-                              onClick={() => handleScheduleClick(applicant)} 
-                              className="text-green-500 hover:text-green-700 mr-2">
-                              <FaCheck />
-                            </button>
-                            <button 
                               onClick={() => handleOnboardClick(applicant)} 
                               disabled={applicant.status !== "Interviewed"}
                               className={`text-purple-500 mr-2 ${applicant.status !== "Interviewed" ? "opacity-50 cursor-not-allowed" : "hover:text-purple-700"}`}>
@@ -418,63 +362,6 @@ const Applicants = () => {
               </>
             )}
           </div>
-
-          {/* Schedule Interview Modal */}
-          {scheduleModalOpen && currentApplicant && (
-            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                <h2 className="text-2xl font-semibold mb-4">Schedule Interview for {currentApplicant.name}</h2>
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Date</label>
-                    <input
-                      type="date"
-                      value={interviewData.date}
-                      onChange={(e) => setInterviewData({...interviewData, date: e.target.value})}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Time</label>
-                    <input
-                      type="time"
-                      value={interviewData.time}
-                      onChange={(e) => setInterviewData({...interviewData, time: e.target.value})}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Location</label>
-                    <input
-                      type="text"
-                      value={interviewData.location}
-                      onChange={(e) => setInterviewData({...interviewData, location: e.target.value})}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="Office location or video call link"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Interviewer</label>
-                    <input
-                      type="text"
-                      value={interviewData.interviewer}
-                      onChange={(e) => setInterviewData({...interviewData, interviewer: e.target.value})}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="Name of the interviewer"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <button onClick={() => setScheduleModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                    Cancel
-                  </button>
-                  <button onClick={handleScheduleInterview} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    Schedule
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Delete Confirmation Modal */}
           {deleteModalOpen && currentApplicant && (
