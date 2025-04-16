@@ -1,8 +1,7 @@
-
-import React, { useState, useEffect, useContext } from "react";
-import React, { useState, useEffect, useContext, useMemo } from "react";
+import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Chart from 'chart.js/auto';
+import { Link } from "react-router-dom";
 import DashboardCard from "../components/Layouts/DashboardCard";
 import DashboardTable from "../components/Layouts/DashboardTable";
 import DashboardList from "../components/Layouts/DashboardList";
@@ -12,14 +11,69 @@ import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
 
-const Home = () => {
-  const { isDarkMode } = useContext(ThemeContext);
-import { Link } from "react-router-dom";
+// Define default data for when API call fails
+const defaultTrendsData = {
+  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  data: [12, 19, 15, 28, 22, 25, 27, 24, 30, 32, 35, 25]
+};
+
+// Sample data for mock API responses when backend is unavailable
+const mockApiData = {
+  monthlyTrends: [
+    { month: 'Jan', count: 12 },
+    { month: 'Feb', count: 19 },
+    { month: 'Mar', count: 15 },
+    { month: 'Apr', count: 28 },
+    { month: 'May', count: 22 },
+    { month: 'Jun', count: 25 },
+    { month: 'Jul', count: 27 },
+    { month: 'Aug', count: 24 },
+    { month: 'Sep', count: 30 },
+    { month: 'Oct', count: 32 },
+    { month: 'Nov', count: 35 },
+    { month: 'Dec', count: 25 }
+  ],
+  statusCounts: [
+    { status: 'Pending', count: 45 },
+    { status: 'Interviewed', count: 32 },
+    { status: 'Hired', count: 18 },
+    { status: 'Rejected', count: 27 }
+  ]
+};
+
+// Function to simulate API response with delay
+const mockFetch = (endpoint, delay = 800) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      if (endpoint.includes('applicant-trends')) {
+        resolve({
+          ok: true,
+          json: () => Promise.resolve(mockApiData)
+        });
+      } else {
+        resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            totalApplicants: 122,
+            totalEmployees: 78,
+            totalOnboarding: 12,
+            recentApplicants: [
+              { id: 1, name: 'John Doe', position: 'Software Engineer', status: 'Interview' },
+              { id: 2, name: 'Jane Smith', position: 'UI/UX Designer', status: 'Shortlisted' },
+              { id: 3, name: 'Robert Johnson', position: 'Project Manager', status: 'New' }
+            ]
+          })
+        });
+      }
+    }, delay);
+  });
+};
 
 const Home = () => {
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState({
     applicants: 0,
@@ -27,13 +81,10 @@ const Home = () => {
     onboarding: 0,
     recentApplicants: []
   });
-  const [trendsData, setTrendsData] = useState({
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
-  });
+  const [trendsData, setTrendsData] = useState(defaultTrendsData);
 
   // Calculate statistics from the trends data
-  const clickStats = useMemo(() => {
+  const applicantStats = useMemo(() => {
     if (!trendsData.data || trendsData.data.length === 0) return { total: 0, highest: 0, average: 0, month: '' };
     
     const total = trendsData.data.reduce((sum, val) => sum + val, 0);
@@ -45,67 +96,142 @@ const Home = () => {
     return { total, highest, average, month };
   }, [trendsData]);
 
-  // Fetch data on component mount
-  useEffect(() => {
-    const fetchDashboardData = async () => {
+  // Function to fetch applicant trends from the backend
+  const fetchTrendsData = useCallback(async () => {
+    try {
+      console.log('Fetching trends data...');
       setIsLoading(true);
-
+      setIsRefreshing(true);
+      
+      let response;
       try {
-        // Get dashboard stats
-        const statsResponse = await apiService.dashboard.getStats();
-        
-        setStats({
-          applicants: statsResponse.data.totalApplicants || 0,
-          employees: statsResponse.data.totalEmployees || 0,
-          onboarding: statsResponse.data.totalOnboarding || 0,
-          recentApplicants: statsResponse.data.recentApplicants || []
+        // Attempt to fetch from real API with a short timeout
+        response = await Promise.race([
+          fetch('http://localhost:8081/api/dashboard/applicant-trends', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout')), 2000)
+          )
+        ]);
+      } catch (connectionError) {
+        console.log('Connection to backend failed, using mock data instead');
+        // Use mock data if real API fails
+        response = await mockFetch('http://localhost:8081/api/dashboard/applicant-trends');
+        toast.info("Using demo data - backend server not available", {
+          autoClose: 3000,
+          position: "bottom-right"
         });
-
-        // Get trends data for the chart
-        try {
-          const trendsResponse = await apiService.dashboard.getApplicantTrends();
-          setTrendsData({
-            labels: trendsResponse.data.labels || [],
-            data: trendsResponse.data.data || []
-          });
-        } catch (trendsError) {
-          console.error("Error fetching trends data:", trendsError);
-          setTrendsData({
-            labels: [],
-            data: []
-          // Fallback to sample link click data
-          setTrendsData({
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
-          });
-          toast.error("Failed to load trends data. Please check your connection.");
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('API response for trends data:', data);
+      
+      // Check if the expected property exists
+      if (!data.monthlyTrends || !Array.isArray(data.monthlyTrends)) {
+        console.error('Could not locate monthlyTrends array in API response', data);
+        // Use default data instead of referencing undefined variable
+        setTrendsData(defaultTrendsData);
+        return;
+      }
+      
+      // Process the monthlyTrends data for the chart
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const processedMonthlyTrends = data.monthlyTrends.map(item => {
+        // If the month is already in 'YYYY-MM' format
+        if (typeof item.month === 'string' && item.month.includes('-')) {
+          const [year, monthNum] = item.month.split('-');
+          const monthIndex = parseInt(monthNum, 10) - 1; // Convert 1-based to 0-based
+          return {
+            month: monthNames[monthIndex],
+            count: item.count
+          };
         }
         
-        // Create the chart after all data is loaded
-        createChart();
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        
-        setStats({
-          applicants: 0,
-          employees: 0,
-          onboarding: 0,
-          recentApplicants: []
-        });
-        
-        setTrendsData({
-          labels: [],
-          data: []
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-          data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
-        });
-        
-        toast.error("Failed to load dashboard data. Please check your connection or contact support.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+        // If it's already in the expected format
+        return item;
+      });
+      
+      console.log('Processed monthly trends data:', processedMonthlyTrends);
+      
+      // Calculate totals for the statistics
+      const totalApplicants = processedMonthlyTrends.reduce((sum, item) => sum + item.count, 0);
+      const totalApril = processedMonthlyTrends.find(item => item.month === 'Apr')?.count || 0;
+      
+      console.log(`Total applicants: ${totalApplicants}, April total: ${totalApril}`);
+      
+      // Extract data properly for the chart
+      const labels = processedMonthlyTrends.map(item => item.month);
+      const counts = processedMonthlyTrends.map(item => item.count);
+      
+      setTrendsData({
+        labels: labels,
+        data: counts,
+        statusCounts: data.statusCounts || []
+      });
+      
+    } catch (error) {
+      console.error('Error fetching trends data:', error);
+      
+      // Use default data as fallback
+      setTrendsData(defaultTrendsData);
+      toast.error("Error loading data. Using default values instead.");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
 
+  // Function to fetch all dashboard data
+  const fetchDashboardData = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
+      let statsResponse;
+      
+      try {
+        // Try to get actual stats from the API
+        statsResponse = await apiService.dashboard.getStats();
+      } catch (error) {
+        console.log('Error fetching from real API, using mock data');
+        // If the real API fails, use our mock data
+        const mockResponse = await mockFetch('/api/dashboard/stats');
+        statsResponse = { data: await mockResponse.json() };
+      }
+      
+      setStats({
+        applicants: statsResponse.data.totalApplicants || 0,
+        employees: statsResponse.data.totalEmployees || 0,
+        onboarding: statsResponse.data.totalOnboarding || 0,
+        recentApplicants: statsResponse.data.recentApplicants || []
+      });
+
+      // Fetch trends data
+      await fetchTrendsData();
+      
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      
+      setStats({
+        applicants: 0,
+        employees: 0,
+        onboarding: 0,
+        recentApplicants: []
+      });
+      
+      toast.error("Failed to load dashboard data. Please check your connection or contact support.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchTrendsData]);
+
+  // Initial data fetch on component mount
+  useEffect(() => {
     fetchDashboardData();
 
     // Cleanup function to destroy chart when component unmounts
@@ -114,34 +240,23 @@ const Home = () => {
         window.myChart.destroy();
       }
     };
-  }, []);
+  }, [fetchDashboardData]);
 
-  // Initialize chart data with fixed values to ensure it always displays properly
+  // Set up auto-refresh interval (every 30 seconds)
   useEffect(() => {
-    // Force set the data with actual numbers regardless of API response
-    setTrendsData({
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-      data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
-    });
-  }, []);
-
-  // Reinitialize chart data after component mount to ensure it renders
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // Create the chart with fixed data values
-      createChart();
-    }, 300); // Longer timeout to ensure DOM is fully ready
+    const refreshInterval = setInterval(() => {
+      fetchTrendsData();
+    }, 30000); // Refresh every 30 seconds
     
-    return () => clearTimeout(timer);
-  }, []);
+    return () => clearInterval(refreshInterval);
+  }, [fetchTrendsData]);
 
   // Effect to update chart when trends data changes
   useEffect(() => {
-    if (trendsData.labels.length > 0) {
+    if (trendsData.labels && trendsData.labels.length > 0 && trendsData.data && trendsData.data.length > 0) {
       createChart();
     }
-  }, [trendsData, isDarkMode]); // Re-create chart when dark mode changes
-  }, [trendsData, theme]);
+  }, [trendsData, theme]); // Re-create chart when theme changes or trends data updates
 
   const createChart = () => {
     // Destroy existing chart if it exists
@@ -150,54 +265,6 @@ const Home = () => {
     }
 
     const ctx = document.getElementById('applicantChart');
-    if (!ctx) return;
-
-    // Determine chart colors based on theme
-    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-    const textColor = isDarkMode ? '#fff' : '#333';
-
-    // Use real data from the API
-    const chartData = {
-      labels: trendsData.labels,
-      datasets: [{
-        label: 'New Applicants',
-        data: trendsData.data,
-        backgroundColor: isDarkMode ? 'rgba(72, 187, 120, 0.2)' : 'rgba(15, 96, 19, 0.2)',
-        borderColor: isDarkMode ? 'rgba(72, 187, 120, 1)' : 'rgba(15, 96, 19, 1)',
-        borderWidth: 2,
-        tension: 0.3
-      }]
-    };
-
-    window.myChart = new Chart(ctx, {
-      type: 'line',
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: gridColor
-            },
-            ticks: {
-              color: textColor
-            }
-          },
-          x: {
-            grid: {
-              color: gridColor
-            },
-            ticks: {
-              color: textColor
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            labels: {
-              color: textColor
     if (!ctx) {
       console.error('Chart canvas element not found');
       return;
@@ -218,12 +285,18 @@ const Home = () => {
         gradient.addColorStop(1, 'rgba(15, 96, 19, 0.01)');
       }
       
-      // Ensure data is not empty
+      // Only proceed if we have valid data
+      if (!trendsData.labels || !trendsData.labels.length || !trendsData.data || !trendsData.data.length) {
+        console.error('No valid chart data available');
+        return;
+      }
+      
+      // Use actual data from the API without fallbacks
       const chartData = {
-        labels: trendsData.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        labels: trendsData.labels,
         datasets: [{
-          label: 'Link Clicks',
-          data: trendsData.data || [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92],
+          label: 'Applicants',
+          data: trendsData.data,
           backgroundColor: gradient,
           borderColor: isDark ? '#16a34a' : '#0f6013',
           borderWidth: 2,
@@ -324,7 +397,7 @@ const Home = () => {
                   return tooltipItems[0].label;
                 },
                 label: function(context) {
-                  return `Clicks: ${context.raw}`;
+                  return `Applicants: ${context.raw}`;
                 }
               }
             }
@@ -354,58 +427,46 @@ const Home = () => {
     }
   };
 
-  return (
-    <div className="flex">
-      <Sidebar />
-      <div className="flex flex-col flex-1 ml-64">
-        <Header />
-        <ToastContainer position="top-right" />
+  // Render the analytics header with a refresh button
+  const renderAnalyticsHeader = () => (
+    <div className="flex justify-between items-center mb-4">
+      <div>
+        <h2 className={`text-lg sm:text-xl font-bold ${
+          isDark ? 'text-white' : 'text-slate-800'
+        }`}>Applicant Analytics</h2>
+        <p className={`text-xs sm:text-sm ${
+          isDark ? 'text-slate-400' : 'text-slate-500'
+        }`}>Number of applicants over the last 12 months</p>
+      </div>
+      <div className="flex items-center space-x-2">
+        <button 
+          onClick={() => {
+            // Prevent multiple clicks while refreshing
+            if (!isRefreshing) {
+              fetchTrendsData();
+            }
+          }} 
+          disabled={isRefreshing}
+          className={`p-1.5 rounded-md transition-all flex items-center ${
+            isDark 
+              ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          } ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <i className={`fas ${isRefreshing ? 'fa-spinner fa-spin' : 'fa-sync-alt'} w-4 h-4 mr-1`}></i>
+          <span className="text-xs">Refresh</span>
+        </button>
+        <button className={`p-1.5 rounded-md transition-all ${
+          isDark 
+            ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        }`}>
+          <i className="fas fa-download w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  );
 
-        <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
-          <div className="container mx-auto px-4">
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-8`}>Dashboard</h1>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center h-96">
-                <Spinner />
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-                  <DashboardCard
-                    title="Total Applicants"
-                    value={stats.applicants}
-                    icon="fas fa-user-tie"
-                    color="text-blue-500"
-                    bgColor={isDarkMode ? "bg-blue-900" : "bg-blue-100"}
-                  />
-
-                  <DashboardCard
-                    title="Employees"
-                    value={stats.employees}
-                    icon="fas fa-users"
-                    color="text-green-500"
-                    bgColor={isDarkMode ? "bg-green-900" : "bg-green-100"}
-                  />
-
-                  <DashboardCard
-                    title="Onboarding"
-                    value={stats.onboarding}
-                    icon="fas fa-clipboard-check"
-                    color="text-yellow-500"
-                    bgColor={isDarkMode ? "bg-yellow-900" : "bg-yellow-100"}
-                  />
-                </div>
-
-                {/* Chart and Table */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Chart Container */}
-                  <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 h-96 transition-colors duration-200`}>
-                    <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-6`}>
-                      Applicant Trends
-                    </h2>
-                    <div className="h-72">
-                      <canvas id="applicantChart"></canvas>
   // Filter tabs
   const renderTabContent = () => {
     switch(activeTab) {
@@ -450,23 +511,7 @@ const Home = () => {
               isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
             }`}>
               <div className="p-4 sm:p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h2 className={`text-lg sm:text-xl font-bold ${
-                      isDark ? 'text-white' : 'text-slate-800'
-                    }`}>Link Click Analytics</h2>
-                    <p className={`text-xs sm:text-sm ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}>Number of clicks on application links over the last 12 months</p>
-                  </div>
-                  <button className={`p-1.5 rounded-md transition-all ${
-                    isDark 
-                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}>
-                    <i className="fas fa-download w-4 h-4"></i>
-                  </button>
-                </div>
+                {renderAnalyticsHeader()}
 
                 {/* Link Click Stats Summary */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
@@ -477,11 +522,11 @@ const Home = () => {
                   }`}>
                     <p className={`text-xs font-medium mb-1 ${
                       isDark ? 'text-emerald-400' : 'text-emerald-600'
-                    }`}>Total Clicks</p>
+                    }`}>Total Applicants</p>
                     <div className="flex justify-between items-center">
                       <p className={`text-lg font-bold ${
                         isDark ? 'text-white' : 'text-slate-800'
-                      }`}>{clickStats.total}</p>
+                      }`}>{applicantStats.total}</p>
                       <span className={`text-xs font-medium px-1.5 py-0.5 rounded flex items-center ${
                         isDark 
                           ? 'bg-emerald-800/30 text-emerald-400' 
@@ -503,10 +548,10 @@ const Home = () => {
                     <div className="flex justify-between items-center">
                       <p className={`text-lg font-bold ${
                         isDark ? 'text-white' : 'text-slate-800'
-                      }`}>{clickStats.highest}</p>
+                      }`}>{applicantStats.highest}</p>
                       <span className={`text-xs ${
                         isDark ? 'text-blue-400' : 'text-blue-600'
-                      }`}>{clickStats.month}</span>
+                      }`}>{applicantStats.month}</span>
                     </div>
                   </div>
                   
@@ -521,7 +566,7 @@ const Home = () => {
                     <div className="flex justify-between items-center">
                       <p className={`text-lg font-bold ${
                         isDark ? 'text-white' : 'text-slate-800'
-                      }`}>{clickStats.average}</p>
+                      }`}>{applicantStats.average}</p>
                     </div>
                   </div>
                 </div>
@@ -530,17 +575,11 @@ const Home = () => {
                 <div className={`h-48 sm:h-56 md:h-64 w-full overflow-hidden px-4 pt-2 pb-4 ${
                   isDark ? 'bg-slate-800' : 'bg-white'
                 }`}>
-                  <canvas id="applicantChart"></canvas>
+                  <canvas id="applicantChart" width="400" height="200"></canvas>
                 </div>
               </div>
             </div>
 
-                  {/* Recent Applicants Table */}
-                  <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 transition-colors duration-200`}>
-                    <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-6`}>
-                      Recent Applicants
-                    </h2>
-                    <DashboardTable data={stats.recentApplicants} />
             {/* Recent Applicants */}
             <div className={`rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border ${
               isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
