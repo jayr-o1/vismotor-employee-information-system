@@ -3,46 +3,6 @@ import React, { createContext, useState, useEffect } from 'react';
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  // Initialize state from localStorage or default to false (light mode)
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('darkMode');
-    return savedTheme ? JSON.parse(savedTheme) : false;
-  });
-  
-  // Real function that toggles dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(prevMode => {
-      const newMode = !prevMode;
-      // Save to localStorage
-      localStorage.setItem('darkMode', JSON.stringify(newMode));
-      return newMode;
-    });
-  };
-
-  // Apply dark mode class to HTML and body when theme changes
-  useEffect(() => {
-    const root = document.documentElement;
-    const body = document.body;
-    
-    if (isDarkMode) {
-      // Apply to both html and body elements
-      root.classList.add('dark-mode');
-      body.classList.add('dark-mode');
-      root.classList.add('dark');
-      body.style.backgroundColor = '#111827';
-      body.style.color = '#f9fafb';
-    } else {
-      // Remove from both html and body elements
-      root.classList.remove('dark-mode');
-      body.classList.remove('dark-mode');
-      root.classList.remove('dark');
-      body.style.backgroundColor = '';
-      body.style.color = '';
-    }
-    
-    // Debug log
-    console.log('Dark mode:', isDarkMode);
-  }, [isDarkMode]);
   // Get theme from localStorage or default to 'light'
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -56,14 +16,23 @@ export const ThemeProvider = ({ children }) => {
     localStorage.setItem('theme', newTheme);
   };
 
-  // Apply the theme class to the document when it changes
+  // Apply theme changes to the document
   useEffect(() => {
-    const root = window.document.documentElement;
+    const root = document.documentElement;
+    const body = document.body;
+    
     if (theme === 'dark') {
       root.classList.add('dark');
+      body.style.backgroundColor = '#0f172a'; // slate-900
+      body.style.color = '#f8fafc'; // slate-50
     } else {
       root.classList.remove('dark');
+      body.style.backgroundColor = '#f8fafc'; // slate-50
+      body.style.color = '#0f172a'; // slate-900
     }
+    
+    // Debug log
+    console.log('Theme:', theme);
   }, [theme]);
 
   return (

@@ -34,7 +34,6 @@ const Settings = () => {
     }
 
     // Here you would normally make an API call to change the password
-    // For demo purposes, we'll just show a success message
     toast.success("Password updated successfully!");
     
     // Reset form
@@ -59,8 +58,8 @@ const Settings = () => {
           onClick={toggleTheme}
           className={`px-4 py-2.5 rounded-lg text-sm font-medium flex items-center transition-colors ${
             isDark 
-              ? 'bg-slate-700 text-white hover:bg-slate-600 border border-slate-600' 
-              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 shadow-sm'
+              ? 'bg-slate-700 text-white hover:bg-slate-600' 
+              : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'
           }`}
         >
           {isDark ? (
@@ -77,8 +76,8 @@ const Settings = () => {
         </button>
       </div>
 
-      <div className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border mb-6 ${
-        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
+      <div className={`rounded-xl shadow-md overflow-hidden transition-colors duration-200 ${
+        isDark ? 'bg-[#1B2537] border border-slate-700' : 'bg-white border border-gray-200'
       }`}>
         {/* Change Password Form */}
         <div className="p-6">
@@ -99,14 +98,11 @@ const Settings = () => {
                 name="currentPassword"
                 value={form.currentPassword}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors ${
                   isDark 
                     ? 'bg-slate-700 border-slate-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-800'
                 }`}
-                style={{
-                  backgroundColor: isDark ? '#334155' : '#ffffff'
-                }}
               />
             </div>
             
@@ -123,14 +119,11 @@ const Settings = () => {
                 name="newPassword"
                 value={form.newPassword}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors ${
                   isDark 
                     ? 'bg-slate-700 border-slate-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-800'
                 }`}
-                style={{
-                  backgroundColor: isDark ? '#334155' : '#ffffff'
-                }}
               />
             </div>
             
@@ -147,20 +140,17 @@ const Settings = () => {
                 name="confirmPassword"
                 value={form.confirmPassword}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors ${
                   isDark 
                     ? 'bg-slate-700 border-slate-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-800'
                 }`}
-                style={{
-                  backgroundColor: isDark ? '#334155' : '#ffffff'
-                }}
               />
             </div>
             
             <button
               type="submit"
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
             >
               Update Password
             </button>

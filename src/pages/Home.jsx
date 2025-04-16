@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo } from "react";
+import React, { useState, useEffect, useContext, useMemo, useRef } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Chart from 'chart.js/auto';
 import DashboardCard from "../components/Layouts/DashboardCard";
@@ -26,6 +26,60 @@ const Home = () => {
     labels: [],
     data: []
   });
+  const [searchTerm, setSearchTerm] = useState("");
+  const chartRef = useRef(null);
+  
+  // Sample statistics data
+  const statistics = [
+    { label: "Total Employees", value: "124", icon: "fa-users" },
+    { label: "Active Projects", value: "42", icon: "fa-project-diagram" },
+    { label: "Open Positions", value: "15", icon: "fa-briefcase" },
+    { label: "Recent Hires", value: "8", icon: "fa-user-plus" }
+  ];
+
+  // Sample recent activity data
+  const recentActivity = [
+    { 
+      title: "New Employee Onboarded", 
+      description: "Sarah Johnson joined as Senior Developer", 
+      icon: "fa-user-plus" 
+    },
+    { 
+      title: "Interview Scheduled", 
+      description: "Technical interview for Frontend Developer position", 
+      icon: "fa-calendar" 
+    },
+    { 
+      title: "Position Filled", 
+      description: "UI/UX Designer position has been filled", 
+      icon: "fa-check-circle" 
+    }
+  ];
+
+  // Sample employee data for the table
+  const [filteredEmployees] = useState([
+    { 
+      id: 1, 
+      name: "John Doe", 
+      position: "Senior Developer", 
+      department: "Engineering",
+      status: "Active" 
+    },
+    { 
+      id: 2, 
+      name: "Jane Smith", 
+      position: "Product Manager", 
+      department: "Product",
+      status: "Active" 
+    },
+    { 
+      id: 3, 
+      name: "Mike Johnson", 
+      position: "UI Designer", 
+      department: "Design",
+      status: "On Leave" 
+    }
+  ]);
 
   // Calculate statistics from the trends data
   const clickStats = useMemo(() => {
@@ -39,6 +93,10 @@ const Home = () => {
     
     return { total, highest, average, month };
   }, [trendsData]);
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
 
   // Fetch data on component mount
   useEffect(() => {
@@ -230,298 +288,229 @@ const Home = () => {
     }
   };
 
-  // Filter tabs
-  const renderTabContent = () => {
-    switch(activeTab) {
-      case 'dashboard':
-        return (
-          <div className="flex flex-col gap-6 overflow-hidden">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <DashboardCard
-                value={stats.employees}
-                title="Total Employees"
-                icon="fas fa-users"
-                color="blue"
-                trend={{
-                  value: 3.6,
-                  isUpward: true,
-                }}
-              />
-              <DashboardCard
-                value={stats.onboarding}
-                title="Onboarding"
-                icon="fas fa-clipboard-check"
-                color="yellow"
-                trend={{
-                  value: 3.6,
-                  isUpward: true,
-                }}
-              />
-              <DashboardCard
-                value={stats.applicants}
-                title="Total Applicants"
-                icon="fas fa-user-tie"
-                color="red"
-                trend={{
-                  value: 3.6,
-                  isUpward: true,
-                }}
-              />
-            </div>
-
-            {/* Link Click Analytics Section */}
-            <div className={`rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border ${
-              isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
-            }`}>
-              <div className="p-4 sm:p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h2 className={`text-lg sm:text-xl font-bold ${
-                      isDark ? 'text-white' : 'text-slate-800'
-                    }`}>Link Click Analytics</h2>
-                    <p className={`text-xs sm:text-sm ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}>Number of clicks on application links over the last 12 months</p>
-                  </div>
-                  <button className={`p-1.5 rounded-md transition-all ${
-                    isDark 
-                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}>
-                    <i className="fas fa-download w-4 h-4"></i>
-                  </button>
-                </div>
-
-                {/* Link Click Stats Summary */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
-                  <div className={`p-3 rounded-lg border ${
-                    isDark 
-                      ? 'bg-emerald-900/20 border-emerald-800/30' 
-                      : 'bg-emerald-50 border-emerald-100'
-                  }`}>
-                    <p className={`text-xs font-medium mb-1 ${
-                      isDark ? 'text-emerald-400' : 'text-emerald-600'
-                    }`}>Total Clicks</p>
-                    <div className="flex justify-between items-center">
-                      <p className={`text-lg font-bold ${
-                        isDark ? 'text-white' : 'text-slate-800'
-                      }`}>{clickStats.total}</p>
-                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded flex items-center ${
-                        isDark 
-                          ? 'bg-emerald-800/30 text-emerald-400' 
-                          : 'bg-emerald-100 text-emerald-600'
-                      }`}>
-                        <i className="fas fa-arrow-up w-3 h-3 mr-0.5"></i>12.4%
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className={`p-3 rounded-lg border ${
-                    isDark 
-                      ? 'bg-blue-900/20 border-blue-800/30' 
-                      : 'bg-blue-50 border-blue-100'
-                  }`}>
-                    <p className={`text-xs font-medium mb-1 ${
-                      isDark ? 'text-blue-400' : 'text-blue-600'
-                    }`}>Highest Month</p>
-                    <div className="flex justify-between items-center">
-                      <p className={`text-lg font-bold ${
-                        isDark ? 'text-white' : 'text-slate-800'
-                      }`}>{clickStats.highest}</p>
-                      <span className={`text-xs ${
-                        isDark ? 'text-blue-400' : 'text-blue-600'
-                      }`}>{clickStats.month}</span>
-                    </div>
-                  </div>
-                  
-                  <div className={`p-3 rounded-lg border ${
-                    isDark 
-                      ? 'bg-purple-900/20 border-purple-800/30' 
-                      : 'bg-purple-50 border-purple-100'
-                  }`}>
-                    <p className={`text-xs font-medium mb-1 ${
-                      isDark ? 'text-purple-400' : 'text-purple-600'
-                    }`}>Average per Month</p>
-                    <div className="flex justify-between items-center">
-                      <p className={`text-lg font-bold ${
-                        isDark ? 'text-white' : 'text-slate-800'
-                      }`}>{clickStats.average}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Chart Container */}
-                <div className={`h-48 sm:h-56 md:h-64 w-full overflow-hidden px-4 pt-2 pb-4 ${
-                  isDark ? 'bg-slate-800' : 'bg-white'
-                }`}>
-                  <canvas id="applicantChart"></canvas>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Applicants */}
-            <div className={`rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border ${
-              isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
-            }`}>
-              <div className="p-4 sm:p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h2 className={`text-lg sm:text-xl font-bold ${
-                      isDark ? 'text-white' : 'text-slate-800'
-                    }`}>Recent Applicants</h2>
-                    <p className={`text-xs sm:text-sm ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}>Latest job applicants in the last 30 days</p>
-                  </div>
-                  <Link to="/applicants" className={`text-sm font-medium ${
-                    isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-700'
-                  }`}>View All</Link>
-                </div>
-                <div className="overflow-x-auto">
-                  <ul className="space-y-3">
-                    {stats.recentApplicants.length > 0 ? (
-                      stats.recentApplicants.map((applicant, index) => (
-                        <li key={index} className={`rounded-lg p-3 flex items-center justify-between ${
-                          isDark ? 'bg-slate-700/30' : 'bg-slate-50'
-                        }`}>
-                          <div className="flex items-center">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm overflow-hidden ${
-                              isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                            }`}>
-                              {applicant.avatar ? (
-                                <img src={applicant.avatar} alt={applicant.name} className="w-full h-full object-cover" />
-                              ) : (
-                                applicant.name.charAt(0).toUpperCase() + (applicant.name.split(' ')[1]?.charAt(0).toUpperCase() || '')
-                              )}
-                            </div>
-                            <div className="ml-3">
-                              <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{applicant.name}</p>
-                              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{applicant.position}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs px-2 py-1 rounded ${
-                              applicant.status === 'Interview' 
-                                ? isDark ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'
-                                : applicant.status === 'Shortlisted' 
-                                ? isDark ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-600'
-                                : isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
-                            }`}>
-                              {applicant.status}
-                            </span>
-                            <button className={`p-1.5 transition-colors ${
-                              isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
-                            }`}>
-                              <i className="fas fa-ellipsis-vertical w-4 h-4"></i>
-                            </button>
-                          </div>
-                        </li>
-                      ))
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>No recent applicants found</p>
-                      </div>
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <p>No content available for this tab.</p>
-          </div>
-        );
-    }
-  };
-
   return (
-    <div className={`w-full ${isDark ? 'bg-gray-900' : 'bg-gray-100'}`}>
-      <ToastContainer position="top-right" />
-      <main className="p-6 flex-1 mt-16 transition-colors duration-200">
-        <div className="container mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Dashboard</h1>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`px-4 py-2 rounded ${
-                  activeTab === 'dashboard'
-                    ? isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
-                    : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => setActiveTab('reports')}
-                className={`px-4 py-2 rounded ${
-                  activeTab === 'reports'
-                    ? isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
-                    : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                Reports
-              </button>
+    <div className={`min-h-screen ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
+      <div className="max-w-7xl mx-auto p-4 pt-2">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search..."
+              className={`pl-10 pr-4 py-2 rounded-lg border ${
+                isDark 
+                  ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
+              } focus:outline-none focus:ring-2 focus:ring-green-500`}
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+            <div className="absolute left-3 top-2.5">
+              <i className={`fas fa-search ${isDark ? 'text-gray-400' : 'text-gray-500'}`}></i>
             </div>
           </div>
+        </div>
 
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Spinner />
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <DashboardCard
-                  title="Total Applicants"
-                  value={stats.applicants}
-                  icon="users"
-                  color="blue"
-                  isDark={isDark}
-                />
-                <DashboardCard
-                  title="Total Employees"
-                  value={stats.employees}
-                  icon="user-tie"
-                  color="green"
-                  isDark={isDark}
-                />
-                <DashboardCard
-                  title="Onboarding"
-                  value={stats.onboarding}
-                  icon="user-plus"
-                  color="purple"
-                  isDark={isDark}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6`}>
-                  <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                    Applicant Trends
-                  </h2>
-                  <div className="h-64">
-                    <canvas id="applicantChart"></canvas>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <Spinner />
+          </div>
+        ) : (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className={`rounded-xl overflow-hidden transition-colors ${
+                isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'
+              } shadow-md`}>
+                <div className="p-6">
+                  <div className="flex justify-between">
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-blue-500">TOTAL EMPLOYEES</h3>
+                      <div className="mt-2 flex items-baseline">
+                        <p className="text-3xl font-bold">{stats.employees}</p>
+                        <p className="ml-2 text-sm text-green-500 flex items-center">
+                          <i className="fas fa-arrow-up mr-1"></i>
+                          3.6% <span className="text-gray-500 ml-1">vs last month</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-blue-900 w-12 h-12 rounded-full flex items-center justify-center">
+                      <i className="fas fa-users text-blue-300 text-xl"></i>
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6`}>
-                  <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                    Recent Applicants
-                  </h2>
-                  <DashboardList
-                    items={stats.recentApplicants}
-                    isDark={isDark}
-                  />
+              <div className={`rounded-xl overflow-hidden transition-colors ${
+                isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'
+              } shadow-md`}>
+                <div className="p-6">
+                  <div className="flex justify-between">
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-500">ONBOARDING</h3>
+                      <div className="mt-2 flex items-baseline">
+                        <p className="text-3xl font-bold">{stats.onboarding}</p>
+                        <p className="ml-2 text-sm text-green-500 flex items-center">
+                          <i className="fas fa-arrow-up mr-1"></i>
+                          3.6% <span className="text-gray-500 ml-1">vs last month</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-amber-900 w-12 h-12 rounded-full flex items-center justify-center">
+                      <i className="fas fa-clipboard-list text-amber-300 text-xl"></i>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </>
-          )}
-        </div>
-      </main>
+
+              <div className={`rounded-xl overflow-hidden transition-colors ${
+                isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'
+              } shadow-md`}>
+                <div className="p-6">
+                  <div className="flex justify-between">
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-red-500">TOTAL APPLICANTS</h3>
+                      <div className="mt-2 flex items-baseline">
+                        <p className="text-3xl font-bold">{stats.applicants}</p>
+                        <p className="ml-2 text-sm text-green-500 flex items-center">
+                          <i className="fas fa-arrow-up mr-1"></i>
+                          3.6% <span className="text-gray-500 ml-1">vs last month</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-red-900 w-12 h-12 rounded-full flex items-center justify-center">
+                      <i className="fas fa-user-tie text-red-300 text-xl"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Analytics Section */}
+            <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md p-4 mb-6`}>
+              <div className="flex justify-between items-center mb-2">
+                <div>
+                  <h2 className="text-xl font-semibold">Link Click Analytics</h2>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Number of clicks on application links over the last 12 months
+                  </p>
+                </div>
+                <button className={`p-2 rounded-lg transition-colors ${
+                  isDark 
+                    ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                }`}>
+                  <i className="fas fa-download"></i>
+                </button>
+              </div>
+
+              {/* Metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className={`p-4 rounded-lg ${
+                  isDark ? 'bg-[#1a2335] border border-emerald-800/30' : 'bg-emerald-50 border border-emerald-100'
+                }`}>
+                  <p className={`text-sm ${isDark ? 'text-emerald-400' : 'text-emerald-600'} mb-1`}>Total Clicks</p>
+                  <div className="flex justify-between items-center">
+                    <p className="text-2xl font-bold">{clickStats.total}</p>
+                    <span className="text-green-500 text-sm flex items-center">
+                      <i className="fas fa-arrow-up mr-1"></i>
+                      12.4%
+                    </span>
+                  </div>
+                </div>
+                
+                <div className={`p-4 rounded-lg ${
+                  isDark ? 'bg-[#1a2335] border border-blue-800/30' : 'bg-blue-50 border border-blue-100'
+                }`}>
+                  <p className={`text-sm ${isDark ? 'text-blue-400' : 'text-blue-600'} mb-1`}>Highest Month</p>
+                  <div className="flex justify-between items-center">
+                    <p className="text-2xl font-bold">{clickStats.highest}</p>
+                    <span className={`${isDark ? 'text-blue-400' : 'text-blue-600'} text-sm`}>{clickStats.month}</span>
+                  </div>
+                </div>
+                
+                <div className={`p-4 rounded-lg ${
+                  isDark ? 'bg-[#1a2335] border border-purple-800/30' : 'bg-purple-50 border border-purple-100'
+                }`}>
+                  <p className={`text-sm ${isDark ? 'text-purple-400' : 'text-purple-600'} mb-1`}>Average per Month</p>
+                  <div className="flex justify-between items-center">
+                    <p className="text-2xl font-bold">{clickStats.average}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Chart */}
+              <div className="h-64 md:h-80">
+                <canvas id="applicantChart"></canvas>
+              </div>
+            </div>
+
+            {/* Recent Applicants Section */}
+            <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md p-4 mb-6`}>
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Recent Applicants</h2>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Latest job applicants in the last 30 days
+                  </p>
+                </div>
+                <Link to="/applicants" className={`text-sm font-medium ${
+                  isDark ? 'text-emerald-400 hover:text-emerald-300' : 'text-emerald-600 hover:text-emerald-700'
+                }`}>View All</Link>
+              </div>
+
+              <div className="overflow-x-auto">
+                <ul className="space-y-3">
+                  {stats.recentApplicants && stats.recentApplicants.length > 0 ? (
+                    stats.recentApplicants.map((applicant, index) => (
+                      <li key={index} className={`rounded-lg p-3 flex items-center justify-between ${
+                        isDark ? 'bg-slate-700/30' : 'bg-slate-50'
+                      }`}>
+                        <div className="flex items-center">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm overflow-hidden ${
+                            isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                          }`}>
+                            {applicant.avatar ? (
+                              <img src={applicant.avatar} alt={applicant.name} className="w-full h-full object-cover" />
+                            ) : (
+                              applicant.name.charAt(0).toUpperCase() + (applicant.name.split(' ')[1]?.charAt(0).toUpperCase() || '')
+                            )}
+                          </div>
+                          <div className="ml-3">
+                            <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{applicant.name}</p>
+                            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{applicant.position}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            applicant.status === 'Interview' 
+                              ? isDark ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'
+                              : applicant.status === 'Shortlisted' 
+                              ? isDark ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-600'
+                              : isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
+                          }`}>
+                            {applicant.status}
+                          </span>
+                          <button className={`p-1.5 transition-colors ${
+                            isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
+                          }`}>
+                            <i className="fas fa-ellipsis-vertical w-4 h-4"></i>
+                          </button>
+                        </div>
+                      </li>
+                    ))
+                  ) : (
+                    <li className={`rounded-lg p-6 text-center ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
+                      <p className={`${isDark ? 'text-slate-400' : 'text-slate-500'}`}>No recent applicants found</p>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

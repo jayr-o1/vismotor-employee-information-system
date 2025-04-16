@@ -146,77 +146,108 @@ const Employees = () => {
   };
 
   return (
-    <div className="w-full">
-      <ToastContainer position="top-right" />
-      <main className={`${isDark ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
+    <div className={`w-full min-h-screen ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      <ToastContainer 
+        position="top-right"
+        theme={isDark ? 'dark' : 'light'}
+      />
+      <main className="p-6 flex-1 mt-16 transition-colors duration-200">
         <div className="container mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Employee Directory</h1>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search employees..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300'
-                }`}
-              />
-              <i className="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+          {/* Header Section */}
+          <div className={`flex justify-between items-center mb-6 p-4 rounded-lg shadow-sm ${
+            isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
+          }`}>
+            <h1 className={`text-2xl font-semibold ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>
+              Employees
+            </h1>
+            <div className="flex space-x-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search employees..."
+                  className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    isDark 
+                      ? 'bg-slate-700 text-slate-50 border-slate-600 placeholder-slate-400' 
+                      : 'bg-white text-slate-900 border-gray-300 placeholder-gray-400'
+                  }`}
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+                <i className={`fas fa-search absolute right-3 top-3 ${
+                  isDark ? 'text-slate-400' : 'text-gray-400'
+                }`}></i>
+              </div>
+              <button
+                onClick={() => setEditModalOpen(true)}
+                className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
+                  isDark 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-green-600 hover:bg-green-700'
+                } text-white transition-colors duration-200`}
+              >
+                <i className="fas fa-plus"></i>
+                <span>Add Employee</span>
+              </button>
             </div>
           </div>
 
+          {/* Main Content */}
           {loading ? (
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 flex justify-center items-center h-64`}>
+            <div className={`flex justify-center items-center h-64 ${
+              isDark ? 'text-slate-300' : 'text-slate-600'
+            }`}>
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
             </div>
           ) : (
-            <>
-              <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow overflow-hidden`}>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <div className={`rounded-lg shadow-sm overflow-hidden ${
+              isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
+            }`}>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
                     <tr>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
-                      }`}>ID</th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
                       }`}>Name</th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
+                      }`}>Position</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
                       }`}>Department</th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
                       }`}>Status</th>
-                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-gray-300' : 'text-gray-500'
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
                       }`}>Actions</th>
                     </tr>
                   </thead>
-                  <tbody className={`${isDark ? 'bg-gray-800' : 'bg-white'} divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                  <tbody className={`divide-y ${
+                    isDark ? 'divide-slate-700' : 'divide-gray-200'
+                  }`}>
                     {currentItems.map((employee) => (
-                      <tr key={employee.id} className={isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                          isDark ? 'text-gray-300' : 'text-gray-900'
-                        }`}>{employee.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm font-medium ${
-                            isDark ? 'text-white' : 'text-gray-900'
-                          }`}>{employee.name}</div>
-                          <div className={`text-sm ${
-                            isDark ? 'text-gray-400' : 'text-gray-500'
-                          }`}>{employee.position}</div>
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                          isDark ? 'text-gray-300' : 'text-gray-500'
+                      <tr key={employee.id} className={`${
+                        isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'
+                      } transition-colors duration-150`}>
+                        <td className={`px-6 py-4 whitespace-nowrap ${
+                          isDark ? 'text-slate-50' : 'text-slate-900'
+                        }`}>{employee.name}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap ${
+                          isDark ? 'text-slate-300' : 'text-gray-500'
+                        }`}>{employee.position}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap ${
+                          isDark ? 'text-slate-300' : 'text-gray-500'
                         }`}>{employee.department}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            employee.status === "Active" 
-                              ? isDark ? "bg-green-900/30 text-green-400" : "bg-green-100 text-green-800"
-                              : employee.status === "On Leave" 
-                              ? isDark ? "bg-yellow-900/30 text-yellow-400" : "bg-yellow-100 text-yellow-800"
-                              : isDark ? "bg-red-900/30 text-red-400" : "bg-red-100 text-red-800"
+                            employee.status === 'Active' 
+                              ? isDark 
+                                ? 'bg-green-900/30 text-green-400' 
+                                : 'bg-green-100 text-green-800'
+                              : isDark 
+                                ? 'bg-yellow-900/30 text-yellow-400' 
+                                : 'bg-yellow-100 text-yellow-800'
                           }`}>
                             {employee.status}
                           </span>
@@ -225,30 +256,33 @@ const Employees = () => {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleViewEmployee(employee)}
-                              className={`p-1.5 rounded-full ${
-                                isDark ? 'text-blue-400 hover:bg-gray-700' : 'text-blue-600 hover:bg-gray-100'
-                              }`}
-                              title="View Details"
+                              className={`p-2 rounded-lg ${
+                                isDark 
+                                  ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' 
+                                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                              } transition-colors duration-200`}
                             >
-                              <FaEye className="w-4 h-4" />
+                              <i className="fas fa-eye"></i>
                             </button>
                             <button
                               onClick={() => handleEditEmployee(employee)}
-                              className={`p-1.5 rounded-full ${
-                                isDark ? 'text-yellow-400 hover:bg-gray-700' : 'text-yellow-600 hover:bg-gray-100'
-                              }`}
-                              title="Edit"
+                              className={`p-2 rounded-lg ${
+                                isDark 
+                                  ? 'bg-blue-700 hover:bg-blue-600 text-blue-300' 
+                                  : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
+                              } transition-colors duration-200`}
                             >
-                              <FaEdit className="w-4 h-4" />
+                              <i className="fas fa-edit"></i>
                             </button>
                             <button
                               onClick={() => handleDeleteClick(employee)}
-                              className={`p-1.5 rounded-full ${
-                                isDark ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'
-                              }`}
-                              title="Delete"
+                              className={`p-2 rounded-lg ${
+                                isDark 
+                                  ? 'bg-red-700 hover:bg-red-600 text-red-300' 
+                                  : 'bg-red-100 hover:bg-red-200 text-red-600'
+                              } transition-colors duration-200`}
                             >
-                              <FaTrash className="w-4 h-4" />
+                              <i className="fas fa-trash"></i>
                             </button>
                           </div>
                         </td>
@@ -257,31 +291,7 @@ const Employees = () => {
                   </tbody>
                 </table>
               </div>
-
-              {/* Pagination */}
-              <div className="mt-6">
-                <ReactPaginate
-                  previousLabel="← Previous"
-                  nextLabel="Next →"
-                  pageCount={pageCount}
-                  onPageChange={handlePageChange}
-                  containerClassName={`flex justify-center items-center mt-6 space-x-1 ${
-                    isDark ? 'text-gray-300' : 'text-gray-500'
-                  }`}
-                  pageLinkClassName={`px-3 py-2 rounded border ${
-                    isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
-                  }`}
-                  previousLinkClassName={`px-3 py-2 rounded border ${
-                    isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
-                  }`}
-                  nextLinkClassName={`px-3 py-2 rounded border ${
-                    isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
-                  }`}
-                  activeLinkClassName={isDark ? 'bg-gray-700 text-white' : 'bg-green-600 text-white'}
-                  disabledLinkClassName="opacity-50 cursor-not-allowed"
-                />
-              </div>
-            </>
+            </div>
           )}
         </div>
       </main>

@@ -281,333 +281,369 @@ const Applicants = () => {
   };
 
   return (
-    <div className="w-full">
-      <ToastContainer position="top-right" />
-
-        <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
-          <div className="container mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-semibold text-gray-800">Applicant Tracking</h1>
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search applicants..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                  <i className="fas fa-search absolute right-3 top-3 text-gray-400"></i>
-                </div>
-                <button 
-                  onClick={() => setAddModalOpen(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
-                >
-                  <FaUserPlus className="mr-2" /> Add Applicant
-                </button>
+    <div className={`w-full min-h-screen ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      <ToastContainer 
+        position="top-right"
+        theme={isDark ? 'dark' : 'light'}
+      />
+      <main className="p-6 flex-1 mt-16 transition-colors duration-200">
+        <div className="container mx-auto">
+          <div className={`flex justify-between items-center mb-6 p-4 rounded-lg shadow-sm ${
+            isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
+          }`}>
+            <h1 className={`text-2xl font-semibold ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>
+              Applicants
+            </h1>
+            <div className="flex space-x-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search applicants..."
+                  className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    isDark 
+                      ? 'bg-slate-700 text-slate-50 border-slate-600 placeholder-slate-400' 
+                      : 'bg-white text-slate-900 border-gray-300 placeholder-gray-400'
+                  }`}
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+                <i className={`fas fa-search absolute right-3 top-3 ${
+                  isDark ? 'text-slate-400' : 'text-gray-400'
+                }`}></i>
               </div>
+              <button
+                onClick={() => setAddModalOpen(true)}
+                className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
+                  isDark 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-green-600 hover:bg-green-700'
+                } text-white transition-colors duration-200`}
+              >
+                <i className="fas fa-plus"></i>
+                <span>Add Applicant</span>
+              </button>
             </div>
-
-            {loading ? (
-              <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 flex justify-center items-center h-64`}>
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-              </div>
-            ) : (
-              <>
-                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow overflow-hidden`}>
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interview</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                      {currentItems.map((applicant) => (
-                        <tr key={applicant.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{applicant.id}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{applicant.name}</div>
-                            <div className="text-sm text-gray-500">{applicant.email}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{applicant.position}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              applicant.status === "Pending" 
-                                ? "bg-yellow-100 text-yellow-800" 
-                                : applicant.status === "Reviewed" 
-                                ? "bg-blue-100 text-blue-800" 
-                                : applicant.status === "Interviewed" 
-                                ? "bg-purple-100 text-purple-800"
-                                : applicant.status === "Accepted" 
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}>
-                              {applicant.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {applicant.interview_scheduled ? "Scheduled" : "Not Scheduled"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onClick={() => handleViewApplicant(applicant)} className="text-blue-500 hover:text-blue-700 mr-2">
-                              <FaEye />
-                            </button>
-                            <button 
-                              onClick={() => handleScheduleClick(applicant)} 
-                              className="text-green-500 hover:text-green-700 mr-2">
-                              <FaCheck />
-                            </button>
-                            {applicant.status === 'Interviewed' && (
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() => handleOnboardClick(applicant)}
-                                  className={`p-1.5 rounded-full ${
-                                    isDark ? 'text-green-400 hover:bg-slate-700' : 'text-green-600 hover:bg-gray-100'
-                                  }`}
-                                  title="Approve & Onboard"
-                                >
-                                  <FaCheck className="w-4 h-4" />
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteClick(applicant)} 
-                                  className={`p-1.5 rounded-full ${
-                                    isDark ? 'text-red-400 hover:bg-slate-700' : 'text-red-600 hover:bg-gray-100'
-                                  }`}
-                                  title="Delete"
-                                >
-                                  <FaTrash className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Pagination */}
-                <div className="mt-6">
-                  <ReactPaginate
-                    previousLabel="← Previous"
-                    nextLabel="Next →"
-                    pageCount={pageCount}
-                    onPageChange={handlePageChange}
-                    containerClassName="flex justify-center items-center mt-6 space-x-1"
-                    pageLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    previousLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    nextLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    activeLinkClassName="bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
-                    disabledLinkClassName="opacity-50 cursor-not-allowed"
-                    breakClassName="px-3 py-2 rounded border border-gray-300"
-                  />
-                </div>
-              </>
-            )}
           </div>
 
-          {/* Delete Confirmation Modal */}
-          {deleteModalOpen && currentApplicant && (
-            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                <h2 className="text-2xl font-semibold mb-4">Confirm Delete</h2>
-                <p className="mb-6">Are you sure you want to delete {currentApplicant.name}'s application? This action cannot be undone.</p>
-                <div className="flex justify-end space-x-2">
-                  <button onClick={() => setDeleteModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                    Cancel
-                  </button>
-                  <button onClick={handleDeleteApplicant} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                    Delete
-                  </button>
-                </div>
+          {loading ? (
+            <div className={`flex justify-center items-center h-64 ${
+              isDark ? 'text-slate-300' : 'text-slate-600'
+            }`}>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+            </div>
+          ) : filteredApplicants.length === 0 ? (
+            <div className={`rounded-lg shadow-lg p-6 flex justify-center items-center h-64 ${
+              isDark ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                No applicants found
+              </p>
+            </div>
+          ) : (
+            <div className={`rounded-lg shadow-sm overflow-hidden ${
+              isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
+            }`}>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
+                    <tr>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
+                      }`}>Name</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
+                      }`}>Position</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
+                      }`}>Status</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
+                      }`}>Applied Date</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        isDark ? 'text-slate-300' : 'text-gray-500'
+                      }`}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${
+                    isDark ? 'divide-slate-700' : 'divide-gray-200'
+                  }`}>
+                    {filteredApplicants.map((applicant) => (
+                      <tr key={applicant.id} className={`${
+                        isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'
+                      } transition-colors duration-150`}>
+                        <td className={`px-6 py-4 whitespace-nowrap ${
+                          isDark ? 'text-slate-50' : 'text-slate-900'
+                        }`}>{applicant.name}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap ${
+                          isDark ? 'text-slate-300' : 'text-gray-500'
+                        }`}>{applicant.position}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            applicant.status === 'New' 
+                              ? isDark 
+                                ? 'bg-blue-900/30 text-blue-400' 
+                                : 'bg-blue-100 text-blue-800'
+                              : applicant.status === 'Reviewed'
+                                ? isDark 
+                                  ? 'bg-yellow-900/30 text-yellow-400' 
+                                  : 'bg-yellow-100 text-yellow-800'
+                                : isDark 
+                                  ? 'bg-green-900/30 text-green-400' 
+                                  : 'bg-green-100 text-green-800'
+                          }`}>
+                            {applicant.status}
+                          </span>
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap ${
+                          isDark ? 'text-slate-300' : 'text-gray-500'
+                        }`}>
+                          {new Date(applicant.applied_date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleViewApplicant(applicant)}
+                              className={`p-2 rounded-lg ${
+                                isDark 
+                                  ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' 
+                                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                              } transition-colors duration-200`}
+                            >
+                              <i className="fas fa-eye"></i>
+                            </button>
+                            <button
+                              onClick={() => handleOnboardClick(applicant)}
+                              className={`p-2 rounded-lg ${
+                                isDark 
+                                  ? 'bg-blue-700 hover:bg-blue-600 text-blue-300' 
+                                  : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
+                              } transition-colors duration-200`}
+                            >
+                              <i className="fas fa-check"></i>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(applicant)}
+                              className={`p-2 rounded-lg ${
+                                isDark 
+                                  ? 'bg-red-700 hover:bg-red-600 text-red-300' 
+                                  : 'bg-red-100 hover:bg-red-200 text-red-600'
+                              } transition-colors duration-200`}
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
+        </div>
+      </main>
 
-          {/* Onboarding Modal */}
-          {onboardModalOpen && currentApplicant && (
-            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                <h2 className="text-2xl font-semibold mb-4">Onboard {currentApplicant.name}</h2>
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Position</label>
-                    <input
-                      type="text"
-                      value={onboardData.position}
-                      onChange={(e) => setOnboardData({...onboardData, position: e.target.value})}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Department</label>
-                    <input
-                      type="text"
-                      value={onboardData.department}
-                      onChange={(e) => setOnboardData({...onboardData, department: e.target.value})}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Start Date</label>
-                    <input
-                      type="date"
-                      value={onboardData.startDate}
-                      onChange={(e) => setOnboardData({...onboardData, startDate: e.target.value})}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-500 mb-1">Salary</label>
-                    <input
-                      type="text"
-                      value={onboardData.salary}
-                      onChange={(e) => setOnboardData({...onboardData, salary: e.target.value})}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <button onClick={() => setOnboardModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                    Cancel
-                  </button>
-                  <button onClick={handleOnboardApplicant} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    Process Onboarding
-                  </button>
-                </div>
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && currentApplicant && (
+        <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
+          <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            <h2 className="text-2xl font-semibold mb-4">Confirm Delete</h2>
+            <p className="mb-6">Are you sure you want to delete {currentApplicant.name}'s application? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-2">
+              <button onClick={() => setDeleteModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+                Cancel
+              </button>
+              <button onClick={handleDeleteApplicant} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Modal */}
+      {onboardModalOpen && currentApplicant && (
+        <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
+          <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            <h2 className="text-2xl font-semibold mb-4">Onboard {currentApplicant.name}</h2>
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Position</label>
+                <input
+                  type="text"
+                  value={onboardData.position}
+                  onChange={(e) => setOnboardData({...onboardData, position: e.target.value})}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Department</label>
+                <input
+                  type="text"
+                  value={onboardData.department}
+                  onChange={(e) => setOnboardData({...onboardData, department: e.target.value})}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={onboardData.startDate}
+                  onChange={(e) => setOnboardData({...onboardData, startDate: e.target.value})}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Salary</label>
+                <input
+                  type="text"
+                  value={onboardData.salary}
+                  onChange={(e) => setOnboardData({...onboardData, salary: e.target.value})}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
               </div>
             </div>
-          )}
-          
-          {/* Add Applicant Modal */}
-          {addModalOpen && (
-            <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-3xl ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                <h2 className="text-2xl font-semibold mb-6 text-center">Add New Applicant</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
-                  {/* Left Column */}
-                  <div>
-                    <div className="mb-4">
-                      <label className="block text-sm text-gray-500 mb-1">Name*</label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={newApplicantData.name}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Full Name"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label className="block text-sm text-gray-500 mb-1">Position Applied For*</label>
-                      <input
-                        type="text"
-                        name="position"
-                        value={newApplicantData.position}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Position"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Right Column */}
-                  <div>
-                    <div className="mb-4">
-                      <label className="block text-sm text-gray-500 mb-1">Education</label>
-                      <input
-                        type="text"
-                        name="education"
-                        value={newApplicantData.education}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Education"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label className="block text-sm text-gray-500 mb-1">Experience</label>
-                      <input
-                        type="text"
-                        name="experience"
-                        value={newApplicantData.experience}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Experience"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Email and Phone - Left Column */}
-                  <div>
-                    <div className="mb-4">
-                      <label className="block text-sm text-gray-500 mb-1">Email*</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={newApplicantData.email}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Email Address"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Phone - Right Column */}
-                  <div>
-                    <div className="mb-4">
-                      <label className="block text-sm text-gray-500 mb-1">Phone</label>
-                      <input
-                        type="text"
-                        name="phone"
-                        value={newApplicantData.phone}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Phone Number"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Skills - Full Width */}
-                  <div className="md:col-span-2">
-                    <label className="block text-sm text-gray-500 mb-1">Skills</label>
-                    <textarea
-                      name="skills"
-                      value={newApplicantData.skills}
+            <div className="flex justify-end space-x-2">
+              <button onClick={() => setOnboardModalOpen(false)} className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+                Cancel
+              </button>
+              <button onClick={handleOnboardApplicant} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                Process Onboarding
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Add Applicant Modal */}
+      {addModalOpen && (
+        <div className={`fixed inset-0 z-50 overflow-y-auto`}>
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-50"></div>
+            <div className={`relative z-50 w-full max-w-md p-6 rounded-lg shadow-xl ${
+              isDark ? 'bg-slate-800' : 'bg-white'
+            }`}>
+              <h2 className="text-2xl font-semibold mb-6 text-center">Add New Applicant</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                {/* Left Column */}
+                <div>
+                  <div className="mb-4">
+                    <label className="block text-sm text-gray-500 mb-1">Name*</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={newApplicantData.name}
                       onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 h-40"
-                      placeholder="Enter skills (one per line)
-Example:
-Coding Skills
-Teaching Skills"
-                    ></textarea>
-                    <p className="text-xs text-gray-500 mt-1">Press Enter after each skill to add multiple skills</p>
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Full Name"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm text-gray-500 mb-1">Position Applied For*</label>
+                    <input
+                      type="text"
+                      name="position"
+                      value={newApplicantData.position}
+                      onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Position"
+                    />
                   </div>
                 </div>
                 
-                <div className="flex justify-end space-x-3 border-t pt-4">
-                  <button 
-                    onClick={() => setAddModalOpen(false)} 
-                    className="px-5 py-2 border border-gray-300 rounded hover:bg-gray-100 transition duration-150"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={handleAddApplicant} 
-                    className="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 transition duration-150"
-                  >
-                    Add Applicant
-                  </button>
+                {/* Right Column */}
+                <div>
+                  <div className="mb-4">
+                    <label className="block text-sm text-gray-500 mb-1">Education</label>
+                    <input
+                      type="text"
+                      name="education"
+                      value={newApplicantData.education}
+                      onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Education"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm text-gray-500 mb-1">Experience</label>
+                    <input
+                      type="text"
+                      name="experience"
+                      value={newApplicantData.experience}
+                      onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Experience"
+                    />
+                  </div>
+                </div>
+                
+                {/* Email and Phone - Left Column */}
+                <div>
+                  <div className="mb-4">
+                    <label className="block text-sm text-gray-500 mb-1">Email*</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={newApplicantData.email}
+                      onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Email Address"
+                    />
+                  </div>
+                </div>
+                
+                {/* Phone - Right Column */}
+                <div>
+                  <div className="mb-4">
+                    <label className="block text-sm text-gray-500 mb-1">Phone</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      value={newApplicantData.phone}
+                      onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Phone Number"
+                    />
+                  </div>
+                </div>
+                
+                {/* Skills - Full Width */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-gray-500 mb-1">Skills</label>
+                  <textarea
+                    name="skills"
+                    value={newApplicantData.skills}
+                    onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 h-40"
+                    placeholder="Enter skills (one per line)
+Example:
+Coding Skills
+Teaching Skills"
+                  ></textarea>
+                  <p className="text-xs text-gray-500 mt-1">Press Enter after each skill to add multiple skills</p>
                 </div>
               </div>
+              
+              <div className="flex justify-end space-x-3 border-t pt-4">
+                <button 
+                  onClick={() => setAddModalOpen(false)} 
+                  className="px-5 py-2 border border-gray-300 rounded hover:bg-gray-100 transition duration-150"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleAddApplicant} 
+                  className="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 transition duration-150"
+                >
+                  Add Applicant
+                </button>
+              </div>
             </div>
-          )}
-        </main>
-       </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

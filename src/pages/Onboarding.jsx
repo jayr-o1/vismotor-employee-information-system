@@ -131,11 +131,13 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="w-full">
+    <div className={`w-full min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <ToastContainer position="top-right" />
-      <main className={`${isDark ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
+      <main className="p-6 flex-1 mt-16 transition-colors duration-200">
         <div className="container mx-auto">
-          <div className="flex justify-between items-center mb-6">
+          <div className={`flex justify-between items-center mb-6 p-4 rounded-lg ${
+            isDark ? 'bg-gray-800' : 'bg-white'
+          }`}>
             <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
               Employee Onboarding
             </h1>
@@ -156,18 +158,24 @@ const Onboarding = () => {
           </div>
 
           {isLoading ? (
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 flex justify-center items-center h-64`}>
+            <div className={`rounded-lg shadow-lg p-6 flex justify-center items-center h-64 ${
+              isDark ? 'bg-gray-800' : 'bg-white'
+            }`}>
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
             </div>
           ) : filteredEmployees.length === 0 ? (
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 flex justify-center items-center h-64`}>
+            <div className={`rounded-lg shadow-lg p-6 flex justify-center items-center h-64 ${
+              isDark ? 'bg-gray-800' : 'bg-white'
+            }`}>
               <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 No employees in onboarding process
               </p>
             </div>
           ) : (
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow overflow-hidden`}>
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className={`rounded-lg shadow-lg overflow-hidden ${
+              isDark ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <table className="min-w-full">
                 <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
                   <tr>
                     <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
@@ -201,7 +209,9 @@ const Onboarding = () => {
                   isDark ? 'divide-gray-700' : 'divide-gray-200'
                 }`}>
                   {filteredEmployees.map((employee) => (
-                    <tr key={employee.id} className={isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+                    <tr key={employee.id} className={`${
+                      isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                    } transition-colors duration-150`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div>
@@ -244,7 +254,7 @@ const Onboarding = () => {
                         <button 
                           onClick={() => handleCompleteOnboarding(employee.id)}
                           disabled={employee.progress === 100}
-                          className={`px-3 py-1 rounded ${
+                          className={`px-3 py-1 rounded transition-colors duration-150 ${
                             employee.progress === 100 
                               ? isDark 
                                 ? "bg-gray-700 text-gray-400 cursor-not-allowed" 
