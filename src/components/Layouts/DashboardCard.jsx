@@ -98,7 +98,7 @@ const DashboardCard = ({ title, value, icon, color, trend }) => {
           <div className={`rounded-full p-3 ${getIconBgColor()}`}>
             <i className={`${icon} text-lg`}></i>
           </div>
-        </div>
+      </div>
       </div>
     </div>
   );

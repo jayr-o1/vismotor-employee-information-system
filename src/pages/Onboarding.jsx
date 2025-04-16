@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useContext } from "react";
-import Header from "../components/Layouts/Header";
-import Sidebar from "../components/Layouts/Sidebar";
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from "react-toastify";
 import apiService from "../services/api";
@@ -131,52 +129,47 @@ const Onboarding = () => {
   };
 
   return (
-    <div className={`w-full min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-100'}`}>
-      <ToastContainer position="top-right" />
-      <main className="p-6 flex-1 mt-16 transition-colors duration-200">
-        <div className="container mx-auto">
-          <div className={`flex justify-between items-center mb-6 p-4 rounded-lg ${
-            isDark ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
-              Employee Onboarding
-            </h1>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search employees..."
-                className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  isDark ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-800 border-gray-300'
-                }`}
-                value={searchTerm}
-                onChange={handleSearch}
-              />
-              <i className={`fas fa-search absolute right-3 top-3 ${
-                isDark ? 'text-gray-400' : 'text-gray-500'
-              }`}></i>
+    <div className={`min-h-screen ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
+      <ToastContainer position="top-right" autoClose={3000} />
+      
+      <div className="max-w-7xl mx-auto p-4 pt-2">
+        {/* Header with search */}
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-semibold">Employee Onboarding</h1>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search employees..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className={`pl-10 pr-4 py-2 rounded-lg border ${
+                isDark 
+                  ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
+              } focus:outline-none focus:ring-2 focus:ring-green-500`}
+            />
+            <div className="absolute left-3 top-2.5">
+              <i className={`fas fa-search ${isDark ? 'text-gray-400' : 'text-gray-500'}`}></i>
             </div>
           </div>
+        </div>
 
-          {isLoading ? (
-            <div className={`rounded-lg shadow-lg p-6 flex justify-center items-center h-64 ${
-              isDark ? 'bg-gray-800' : 'bg-white'
-            }`}>
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-            </div>
-          ) : filteredEmployees.length === 0 ? (
-            <div className={`rounded-lg shadow-lg p-6 flex justify-center items-center h-64 ${
-              isDark ? 'bg-gray-800' : 'bg-white'
-            }`}>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                No employees in onboarding process
-              </p>
-            </div>
-          ) : (
-            <div className={`rounded-lg shadow-lg overflow-hidden ${
-              isDark ? 'bg-gray-800' : 'bg-white'
-            }`}>
+        {/* Main content */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        ) : filteredEmployees.length === 0 ? (
+          <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md p-6 flex justify-center items-center h-64`}>
+            <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              No employees in onboarding process
+            </p>
+          </div>
+        ) : (
+          <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md overflow-hidden`}>
+            <div className="overflow-x-auto">
               <table className="min-w-full">
-                <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
+                <thead className={isDark ? 'bg-slate-800/50' : 'bg-gray-50'}>
                   <tr>
                     <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
                       isDark ? 'text-gray-300' : 'text-gray-500'
@@ -205,9 +198,7 @@ const Onboarding = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className={`${isDark ? 'bg-gray-800' : 'bg-white'} divide-y ${
-                  isDark ? 'divide-gray-700' : 'divide-gray-200'
-                }`}>
+                <tbody className={isDark ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}>
                   {filteredEmployees.map((employee) => (
                     <tr key={employee.id} className={`${
                       isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
@@ -270,9 +261,9 @@ const Onboarding = () => {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
-      </main>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

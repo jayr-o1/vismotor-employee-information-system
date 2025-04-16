@@ -146,62 +146,40 @@ const Employees = () => {
   };
 
   return (
-    <div className={`w-full min-h-screen ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
-      <ToastContainer 
-        position="top-right"
-        theme={isDark ? 'dark' : 'light'}
-      />
-      <main className="p-6 flex-1 mt-16 transition-colors duration-200">
-        <div className="container mx-auto">
-          {/* Header Section */}
-          <div className={`flex justify-between items-center mb-6 p-4 rounded-lg shadow-sm ${
-            isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
-          }`}>
-            <h1 className={`text-2xl font-semibold ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>
-              Employees
-            </h1>
-            <div className="flex space-x-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search employees..."
-                  className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark 
-                      ? 'bg-slate-700 text-slate-50 border-slate-600 placeholder-slate-400' 
-                      : 'bg-white text-slate-900 border-gray-300 placeholder-gray-400'
-                  }`}
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-                <i className={`fas fa-search absolute right-3 top-3 ${
-                  isDark ? 'text-slate-400' : 'text-gray-400'
-                }`}></i>
-              </div>
-              <button
-                onClick={() => setEditModalOpen(true)}
-                className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
-                  isDark 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-green-600 hover:bg-green-700'
-                } text-white transition-colors duration-200`}
-              >
-                <i className="fas fa-plus"></i>
-                <span>Add Employee</span>
-              </button>
+    <div className={`min-h-screen ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
+      <ToastContainer position="top-right" autoClose={3000} />
+      
+      <div className="max-w-7xl mx-auto p-4 pt-2">
+        {/* Header with search */}
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-semibold">Employees</h1>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search employees..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className={`pl-10 pr-4 py-2 rounded-lg border ${
+                isDark 
+                  ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
+              } focus:outline-none focus:ring-2 focus:ring-green-500`}
+            />
+            <div className="absolute left-3 top-2.5">
+              <i className={`fas fa-search ${isDark ? 'text-gray-400' : 'text-gray-500'}`}></i>
             </div>
           </div>
+        </div>
 
-          {/* Main Content */}
-          {loading ? (
-            <div className={`flex justify-center items-center h-64 ${
-              isDark ? 'text-slate-300' : 'text-slate-600'
-            }`}>
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-            </div>
-          ) : (
-            <div className={`rounded-lg shadow-sm overflow-hidden ${
-              isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-gray-200'
-            }`}>
+        {/* Main content */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        ) : (
+          <>
+            {/* Employees Table */}
+            <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md overflow-hidden mb-4`}>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
@@ -292,175 +270,222 @@ const Employees = () => {
                 </table>
               </div>
             </div>
-          )}
-        </div>
-      </main>
 
-      {/* View Modal */}
-      {viewModalOpen && currentEmployee && (
-        <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-          <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDark ? 'text-white' : 'text-gray-800'}`}>
-            <h2 className="text-2xl font-semibold mb-4">Employee Details</h2>
-            <div className="grid grid-cols-1 gap-4 mb-4">
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Name</label>
-                <p className="text-lg">{currentEmployee.name}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Position</label>
-                <p className="text-lg">{currentEmployee.position}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Department</label>
-                <p className="text-lg">{currentEmployee.department}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Email</label>
-                <p className="text-lg">{currentEmployee.email}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Phone</label>
-                <p className="text-lg">{currentEmployee.phone}</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Status</label>
-                <p className="text-lg">{currentEmployee.status}</p>
-              </div>
+            {/* Pagination */}
+            <div className="flex justify-center my-4">
+              <ReactPaginate
+                previousLabel={<i className="fas fa-chevron-left"></i>}
+                nextLabel={<i className="fas fa-chevron-right"></i>}
+                breakLabel={"..."}
+                pageCount={pageCount}
+                marginPagesDisplayed={2}
+                pageRangeDisplayed={3}
+                onPageChange={handlePageChange}
+                containerClassName={`flex items-center space-x-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                pageClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+                previousClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+                nextClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+                activeClassName={`${isDark ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}
+                disabledClassName={"text-gray-400 cursor-not-allowed"}
+              />
             </div>
-            <div className="flex justify-end">
-              <button
+          </>
+        )}
+      </div>
+
+      {/* View Employee Modal */}
+      {viewModalOpen && currentEmployee && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold">Employee Details</h2>
+              <button 
                 onClick={() => setViewModalOpen(false)}
-                className={`px-4 py-2 rounded ${
-                  isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-300 hover:bg-gray-400'
+                className={`p-2 rounded-full ${
+                  isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-gray-200 text-gray-500'
                 }`}
               >
-                Close
+                <i className="fas fa-times"></i>
               </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h3 className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Name</h3>
+                <p className="font-medium">{currentEmployee.name}</p>
+              </div>
+              <div>
+                <h3 className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Position</h3>
+                <p className="font-medium">{currentEmployee.position}</p>
+              </div>
+              <div>
+                <h3 className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Department</h3>
+                <p className="font-medium">{currentEmployee.department}</p>
+              </div>
+              <div>
+                <h3 className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</h3>
+                <p className="font-medium">{currentEmployee.email}</p>
+              </div>
+              <div>
+                <h3 className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</h3>
+                <p className="font-medium">{currentEmployee.phone}</p>
+              </div>
+              <div>
+                <h3 className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Status</h3>
+                <p className={`inline-block px-2 py-1 rounded-full text-sm font-semibold ${
+                  currentEmployee.status === 'Active' 
+                    ? isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
+                    : isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800'
+                }`}>
+                  {currentEmployee.status}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* Edit Employee Modal */}
       {editModalOpen && currentEmployee && (
-        <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-          <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDark ? 'text-white' : 'text-gray-800'}`}>
-            <h2 className="text-2xl font-semibold mb-4">Edit Employee</h2>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold">Edit Employee</h2>
+              <button 
+                onClick={() => setEditModalOpen(false)}
+                className={`p-2 rounded-full ${
+                  isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-gray-200 text-gray-500'
+                }`}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div>
-                <label className="block text-sm text-gray-500 mb-1">Name</label>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Name</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
                   }`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-500 mb-1">Department</label>
-                <input
-                  type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Position</label>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Position</label>
                 <input
                   type="text"
                   name="position"
                   value={formData.position}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
                   }`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-500 mb-1">Email</label>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Department</label>
+                <input
+                  type="text"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Email</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
                   }`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-500 mb-1">Phone</label>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Phone</label>
                 <input
                   type="text"
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
                   }`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-500 mb-1">Status</label>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Status</label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
                   }`}
                 >
                   <option value="Active">Active</option>
                   <option value="On Leave">On Leave</option>
-                  <option value="Inactive">Inactive</option>
+                  <option value="Terminated">Terminated</option>
                 </select>
               </div>
             </div>
             <div className="flex justify-end space-x-2">
-              <button
+              <button 
                 onClick={() => setEditModalOpen(false)}
-                className={`px-4 py-2 rounded ${
-                  isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-300 hover:bg-gray-400'
+                className={`px-4 py-2 rounded-lg ${
+                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateEmployee}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
               >
-                Save Changes
+                Update
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Modal */}
+      {/* Delete Confirmation Modal */}
       {deleteModalOpen && currentEmployee && (
-        <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-          <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDark ? 'text-white' : 'text-gray-800'}`}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
             <h2 className="text-2xl font-semibold mb-4">Confirm Delete</h2>
-            <p className="mb-6">Are you sure you want to delete {currentEmployee.name}? This action cannot be undone.</p>
+            <p className="mb-6">Are you sure you want to delete {currentEmployee.name} from the employee list? This action cannot be undone.</p>
             <div className="flex justify-end space-x-2">
-              <button
+              <button 
                 onClick={() => setDeleteModalOpen(false)}
-                className={`px-4 py-2 rounded ${
-                  isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-300 hover:bg-gray-400'
+                className={`px-4 py-2 rounded-lg ${
+                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteEmployee}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
               >
                 Delete
               </button>
