@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
@@ -6,10 +6,12 @@ import { FaArrowLeft, FaCalendarAlt, FaStickyNote } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
+import { ThemeContext } from "../ThemeContext";
 
 const ApplicantDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isDarkMode } = useContext(ThemeContext);
   const [applicant, setApplicant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,20 +35,27 @@ const ApplicantDetails = () => {
     setError(null);
     try {
       console.log("Fetching applicant details for ID:", id);
-      const [applicantResponse, notesResponse] = await Promise.all([
-        apiService.applicants.getById(id),
-        apiService.applicants.getNotes(id)
-      ]);
       
+      // First, try to get the applicant data
+      const applicantResponse = await apiService.applicants.getById(id);
       console.log("Applicant response:", applicantResponse);
-      console.log("Notes response:", notesResponse);
       
       if (!applicantResponse.data) {
         throw new Error("Applicant not found");
       }
       
       setApplicant(applicantResponse.data);
-      setNotes(notesResponse.data || []);
+      
+      // Then try to get notes, but don't let it block the main applicant data
+      try {
+        const notesResponse = await apiService.applicants.getNotes(id);
+        console.log("Notes response:", notesResponse);
+        setNotes(notesResponse.data || []);
+      } catch (notesError) {
+        console.error("Error fetching applicant notes:", notesError);
+        // Don't show toast error for notes - just log it
+        setNotes([]);
+      }
     } catch (error) {
       console.error("Error fetching applicant details:", error);
       console.error("Error response:", error.response);
@@ -89,21 +98,24 @@ const ApplicantDetails = () => {
     }
     
     try {
-      await apiService.applicants.addNote(applicant.id, {
+      console.log("Submitting feedback for applicant ID:", applicant.id);
+      
+      // Use the correct endpoint and parameter names for feedback
+      await apiService.applicants.addFeedback(applicant.id, {
         feedback_text: feedbackData,
         created_by: "HR User" // In a real app, this would be the current user's name
       });
       
-      // Refresh notes
-      const notesResponse = await apiService.applicants.getNotes(applicant.id);
-      setNotes(notesResponse.data);
+      // Refresh applicant details after adding feedback
+      fetchApplicantDetails();
       
       setFeedbackModalOpen(false);
       setFeedbackData("");
-      toast.success("Note added successfully");
+      toast.success("Feedback added successfully");
     } catch (error) {
-      console.error("Error submitting note:", error);
-      toast.error(error.response?.data?.message || "Failed to add note");
+      console.error("Error submitting feedback:", error);
+      console.error("Error response:", error.response);
+      toast.error(error.response?.data?.message || "Failed to add feedback");
     }
   };
 
@@ -113,7 +125,7 @@ const ApplicantDetails = () => {
         <Sidebar />
         <div className="flex flex-col flex-1 ml-64">
           <Header />
-          <main className="bg-gray-100 p-6 flex-1 mt-16">
+          <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
             </div>
@@ -129,9 +141,9 @@ const ApplicantDetails = () => {
         <Sidebar />
         <div className="flex flex-col flex-1 ml-64">
           <Header />
-          <main className="bg-gray-100 p-6 flex-1 mt-16">
+          <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800">
+              <h2 className={`text-2xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                 {error || "Applicant not found"}
               </h2>
               <button
@@ -152,34 +164,34 @@ const ApplicantDetails = () => {
       <div className="flex flex-col flex-1 ml-64">
         <ToastContainer position="top-right" />
 
-        <main className="bg-gray-100 p-6 flex-1 mt-16">
+        <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
           <div className="container mx-auto">
             {/* Back Button */}
             <button
               onClick={() => navigate('/applicants')}
-              className="flex items-center text-gray-600 hover:text-gray-800 mb-6"
+              className={`flex items-center ${isDarkMode ? 'text-gray-300 hover:text-gray-100' : 'text-gray-600 hover:text-gray-800'} mb-6`}
             >
               <FaArrowLeft className="mr-2" />
               Back to Applicants
             </button>
 
             {/* Applicant Details */}
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6 mb-6`}>
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h1 className="text-2xl font-semibold text-gray-800">{applicant.name}</h1>
-                  <p className="text-gray-600">{applicant.position}</p>
+                  <h1 className={`text-2xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{applicant.name}</h1>
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{applicant.position}</p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
                   applicant.status === "Pending" 
-                    ? "bg-yellow-100 text-yellow-800" 
+                    ? isDarkMode ? "bg-yellow-900 text-yellow-200" : "bg-yellow-100 text-yellow-800" 
                     : applicant.status === "Reviewed" 
-                    ? "bg-blue-100 text-blue-800" 
+                    ? isDarkMode ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800" 
                     : applicant.status === "Interviewed" 
-                    ? "bg-purple-100 text-purple-800"
+                    ? isDarkMode ? "bg-purple-900 text-purple-200" : "bg-purple-100 text-purple-800"
                     : applicant.status === "Accepted" 
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
+                    ? isDarkMode ? "bg-green-900 text-green-200" : "bg-green-100 text-green-800"
+                    : isDarkMode ? "bg-red-900 text-red-200" : "bg-red-100 text-red-800"
                 }`}>
                   {applicant.status}
                 </span>
@@ -266,7 +278,7 @@ const ApplicantDetails = () => {
           {/* Schedule Interview Modal */}
           {scheduleModalOpen && (
             <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 <h2 className="text-2xl font-semibold mb-4">Schedule Interview</h2>
                 <div className="grid grid-cols-1 gap-4 mb-4">
                   <div>
@@ -323,7 +335,7 @@ const ApplicantDetails = () => {
           {/* Feedback Modal */}
           {feedbackModalOpen && (
             <div className="fixed inset-0 flex items-center justify-center backdrop-filter backdrop-blur-md bg-gray-900/50 z-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+              <div className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 <h2 className="text-2xl font-semibold mb-4">Add Note</h2>
                 <div className="mb-4">
                   <label className="block text-sm text-gray-500 mb-1">Note</label>

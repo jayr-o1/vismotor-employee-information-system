@@ -1,9 +1,10 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Spinner from "./components/Layouts/Spinner";
+import { ThemeContext } from "./ThemeContext";
 import Layout from "./components/Layout";
 
 // Lazy loaded components
@@ -22,11 +23,21 @@ const Documentation = lazy(() => import("./pages/Documentation"));
 const NotFound = lazy(() => import("./components/NotFound"));
 
 function App() {
+  const { isDarkMode } = useContext(ThemeContext);
+  
   return (
     <Router>
-      <div className="app">
-        <ToastContainer position="top-right" autoClose={3000} />
-        <Suspense fallback={<div className="flex items-center justify-center h-screen"><Spinner /></div>}>
+      <div className={`app ${isDarkMode ? 'dark-mode' : ''}`}>
+        <ToastContainer 
+          position="top-right" 
+          autoClose={3000} 
+          theme={isDarkMode ? 'dark' : 'light'}
+        />
+        <Suspense fallback={
+          <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+            <Spinner />
+          </div>
+        }>
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />

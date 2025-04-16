@@ -78,7 +78,7 @@ const apiService = {
     getById: (id) => api.get(`/api/employees/${id}`),
     create: (employeeData) => api.post('/api/employees', employeeData),
     update: (id, employeeData) => api.put(`/api/employees/${id}`, employeeData),
-    updateStatus: (id, status) => api.patch(`/api/employees/${id}/status`, { status }),
+    updateStatus: (id, status) => api.put(`/api/employees/${id}`, { status }),
     delete: (id) => api.delete(`/api/employees/${id}`),
   },
   
