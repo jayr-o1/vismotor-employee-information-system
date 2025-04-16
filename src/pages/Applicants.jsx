@@ -10,6 +10,9 @@ import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../ThemeContext";
 
 const Applicants = () => {
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
+  
   // State for applicants data
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -298,12 +301,39 @@ const Applicants = () => {
     }
   };
 
+  // Function to determine status style based on status
+  const getStatusStyle = (status) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return isDark 
+          ? "bg-yellow-900/30 text-yellow-400" 
+          : "bg-yellow-100 text-yellow-800";
+      case 'reviewed':
+        return isDark 
+          ? "bg-blue-900/30 text-blue-400" 
+          : "bg-blue-100 text-blue-800";
+      case 'interviewed':
+        return isDark 
+          ? "bg-purple-900/30 text-purple-400" 
+          : "bg-purple-100 text-purple-800";
+      case 'rejected':
+        return isDark 
+          ? "bg-red-900/30 text-red-400" 
+          : "bg-red-100 text-red-800";
+      case 'accepted':
+        return isDark 
+          ? "bg-green-900/30 text-green-400" 
+          : "bg-green-100 text-green-800";
+      default:
+        return isDark 
+          ? "bg-gray-900/30 text-gray-400" 
+          : "bg-gray-100 text-gray-800";
+    }
+  };
+
   return (
-    <div className="flex">
-      <Sidebar />
-      <div className="flex flex-col flex-1 ml-64">
-        <Header />
-        <ToastContainer position="top-right" />
+    <div className="w-full">
+      <ToastContainer position="top-right" />
 
         <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
           <div className="container mx-auto">
@@ -382,12 +412,145 @@ const Applicants = () => {
                               onClick={() => handleScheduleClick(applicant)} 
                               className="text-green-500 hover:text-green-700 mr-2">
                               <FaCheck />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
+          Job Applicants
+        </h1>
+        
+        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search applicants..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className={`w-full md:w-64 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+              }`}
+            />
+            <i className="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+          </div>
+          
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <FaUserPlus /> Add Applicant
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className={`rounded-lg shadow p-6 flex justify-center items-center h-64 ${
+          isDark ? 'bg-slate-800' : 'bg-white'
+        }`}>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        </div>
+      ) : (
+        <>
+          <div className={`rounded-lg shadow overflow-hidden ${
+            isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white'
+          }`}>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
+                  <tr>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    }`}>Applicant</th>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    }`}>Position</th>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    }`}>Status</th>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    }`}>Applied Date</th>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    }`}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${
+                  isDark ? 'bg-slate-800 divide-slate-700' : 'bg-white divide-gray-200'
+                }`}>
+                  {currentItems.map((applicant) => (
+                    <tr key={applicant.id} className={isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div>
+                            <div className={`text-sm font-medium ${
+                              isDark ? 'text-white' : 'text-gray-900'
+                            }`}>{applicant.name}</div>
+                            <div className={`text-sm ${
+                              isDark ? 'text-gray-400' : 'text-gray-500'
+                            }`}>{applicant.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                        isDark ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        {applicant.position}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          getStatusStyle(applicant.status)
+                        }`}>
+                          {applicant.status}
+                        </span>
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                        isDark ? 'text-gray-300' : 'text-gray-500'
+                      }`}>
+                        {new Date(applicant.applied_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleViewApplicant(applicant)}
+                            className={`p-1.5 rounded-full ${
+                              isDark ? 'text-blue-400 hover:bg-slate-700' : 'text-blue-600 hover:bg-gray-100'
+                            }`}
+                            title="View Details"
+                          >
+                            <FaEye className="w-4 h-4" />
+                          </button>
+                          
+                          {applicant.status === 'Pending' && (
+                            <button
+                              onClick={() => handleFeedbackClick(applicant)}
+                              className={`p-1.5 rounded-full ${
+                                isDark ? 'text-yellow-400 hover:bg-slate-700' : 'text-yellow-600 hover:bg-gray-100'
+                              }`}
+                              title="Add Feedback"
+                            >
+                              <FaEdit className="w-4 h-4" />
                             </button>
-                            <button 
-                              onClick={() => handleOnboardClick(applicant)} 
-                              disabled={applicant.status !== "Interviewed"}
-                              className={`text-purple-500 mr-2 ${applicant.status !== "Interviewed" ? "opacity-50 cursor-not-allowed" : "hover:text-purple-700"}`}>
-                              <FaCheck />
+                          )}
+                          
+                          {(applicant.status === 'Reviewed' || applicant.status === 'Interviewed') && !applicant.interview_scheduled && (
+                            <button
+                              onClick={() => handleScheduleClick(applicant)}
+                              className={`p-1.5 rounded-full ${
+                                isDark ? 'text-purple-400 hover:bg-slate-700' : 'text-purple-600 hover:bg-gray-100'
+                              }`}
+                              title="Schedule Interview"
+                            >
+                              <i className="fas fa-calendar-alt w-4 h-4"></i>
+                            </button>
+                          )}
+                          
+                          {applicant.status === 'Interviewed' && (
+                            <button
+                              onClick={() => handleOnboardClick(applicant)}
+                              className={`p-1.5 rounded-full ${
+                                isDark ? 'text-green-400 hover:bg-slate-700' : 'text-green-600 hover:bg-gray-100'
+                              }`}
+                              title="Approve & Onboard"
+                            >
+                              <FaCheck className="w-4 h-4" />
                             </button>
                             <button onClick={() => handleDeleteClick(applicant)} className="text-red-500 hover:text-red-700">
                               <FaTrash />
@@ -673,6 +836,55 @@ Teaching Skills"
           )}
         </main>
       </div>
+                          )}
+                          
+                          <button
+                            onClick={() => handleDeleteClick(applicant)}
+                            className={`p-1.5 rounded-full ${
+                              isDark ? 'text-red-400 hover:bg-slate-700' : 'text-red-600 hover:bg-gray-100'
+                            }`}
+                            title="Delete"
+                          >
+                            <FaTrash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex justify-center mt-6">
+            <ReactPaginate
+              previousLabel={"← Previous"}
+              nextLabel={"Next →"}
+              pageCount={pageCount}
+              onPageChange={handlePageChange}
+              forcePage={currentPage}
+              containerClassName={`flex space-x-2 overflow-x-auto ${
+                isDark ? 'text-gray-300' : 'text-gray-500'
+              }`}
+              pageClassName={`border rounded-md ${
+                isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
+              }`}
+              previousClassName={`border rounded-md px-4 py-2 ${
+                isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
+              }`}
+              nextClassName={`border rounded-md px-4 py-2 ${
+                isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
+              }`}
+              pageLinkClassName="px-4 py-2 block"
+              previousLinkClassName=""
+              nextLinkClassName=""
+              activeClassName={isDark ? 'bg-gray-700 text-white' : 'bg-green-600 text-white'}
+              disabledClassName="opacity-50 cursor-not-allowed"
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };
