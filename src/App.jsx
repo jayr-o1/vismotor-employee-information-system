@@ -5,6 +5,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Spinner from "./components/Layouts/Spinner";
 import { ThemeContext } from "./ThemeContext";
+import Layout from "./components/Layout";
 
 // Lazy loaded components
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -46,13 +47,15 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/documentation" element={<Documentation />} />
             
-            {/* Protected Routes */}
-            <Route path="/home" element={<ProtectedRoute element={<Home />} />} />
-            <Route path="/employees" element={<ProtectedRoute element={<Employees />} />} />
-            <Route path="/applicants" element={<ProtectedRoute element={<Applicants />} />} />
-            <Route path="/applicants/:id" element={<ProtectedRoute element={<ApplicantDetails />} />} />
-            <Route path="/onboarding" element={<ProtectedRoute element={<Onboarding />} />} />
-            <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
+            {/* Protected Routes wrapped in Layout */}
+            <Route element={<ProtectedRoute element={<Layout />} />}>
+              <Route path="/home" element={<Home />} />
+              <Route path="/employees" element={<Employees />} />
+              <Route path="/applicants" element={<Applicants />} />
+              <Route path="/applicants/:id" element={<ApplicantDetails />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
             
             {/* Redirect root to login */}
             <Route path="/" element={<Navigate replace to="/login" />} />

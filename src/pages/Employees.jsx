@@ -3,12 +3,16 @@ import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import ReactPaginate from "react-paginate";
+import ReactPaginate from 'react-paginate';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
 
 const Employees = () => {
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
+  
   // State management
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -147,12 +151,22 @@ const Employees = () => {
     }
   };
 
-  return (
-    <div className="flex">
-      <Sidebar />
-      <div className="flex flex-col flex-1 ml-64">
-        <Header />
-        <ToastContainer position="top-right" />
+  // Function to determine status style based on status
+  const getStatusStyle = (status) => {
+    if (status === 'Active') {
+      return isDark 
+        ? "bg-green-900/30 text-green-400" 
+        : "bg-green-200 text-green-800";
+    } else if (status === 'On Leave') {
+      return isDark 
+        ? "bg-yellow-900/30 text-yellow-400" 
+        : "bg-yellow-200 text-yellow-800";
+    } else {
+      return isDark 
+        ? "bg-red-900/30 text-red-400" 
+        : "bg-red-200 text-red-800";
+    }
+  };
 
         <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
           <div className="container mx-auto">
@@ -223,25 +237,124 @@ const Employees = () => {
                     </tbody>
                   </table>
                 </div>
+  return (
+    <div className="w-full">
+      <ToastContainer position="top-right" />
 
-                {/* Pagination */}
-                <div className="mt-6">
-                  <ReactPaginate
-                    previousLabel="← Previous"
-                    nextLabel="Next →"
-                    pageCount={pageCount}
-                    onPageChange={handlePageChange}
-                    containerClassName="flex justify-center items-center mt-6 space-x-1"
-                    pageLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    previousLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    nextLinkClassName="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    activeLinkClassName="bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
-                    disabledLinkClassName="opacity-50 cursor-not-allowed"
-                    breakClassName="px-3 py-2 rounded border border-gray-300"
-                  />
-                </div>
-              </>
-            )}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
+          Staff Directory
+        </h1>
+        
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search employees..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className={`px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300'
+            }`}
+          />
+          <i className="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className={`rounded-lg shadow p-6 flex justify-center items-center h-64 ${
+          isDark ? 'bg-slate-800' : 'bg-white'
+        }`}>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        </div>
+      ) : (
+        <>
+          <div className={`rounded-lg shadow overflow-hidden ${
+            isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white'
+          }`}>
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
+                <tr>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                    isDark ? 'text-gray-300' : 'text-gray-500'
+                  }`}>ID</th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                    isDark ? 'text-gray-300' : 'text-gray-500'
+                  }`}>Name</th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                    isDark ? 'text-gray-300' : 'text-gray-500'
+                  }`}>Department</th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                    isDark ? 'text-gray-300' : 'text-gray-500'
+                  }`}>Status</th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                    isDark ? 'text-gray-300' : 'text-gray-500'
+                  }`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${
+                isDark ? 'bg-slate-800 divide-slate-700' : 'bg-white divide-gray-200'
+              }`}>
+                {currentItems.map((employee) => (
+                  <tr key={employee.id} className={isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-50'}>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
+                      {employee.id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div>
+                          <div className={`text-sm font-medium ${
+                            isDark ? 'text-white' : 'text-gray-900'
+                          }`}>{employee.name}</div>
+                          <div className={`text-sm ${
+                            isDark ? 'text-gray-400' : 'text-gray-500'
+                          }`}>{employee.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      {employee.department}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusStyle(employee.status)}`}>
+                        {employee.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => handleViewEmployee(employee)}
+                          className={`p-1.5 rounded-full ${
+                            isDark ? 'text-blue-400 hover:bg-slate-700' : 'text-blue-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <FaEye className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleEditEmployee(employee)}
+                          className={`p-1.5 rounded-full ${
+                            isDark ? 'text-yellow-400 hover:bg-slate-700' : 'text-yellow-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <FaEdit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteClick(employee)}
+                          className={`p-1.5 rounded-full ${
+                            isDark ? 'text-red-400 hover:bg-slate-700' : 'text-red-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <FaTrash className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           {/* View Employee Modal */}
@@ -389,6 +502,35 @@ const Employees = () => {
           )}
         </main>
       </div>
+          {/* Pagination */}
+          <div className="flex justify-center mt-6">
+            <ReactPaginate
+              previousLabel={"← Previous"}
+              nextLabel={"Next →"}
+              pageCount={pageCount}
+              onPageChange={handlePageChange}
+              forcePage={currentPage}
+              containerClassName={`flex space-x-2 overflow-x-auto ${
+                isDark ? 'text-gray-300' : 'text-gray-500'
+              }`}
+              pageClassName={`border rounded-md ${
+                isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
+              }`}
+              previousClassName={`border rounded-md px-4 py-2 ${
+                isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
+              }`}
+              nextClassName={`border rounded-md px-4 py-2 ${
+                isDark ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'
+              }`}
+              pageLinkClassName="px-4 py-2 block"
+              previousLinkClassName=""
+              nextLinkClassName=""
+              activeClassName={isDark ? 'bg-gray-700 text-white' : 'bg-green-600 text-white'}
+              disabledClassName="opacity-50 cursor-not-allowed"
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };
