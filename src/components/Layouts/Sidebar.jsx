@@ -7,7 +7,6 @@ import { ThemeContext } from "../../ThemeContext";
 
 const Sidebar = () => {
   const navigate = useNavigate();
-  const { isDarkMode } = useContext(ThemeContext);
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
 
@@ -21,8 +20,8 @@ const Sidebar = () => {
       confirmButtonColor: "#d33",
       cancelButtonColor: "#a6a6a6",
       confirmButtonText: "Logout",
-      background: isDarkMode ? '#374151' : '#fff',
-      color: isDarkMode ? '#fff' : '#000'
+      background: isDark ? '#374151' : '#fff',
+      color: isDark ? '#fff' : '#000'
     }).then((result) => {
       if (result.isConfirmed) {
         // Clear authentication data
@@ -35,14 +34,9 @@ const Sidebar = () => {
   };
 
   return (
-    <div className={`flex flex-col min-h-screen w-64 border-r-2 fixed ${
-      isDarkMode 
-        ? 'border-gray-700 bg-gray-800 text-white' 
-        : 'border-gray-200 bg-gray-50 text-black'
-    } transition-colors duration-200`}>
     <div className={`flex flex-col min-h-screen border-r-2 fixed z-50 w-64 ${
       isDark ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-200 bg-gray-50 text-black'
-    }`}>
+    } transition-colors duration-200`}>
       {/* Profile Picture */}
       <div className="flex flex-col items-center pt-6 pb-4 space-y-3 px-3">
         <img
@@ -50,11 +44,6 @@ const Sidebar = () => {
           src={logo}
           alt="Profile"
         />
-        <span className={`text-lg font-semibold ${
-          isDarkMode 
-            ? 'bg-gray-700 text-white' 
-            : 'bg-gray-50 text-black'
-        } px-3 py-1 rounded-md`}>
         <span className={`text-lg font-semibold px-3 py-1 rounded-md ${
           isDark ? 'bg-gray-700' : 'bg-gray-50'
         }`}>
@@ -63,11 +52,6 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 pl-4 lg:pl-4 mt-5 overflow-y-auto ${
-        isDarkMode 
-          ? 'bg-gray-800 text-white' 
-          : 'bg-gray-50 text-black'
-      }`}>
       <nav className={`flex-1 px-4 mt-3 overflow-y-auto ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <ul className="w-full flex flex-col">
           {/* Home */}
@@ -78,10 +62,8 @@ const Sidebar = () => {
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
-                    : isDarkMode
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                     : isDark
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline` 
+                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
@@ -100,10 +82,8 @@ const Sidebar = () => {
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
-                    : isDarkMode
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                     : isDark
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline` 
+                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
@@ -122,10 +102,8 @@ const Sidebar = () => {
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
-                    : isDarkMode
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                     : isDark
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline` 
+                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
@@ -144,10 +122,8 @@ const Sidebar = () => {
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
-                    : isDarkMode
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                     : isDark
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline` 
+                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
@@ -166,10 +142,8 @@ const Sidebar = () => {
                 `flex items-center py-3 px-4 rounded-l ${
                   isActive
                     ? `bg-[#0f6013] text-white border-r-4 border-green-700 hover:no-underline`
-                    : isDarkMode
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                     : isDark
-                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline` 
+                      ? `text-gray-300 hover:bg-gray-700 hover:text-white hover:no-underline`
                       : `text-gray-500 hover:bg-gray-200 hover:text-gray-500 hover:no-underline`
                 }`
               }
@@ -181,8 +155,7 @@ const Sidebar = () => {
           </li>
 
           {/* Divider */}
-          <hr className={isDarkMode ? "bg-gray-700" : "bg-gray-100"} />
-          <hr className={`my-3 ${isDark ? 'border-gray-700' : 'bg-gray-100'}`} />
+          <hr className={`my-3 ${isDark ? 'border-gray-700' : 'border-gray-100'}`} />
 
           {/* Logout */}
           <li className="my-1">

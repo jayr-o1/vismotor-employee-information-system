@@ -1,5 +1,3 @@
-
-import React, { useState, useEffect, useContext } from "react";
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Chart from 'chart.js/auto';
@@ -11,9 +9,6 @@ import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
-
-const Home = () => {
-  const { isDarkMode } = useContext(ThemeContext);
 import { Link } from "react-router-dom";
 
 const Home = () => {
@@ -28,8 +23,8 @@ const Home = () => {
     recentApplicants: []
   });
   const [trendsData, setTrendsData] = useState({
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
+    labels: [],
+    data: []
   });
 
   // Calculate statistics from the trends data
@@ -73,10 +68,6 @@ const Home = () => {
           setTrendsData({
             labels: [],
             data: []
-          // Fallback to sample link click data
-          setTrendsData({
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
           });
           toast.error("Failed to load trends data. Please check your connection.");
         }
@@ -96,8 +87,6 @@ const Home = () => {
         setTrendsData({
           labels: [],
           data: []
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-          data: [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92]
         });
         
         toast.error("Failed to load dashboard data. Please check your connection or contact support.");
@@ -140,8 +129,7 @@ const Home = () => {
     if (trendsData.labels.length > 0) {
       createChart();
     }
-  }, [trendsData, isDarkMode]); // Re-create chart when dark mode changes
-  }, [trendsData, theme]);
+  }, [trendsData, isDark]); // Re-create chart when dark mode changes
 
   const createChart = () => {
     // Destroy existing chart if it exists
@@ -150,54 +138,6 @@ const Home = () => {
     }
 
     const ctx = document.getElementById('applicantChart');
-    if (!ctx) return;
-
-    // Determine chart colors based on theme
-    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-    const textColor = isDarkMode ? '#fff' : '#333';
-
-    // Use real data from the API
-    const chartData = {
-      labels: trendsData.labels,
-      datasets: [{
-        label: 'New Applicants',
-        data: trendsData.data,
-        backgroundColor: isDarkMode ? 'rgba(72, 187, 120, 0.2)' : 'rgba(15, 96, 19, 0.2)',
-        borderColor: isDarkMode ? 'rgba(72, 187, 120, 1)' : 'rgba(15, 96, 19, 1)',
-        borderWidth: 2,
-        tension: 0.3
-      }]
-    };
-
-    window.myChart = new Chart(ctx, {
-      type: 'line',
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: gridColor
-            },
-            ticks: {
-              color: textColor
-            }
-          },
-          x: {
-            grid: {
-              color: gridColor
-            },
-            ticks: {
-              color: textColor
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            labels: {
-              color: textColor
     if (!ctx) {
       console.error('Chart canvas element not found');
       return;
@@ -218,12 +158,11 @@ const Home = () => {
         gradient.addColorStop(1, 'rgba(15, 96, 19, 0.01)');
       }
       
-      // Ensure data is not empty
       const chartData = {
-        labels: trendsData.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        labels: trendsData.labels,
         datasets: [{
-          label: 'Link Clicks',
-          data: trendsData.data || [45, 62, 78, 55, 98, 82, 63, 70, 92, 105, 87, 92],
+          label: 'New Applicants',
+          data: trendsData.data,
           backgroundColor: gradient,
           borderColor: isDark ? '#16a34a' : '#0f6013',
           borderWidth: 2,
@@ -248,164 +187,49 @@ const Home = () => {
           maintainAspectRatio: false,
           interaction: {
             mode: 'index',
-            intersect: false,
+            intersect: false
           },
           scales: {
             y: {
               beginAtZero: true,
-              border: {
-                display: false
-              },
               grid: {
-                color: gridColor,
-                drawBorder: false,
-                lineWidth: 1
+                color: gridColor
               },
               ticks: {
-                color: textColor,
-                font: {
-                  size: 10
-                },
-                padding: 6,
-                maxTicksLimit: 6,
-                callback: function(value) {
-                  return value % 1 === 0 ? value : '';  // Only show integer values
-                }
+                color: textColor
               }
             },
             x: {
-              border: {
-                display: false
-              },
               grid: {
-                display: false,
-                drawBorder: false
+                color: gridColor
               },
               ticks: {
-                color: textColor,
-                font: {
-                  size: 10
-                },
-                padding: 6,
-                maxTicksLimit: window.innerWidth < 768 ? 6 : 12, // Show fewer labels on small screens
-                callback: function(val, index) {
-                  // On small screens, only show every other month
-                  return window.innerWidth < 768 ? (index % 2 === 0 ? this.getLabelForValue(val) : '') : this.getLabelForValue(val);
-                }
+                color: textColor
               }
             }
           },
           plugins: {
             legend: {
-              display: false
-            },
-            title: {
-              display: false
+              labels: {
+                color: textColor
+              }
             },
             tooltip: {
-              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.95)',
-              titleColor: isDark ? '#fff' : '#0f6013',
-              bodyColor: isDark ? '#e2e8f0' : '#333',
-              titleFont: {
-                size: 12,
-                weight: 'bold'
-              },
-              bodyFont: {
-                size: 11
-              },
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : '#0f6013',
-              borderWidth: 1,
-              padding: 8,
-              cornerRadius: 6,
-              boxPadding: 4,
-              displayColors: false,
-              callbacks: {
-                title: function(tooltipItems) {
-                  return tooltipItems[0].label;
-                },
-                label: function(context) {
-                  return `Clicks: ${context.raw}`;
-                }
-              }
-            }
-          },
-          elements: {
-            line: {
-              tension: 0.3
-            }
-          },
-          animation: {
-            duration: 800,
-            easing: 'easeOutQuad'
-          },
-          layout: {
-            padding: {
-              left: 10,
-              right: 10,
-              top: 15,
-              bottom: 10
+              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+              titleColor: textColor,
+              bodyColor: textColor,
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+              borderWidth: 1
             }
           }
         }
       });
-      
     } catch (error) {
-      console.error('Error creating chart:', error);
+      console.error("Error creating chart:", error);
+      toast.error("Failed to create chart. Please try refreshing the page.");
     }
   };
 
-  return (
-    <div className="flex">
-      <Sidebar />
-      <div className="flex flex-col flex-1 ml-64">
-        <Header />
-        <ToastContainer position="top-right" />
-
-        <main className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} p-6 flex-1 mt-16 transition-colors duration-200`}>
-          <div className="container mx-auto px-4">
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-8`}>Dashboard</h1>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center h-96">
-                <Spinner />
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-                  <DashboardCard
-                    title="Total Applicants"
-                    value={stats.applicants}
-                    icon="fas fa-user-tie"
-                    color="text-blue-500"
-                    bgColor={isDarkMode ? "bg-blue-900" : "bg-blue-100"}
-                  />
-
-                  <DashboardCard
-                    title="Employees"
-                    value={stats.employees}
-                    icon="fas fa-users"
-                    color="text-green-500"
-                    bgColor={isDarkMode ? "bg-green-900" : "bg-green-100"}
-                  />
-
-                  <DashboardCard
-                    title="Onboarding"
-                    value={stats.onboarding}
-                    icon="fas fa-clipboard-check"
-                    color="text-yellow-500"
-                    bgColor={isDarkMode ? "bg-yellow-900" : "bg-yellow-100"}
-                  />
-                </div>
-
-                {/* Chart and Table */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Chart Container */}
-                  <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 h-96 transition-colors duration-200`}>
-                    <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-6`}>
-                      Applicant Trends
-                    </h2>
-                    <div className="h-72">
-                      <canvas id="applicantChart"></canvas>
   // Filter tabs
   const renderTabContent = () => {
     switch(activeTab) {
@@ -535,12 +359,6 @@ const Home = () => {
               </div>
             </div>
 
-                  {/* Recent Applicants Table */}
-                  <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 transition-colors duration-200`}>
-                    <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-6`}>
-                      Recent Applicants
-                    </h2>
-                    <DashboardTable data={stats.recentApplicants} />
             {/* Recent Applicants */}
             <div className={`rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border ${
               isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'
@@ -620,29 +438,90 @@ const Home = () => {
   };
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`px-3 py-2 rounded-lg transition-colors text-sm ${
-              activeTab === 'dashboard' 
-                ? 'bg-green-600 text-white' 
-                : isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <i className="fas fa-th-large mr-2"></i> Overview
-          </button>
-        </div>
-      </div>
+    <div className={`w-full ${isDark ? 'bg-gray-900' : 'bg-gray-100'}`}>
+      <ToastContainer position="top-right" />
+      <main className="p-6 flex-1 mt-16 transition-colors duration-200">
+        <div className="container mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Dashboard</h1>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-4 py-2 rounded ${
+                  activeTab === 'dashboard'
+                    ? isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
+                    : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('reports')}
+                className={`px-4 py-2 rounded ${
+                  activeTab === 'reports'
+                    ? isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-800'
+                    : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Reports
+              </button>
+            </div>
+          </div>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-96">
-          <Spinner />
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Spinner />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <DashboardCard
+                  title="Total Applicants"
+                  value={stats.applicants}
+                  icon="users"
+                  color="blue"
+                  isDark={isDark}
+                />
+                <DashboardCard
+                  title="Total Employees"
+                  value={stats.employees}
+                  icon="user-tie"
+                  color="green"
+                  isDark={isDark}
+                />
+                <DashboardCard
+                  title="Onboarding"
+                  value={stats.onboarding}
+                  icon="user-plus"
+                  color="purple"
+                  isDark={isDark}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6`}>
+                  <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    Applicant Trends
+                  </h2>
+                  <div className="h-64">
+                    <canvas id="applicantChart"></canvas>
+                  </div>
+                </div>
+
+                <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6`}>
+                  <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    Recent Applicants
+                  </h2>
+                  <DashboardList
+                    items={stats.recentApplicants}
+                    isDark={isDark}
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
-      ) : renderTabContent()}
+      </main>
     </div>
   );
 };
