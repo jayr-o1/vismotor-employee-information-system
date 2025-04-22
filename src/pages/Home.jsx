@@ -203,21 +203,21 @@ const Home = () => {
         const mockResponse = await mockFetch('/api/dashboard/stats');
         statsResponse = { data: await mockResponse.json() };
       }
-      
-      setStats({
-        applicants: statsResponse.data.totalApplicants || 0,
-        employees: statsResponse.data.totalEmployees || 0,
-        onboarding: statsResponse.data.totalOnboarding || 0,
-        recentApplicants: statsResponse.data.recentApplicants || []
-      });
+        
+        setStats({
+          applicants: statsResponse.data.totalApplicants || 0,
+          employees: statsResponse.data.totalEmployees || 0,
+          onboarding: statsResponse.data.totalOnboarding || 0,
+          recentApplicants: statsResponse.data.recentApplicants || []
+        });
 
       // Fetch trends data
       await fetchTrendsData();
       
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-      
-      setStats({
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        
+        setStats({
         applicants: 0,
         employees: 0,
         onboarding: 0,
@@ -225,9 +225,9 @@ const Home = () => {
       });
       
       toast.error("Failed to load dashboard data. Please check your connection or contact support.");
-    } finally {
-      setIsLoading(false);
-    }
+      } finally {
+        setIsLoading(false);
+      }
   }, [fetchTrendsData]);
 
   // Initial data fetch on component mount
@@ -292,14 +292,14 @@ const Home = () => {
       }
       
       // Use actual data from the API without fallbacks
-      const chartData = {
-        labels: trendsData.labels,
-        datasets: [{
+    const chartData = {
+      labels: trendsData.labels,
+      datasets: [{
           label: 'Applicants',
-          data: trendsData.data,
+        data: trendsData.data,
           backgroundColor: gradient,
           borderColor: isDark ? '#16a34a' : '#0f6013',
-          borderWidth: 2,
+        borderWidth: 2,
           tension: 0.3,
           fill: true,
           pointBackgroundColor: isDark ? '#22c55e' : '#16a34a',
@@ -310,26 +310,26 @@ const Home = () => {
           pointHoverBackgroundColor: '#fff',
           pointHoverBorderColor: '#16a34a',
           pointHoverBorderWidth: 2
-        }]
-      };
+      }]
+    };
 
-      window.myChart = new Chart(ctx, {
-        type: 'line',
-        data: chartData,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
+    window.myChart = new Chart(ctx, {
+      type: 'line',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
           interaction: {
             mode: 'index',
             intersect: false,
           },
-          scales: {
-            y: {
-              beginAtZero: true,
+        scales: {
+          y: {
+            beginAtZero: true,
               border: {
                 display: false
               },
-              grid: {
+            grid: {
                 color: gridColor,
                 drawBorder: false,
                 lineWidth: 1
@@ -344,13 +344,13 @@ const Home = () => {
                 callback: function(value) {
                   return value % 1 === 0 ? value : '';  // Only show integer values
                 }
-              }
-            },
-            x: {
+            }
+          },
+          x: {
               border: {
                 display: false
               },
-              grid: {
+            grid: {
                 display: false,
                 drawBorder: false
               },
@@ -365,11 +365,11 @@ const Home = () => {
                   // On small screens, only show every other month
                   return window.innerWidth < 768 ? (index % 2 === 0 ? this.getLabelForValue(val) : '') : this.getLabelForValue(val);
                 }
-              }
             }
-          },
-          plugins: {
-            legend: {
+          }
+        },
+        plugins: {
+          legend: {
               display: false
             },
             title: {
@@ -464,7 +464,7 @@ const Home = () => {
           <i className="fas fa-download w-4 h-4"></i>
         </button>
       </div>
-    </div>
+              </div>
   );
 
   // Filter tabs
@@ -474,20 +474,20 @@ const Home = () => {
         return (
           <div className="flex flex-col gap-6 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <DashboardCard
-                value={stats.employees}
+                  <DashboardCard
+                    value={stats.employees}
                 title="Total Employees"
-                icon="fas fa-users"
+                    icon="fas fa-users"
                 color="blue"
                 trend={{
                   value: 3.6,
                   isUpward: true,
                 }}
               />
-              <DashboardCard
+                  <DashboardCard
                 value={stats.onboarding}
-                title="Onboarding"
-                icon="fas fa-clipboard-check"
+                    title="Onboarding"
+                    icon="fas fa-clipboard-check"
                 color="yellow"
                 trend={{
                   value: 3.6,
@@ -503,8 +503,8 @@ const Home = () => {
                   value: 3.6,
                   isUpward: true,
                 }}
-              />
-            </div>
+                  />
+                </div>
 
             {/* Link Click Analytics Section */}
             <div className={`rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border ${
@@ -536,7 +536,7 @@ const Home = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className={`p-3 rounded-lg border ${
                     isDark 
                       ? 'bg-blue-900/20 border-blue-800/30' 
@@ -554,7 +554,7 @@ const Home = () => {
                       }`}>{applicantStats.month}</span>
                     </div>
                   </div>
-                  
+
                   <div className={`p-3 rounded-lg border ${
                     isDark 
                       ? 'bg-purple-900/20 border-purple-800/30' 
