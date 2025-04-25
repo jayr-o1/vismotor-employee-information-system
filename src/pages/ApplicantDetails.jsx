@@ -18,12 +18,12 @@ const ApplicantDetails = () => {
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [interviewData, setInterviewData] = useState({
     date: "",
-    type: "video", // Default to video interview
-    interviewer: "", // Changed from notes to interviewer
-    location: "" // Add location field which seems to be required
+    time: "",
+    location: "",
+    interviewer: ""
   });
   const [feedbackData, setFeedbackData] = useState("");
-  const [interviews, setInterviews] = useState([]); // Changed from notes to interviews
+  const [notes, setNotes] = useState([]);
 
   useEffect(() => {
     fetchApplicantDetails();
@@ -45,15 +45,15 @@ const ApplicantDetails = () => {
       
       setApplicant(applicantResponse.data);
       
-      // Then try to get interviews history using the correct API method
+      // Then try to get notes, but don't let it block the main applicant data
       try {
-        const interviewsResponse = await apiService.applicants.getInterviews(id);
-        console.log("Interviews response:", interviewsResponse);
-        setInterviews(interviewsResponse.data || []);
-      } catch (interviewsError) {
-        console.error("Error fetching interview history:", interviewsError);
-        // Don't show toast error for interviews - just log it
-        setInterviews([]);
+        const notesResponse = await apiService.applicants.getNotes(id);
+        console.log("Notes response:", notesResponse);
+        setNotes(notesResponse.data || []);
+      } catch (notesError) {
+        console.error("Error fetching applicant notes:", notesError);
+        // Don't show toast error for notes - just log it
+        setNotes([]);
       }
     } catch (error) {
       console.error("Error fetching applicant details:", error);
@@ -66,77 +66,27 @@ const ApplicantDetails = () => {
   };
 
   const handleScheduleInterview = async () => {
-    // Check for all required fields
-    if (!interviewData.date || !interviewData.interviewer || !interviewData.location) {
-      toast.error("Please fill all interview details (date, type, interviewer, and location)");
+    if (!interviewData.date || !interviewData.time || !interviewData.location || !interviewData.interviewer) {
+      toast.error("Please fill all interview details");
       return;
     }
     
     try {
-      // Parse the datetime-local input
-      const dateTimeInput = interviewData.date; // Format: "YYYY-MM-DDThh:mm"
-      let interviewDate, interviewTime;
-      
-      if (dateTimeInput.includes('T')) {
-        // Split into date and time components
-        const [datePart, timePart] = dateTimeInput.split('T');
-        interviewDate = datePart; // YYYY-MM-DD
-        interviewTime = timePart; // hh:mm
-      } else {
-        interviewDate = dateTimeInput;
-        interviewTime = "00:00"; // Default time if none provided
-      }
-      
-      // Let's try a direct call to the applicant-specific API endpoint instead
-      console.log("Creating interview for applicant ID:", applicant.id);
-      
-      // Instead of using interviews.schedule, try using a method directly on the applicant
-      const response = await apiService.applicants.addInterview(applicant.id, {
-        interview_date: interviewDate,
-        interview_time: interviewTime,
-        interview_type: interviewData.type,
-        interviewer: interviewData.interviewer,
+      await apiService.interviews.schedule({
+        applicant_id: applicant.id,
+        interview_date: interviewData.date,
+        interview_time: interviewData.time,
         location: interviewData.location,
-        status: 'scheduled'
+        interviewer: interviewData.interviewer
       });
       
-      console.log("Interview scheduling response:", response);
-      
-      // If successful, update applicant status
-      await apiService.applicants.update(applicant.id, { status: 'Interviewed' });
-      
-      setApplicant(prev => ({
-        ...prev,
-        status: 'Interviewed'
-      }));
-      
-      setScheduleModalOpen(false);
-      
-      setInterviewData({
-        date: '',
-        type: 'video',
-        interviewer: '',
-        location: ''
-      });
-      
-      toast.success("Interview scheduled successfully and applicant status updated!");
-      
-      // Refresh to get updated interview history
+      // Refresh applicant details
       fetchApplicantDetails();
+      setScheduleModalOpen(false);
+      toast.success("Interview scheduled successfully");
     } catch (error) {
       console.error("Error scheduling interview:", error);
-      // Log more detailed error information
-      if (error.response) {
-        console.error("Error response data:", error.response.data);
-        console.error("Error response status:", error.response.status);
-        console.error("Error config:", error.config);
-        toast.error(`Failed to schedule interview: ${error.response.data?.message || error.response.status}`);
-      } else if (error.message) {
-        console.error("Error message:", error.message);
-        toast.error(`Error: ${error.message}`);
-      } else {
-        toast.error("Failed to schedule interview. Please try again.");
-      }
+      toast.error(error.response?.data?.message || "Failed to schedule interview");
     }
   };
 
@@ -294,146 +244,96 @@ const ApplicantDetails = () => {
             </button>
           </div>
 
-          {/* Interview History Section */}
+          {/* Notes Section */}
           <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-lg shadow-md p-6 mb-6`}>
-            <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Interview History</h2>
-            {interviews && interviews.length > 0 ? (
+            <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Notes & Feedback</h2>
+            {notes && notes.length > 0 ? (
               <div className="space-y-4">
-                {interviews.map((interview) => (
-                  <div key={interview.id} className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-gray-50 border-gray-200'} border p-4 rounded-lg`}>
+                {notes.map((note) => (
+                  <div key={note.id} className={`${isDark ? 'bg-slate-800 border-slate-700' : 'bg-gray-50 border-gray-200'} border p-4 rounded-lg`}>
                     <div className="flex justify-between mb-2">
-                      <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {interview.interview_type} Interview
-                      </span>
-                      <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {new Date(interview.interview_date).toLocaleDateString()} 
-                        {interview.interview_time && ` at ${interview.interview_time}`}
-                      </span>
+                      <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{note.created_by}</span>
+                      <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{new Date(note.created_at).toLocaleDateString()}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                          <span className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Interviewer: </span>
-                          {interview.interviewer}
-                        </p>
-                        {interview.notes && (
-                          <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
-                            {interview.notes}
-                          </p>
-                        )}
-                      </div>
-                      <span className={`px-2 py-1 text-xs rounded ${
-                        interview.status === 'completed' 
-                          ? isDark ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'
-                          : isDark ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {interview.status === 'completed' ? 'Completed' : 'Scheduled'}
-                      </span>
-                    </div>
+                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{note.feedback_text}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No interviews scheduled yet.</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No notes or feedback yet.</p>
             )}
-          </div>
-
-          {/* Add a message explaining the workflow to the UI */}
-          <div className={`my-4 p-4 rounded-lg ${
-            isDark 
-              ? 'bg-blue-900/30 border border-blue-800/50 text-blue-300' 
-              : 'bg-blue-50 border border-blue-200 text-blue-800'
-          }`}>
-            <div className="flex items-start">
-              <i className="fas fa-info-circle mt-0.5 mr-2"></i>
-              <p className="text-sm">
-                <strong>Workflow:</strong> Applicants must be interviewed before they can be onboarded. 
-                Schedule an interview using the button below to proceed with the hiring process.
-              </p>
-            </div>
           </div>
         </div>
       </div>
 
       {/* Schedule Interview Modal */}
       {scheduleModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className={`p-6 rounded-lg shadow-lg w-full max-w-md ${
-            isDark ? 'bg-slate-800' : 'bg-white'
-          }`}>
-            <h2 className={`text-xl font-bold mb-4 ${
-              isDark ? 'text-white' : 'text-slate-800'
-            }`}>Schedule Interview</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${isDark ? 'bg-[#232f46] text-white' : 'bg-white text-gray-800'} rounded-lg shadow-lg p-6 max-w-md w-full`}>
+            <h3 className="text-xl font-semibold mb-4">Schedule Interview</h3>
             <div className="space-y-4">
               <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  isDark ? 'text-slate-300' : 'text-slate-600'
-                }`}>Interview Date & Time</label>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Date</label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   value={interviewData.date}
                   onChange={(e) => setInterviewData({...interviewData, date: e.target.value})}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-800'
+                  className={`w-full px-3 py-2 border rounded-lg ${
+                    isDark 
+                      ? 'bg-slate-700 border-slate-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-800'
                   }`}
-                  required
                 />
-                <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Please select both date and time
-                </p>
               </div>
               <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  isDark ? 'text-slate-300' : 'text-slate-600'
-                }`}>Interview Type</label>
-                <select
-                  value={interviewData.type}
-                  onChange={(e) => setInterviewData({...interviewData, type: e.target.value})}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-800'
-                  }`}
-                >
-                  <option value="phone">Phone Interview</option>
-                  <option value="video">Video Interview</option>
-                  <option value="in-person">In-Person Interview</option>
-                </select>
-              </div>
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  isDark ? 'text-slate-300' : 'text-slate-600'
-                }`}>Interviewer</label>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Time</label>
                 <input
-                  type="text"
-                  value={interviewData.interviewer}
-                  onChange={(e) => setInterviewData({...interviewData, interviewer: e.target.value})}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-800'
+                  type="time"
+                  value={interviewData.time}
+                  onChange={(e) => setInterviewData({...interviewData, time: e.target.value})}
+                  className={`w-full px-3 py-2 border rounded-lg ${
+                    isDark 
+                      ? 'bg-slate-700 border-slate-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-800'
                   }`}
-                  placeholder="Enter interviewer's name"
-                  required
                 />
               </div>
               <div>
-                <label className={`block text-sm font-medium mb-1 ${
-                  isDark ? 'text-slate-300' : 'text-slate-600'
-                }`}>Location</label>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Location</label>
                 <input
                   type="text"
                   value={interviewData.location}
                   onChange={(e) => setInterviewData({...interviewData, location: e.target.value})}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-800'
+                  placeholder="e.g. Office Room 3, Zoom, etc."
+                  className={`w-full px-3 py-2 border rounded-lg ${
+                    isDark 
+                      ? 'bg-slate-700 border-slate-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-800'
                   }`}
-                  placeholder="Enter the interview location"
-                  required
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Interviewer</label>
+                <input
+                  type="text"
+                  value={interviewData.interviewer}
+                  onChange={(e) => setInterviewData({...interviewData, interviewer: e.target.value})}
+                  placeholder="Name of interviewer"
+                  className={`w-full px-3 py-2 border rounded-lg ${
+                    isDark 
+                      ? 'bg-slate-700 border-slate-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-800'
+                  }`}
                 />
               </div>
             </div>
-            <div className="flex justify-end space-x-3 mt-6">
+            <div className="flex justify-end mt-6 space-x-3">
               <button
                 onClick={() => setScheduleModalOpen(false)}
                 className={`px-4 py-2 rounded-lg ${
-                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  isDark 
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
               >
                 Cancel
@@ -451,29 +351,28 @@ const ApplicantDetails = () => {
 
       {/* Add Feedback Modal */}
       {feedbackModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className={`p-6 rounded-lg shadow-lg w-full max-w-md ${
-            isDark ? 'bg-slate-800' : 'bg-white'
-          }`}>
-            <h2 className={`text-xl font-bold mb-4 ${
-              isDark ? 'text-white' : 'text-slate-800'
-            }`}>Add Note</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${isDark ? 'bg-[#232f46] text-white' : 'bg-white text-gray-800'} rounded-lg shadow-lg p-6 max-w-md w-full`}>
+            <h3 className="text-xl font-semibold mb-4">Add Note</h3>
             <div>
               <textarea
                 value={feedbackData}
                 onChange={(e) => setFeedbackData(e.target.value)}
                 placeholder="Enter your notes or feedback..."
-                className={`w-full px-3 py-2 rounded-lg border ${
-                  isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-800'
+                className={`w-full px-3 py-2 border rounded-lg h-32 ${
+                  isDark 
+                    ? 'bg-slate-700 border-slate-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-800'
                 }`}
-                rows="3"
               ></textarea>
             </div>
-            <div className="flex justify-end space-x-3 mt-6">
+            <div className="flex justify-end mt-6 space-x-3">
               <button
                 onClick={() => setFeedbackModalOpen(false)}
                 className={`px-4 py-2 rounded-lg ${
-                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  isDark 
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
               >
                 Cancel
