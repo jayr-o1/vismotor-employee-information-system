@@ -13,6 +13,7 @@ const Signup = lazy(() => import("./pages/auth/Signup"));
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const Home = lazy(() => import("./pages/Home"));
 const Employees = lazy(() => import("./pages/Employees"));
+const EmployeeDetails = lazy(() => import("./pages/EmployeeDetails"));
 const Applicants = lazy(() => import("./pages/Applicants"));
 const ApplicantDetails = lazy(() => import("./pages/ApplicantDetails"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
@@ -51,6 +52,7 @@ function App() {
             <Route element={<ProtectedRoute element={<Layout />} />}>
               <Route path="/home" element={<Home />} />
               <Route path="/employees" element={<Employees />} />
+              <Route path="/employees/:id" element={<EmployeeDetails />} />
               <Route path="/applicants" element={<Applicants />} />
               <Route path="/applicants/:id" element={<ApplicantDetails />} />
               <Route path="/onboarding" element={<Onboarding />} />
