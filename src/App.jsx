@@ -22,6 +22,8 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const Documentation = lazy(() => import("./pages/Documentation"));
 const NotFound = lazy(() => import("./components/NotFound"));
+const ApplicantQRProfile = lazy(() => import("./pages/ApplicantQRProfile"));
+const EmployeeQRProfile = lazy(() => import("./pages/EmployeeQRProfile"));
 
 function App() {
   const { isDarkMode } = useContext(ThemeContext);
@@ -47,6 +49,9 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/documentation" element={<Documentation />} />
+            {/* QR Profile Public Route */}
+            <Route path="/qr/applicant/:id" element={<ApplicantQRProfile />} />
+            <Route path="/qr/employee/:id" element={<EmployeeQRProfile />} />
             
             {/* Protected Routes wrapped in Layout */}
             <Route element={<ProtectedRoute element={<Layout />} />}>
