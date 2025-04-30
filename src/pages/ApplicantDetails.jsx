@@ -5,6 +5,8 @@ import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
+import Swal from 'sweetalert2';
+import 'animate.css';
 
 const ApplicantDetails = () => {
   const { id } = useParams();
@@ -46,6 +48,20 @@ const ApplicantDetails = () => {
   useEffect(() => {
     fetchApplicantDetails();
   }, [id]);
+
+  // Handle the Escape key press for onboard modal
+  useEffect(() => {
+    const handleEscapeKey = (e) => {
+      if (e.key === 'Escape' && onboardModalOpen) {
+        handleOnboardModalClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [onboardModalOpen]); // Only depend on modal open state
 
   const fetchApplicantDetails = async () => {
     setLoading(true);
@@ -149,6 +165,41 @@ const ApplicantDetails = () => {
     }
   };
 
+  // Function to handle onboard modal close with confirmation
+  const handleOnboardModalClose = () => {
+    // Only show confirmation if user has entered data
+    if (onboardData.position || onboardData.department || onboardData.startDate || onboardData.salary) {
+      Swal.fire({
+        title: 'Discard changes?',
+        text: 'Any information you entered will be lost.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Discard',
+        cancelButtonText: 'Continue Editing'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Reset form data and close modal
+          setOnboardData({
+            position: "",
+            department: "",
+            startDate: "",
+            salary: "",
+            equipment: [],
+            documents: [],
+            trainingSchedule: [],
+            mentor: ""
+          });
+          setOnboardModalOpen(false);
+        }
+      });
+    } else {
+      // No data entered, just close the modal
+      setOnboardModalOpen(false);
+    }
+  };
+
   const handleOpenOnboardModal = () => {
     // Validate applicant status
     if (applicant.status !== 'Interviewed' && applicant.status !== 'Reviewed') {
@@ -195,6 +246,50 @@ const ApplicantDetails = () => {
       return;
     }
     
+    // Show confirmation before processing
+    const result = await Swal.fire({
+      title: 'Confirm Onboarding',
+      html: `
+        <div class="text-left">
+          <p>Are you sure you want to onboard <strong>${applicant.name}</strong> with the following details?</p>
+          <div class="mt-3">
+            <p><strong>Position:</strong> ${onboardData.position}</p>
+            <p><strong>Department:</strong> ${onboardData.department}</p>
+            <p><strong>Start Date:</strong> ${onboardData.startDate}</p>
+            <p><strong>Salary:</strong> $${salary}</p>
+          </div>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10B981',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: 'Yes, Onboard!',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) {
+      return; // User cancelled the operation
+    }
+    
+    // Close the modal immediately after confirmation
+    setOnboardModalOpen(false);
+    
+    // Save onboard data for API calls
+    const onboardingData = { ...onboardData };
+    
+    // Reset form data
+    setOnboardData({
+      position: "",
+      department: "",
+      startDate: "",
+      salary: "",
+      equipment: [],
+      documents: [],
+      trainingSchedule: [],
+      mentor: ""
+    });
+    
     setLoading(true);
     try {
       // Create employee record
@@ -203,26 +298,26 @@ const ApplicantDetails = () => {
         name: applicant.name,
         email: applicant.email,
         phone: applicant.phone || '',
-        position: onboardData.position,
-        department: onboardData.department,
-        hire_date: onboardData.startDate,
+        position: onboardingData.position,
+        department: onboardingData.department,
+        hire_date: onboardingData.startDate,
         salary: salary,
-        mentor: onboardData.mentor
+        mentor: onboardingData.mentor
       });
 
       // Process equipment requests
-      if (onboardData.equipment.length > 0) {
-        await apiService.employees.requestEquipment(employeeResponse.data.id, onboardData.equipment);
+      if (onboardingData.equipment.length > 0) {
+        await apiService.employees.requestEquipment(employeeResponse.data.id, onboardingData.equipment);
       }
 
       // Process document uploads
-      if (onboardData.documents.length > 0) {
-        await apiService.employees.uploadDocuments(employeeResponse.data.id, onboardData.documents);
+      if (onboardingData.documents.length > 0) {
+        await apiService.employees.uploadDocuments(employeeResponse.data.id, onboardingData.documents);
       }
 
       // Schedule training
-      if (onboardData.trainingSchedule.length > 0) {
-        await apiService.employees.scheduleTraining(employeeResponse.data.id, onboardData.trainingSchedule);
+      if (onboardingData.trainingSchedule.length > 0) {
+        await apiService.employees.scheduleTraining(employeeResponse.data.id, onboardingData.trainingSchedule);
       }
 
       // Update applicant status
@@ -231,28 +326,45 @@ const ApplicantDetails = () => {
       // Send welcome email
       await apiService.employees.sendWelcomeEmail(employeeResponse.data.id);
       
-      // Show success message with more details
-      toast.success(`${applicant.name} successfully onboarded! Welcome email sent.`, {
-        position: "top-center",
-        autoClose: 5000
-      });
-      
-      // Display confirmation alert
-      alert(`${applicant.name} has been successfully hired and added to Staff Directory!\n\nPosition: ${onboardData.position}\nDepartment: ${onboardData.department}\nStart Date: ${onboardData.startDate}\nSalary: $${salary}`);
-      
+      // Update applicant state
       setApplicant(prev => ({ ...prev, status: "Accepted" }));
-      setOnboardModalOpen(false);
-      setOnboardData({
-        position: "",
-        department: "",
-        startDate: "",
-        salary: "",
-        equipment: [],
-        documents: [],
-        trainingSchedule: [],
-        mentor: ""
+      
+      // Show toast success message
+      toast.success(`${applicant.name} successfully onboarded!`, {
+        position: "top-right",
+        autoClose: 3000
       });
       
+      // Refresh the page immediately to show updated data
+      window.location.reload();
+      
+      // Note: The code below will not execute because of the page refresh
+      // but we'll keep it in case the refresh behavior changes later
+      Swal.fire({
+        icon: 'success',
+        title: 'Applicant Onboarded!',
+        html: `
+          <div class="text-left">
+            <p><strong>${applicant.name}</strong> has been successfully hired and added to Staff Directory!</p>
+            <div class="mt-3">
+              <p><strong>Position:</strong> ${onboardingData.position}</p>
+              <p><strong>Department:</strong> ${onboardingData.department}</p>
+              <p><strong>Start Date:</strong> ${onboardingData.startDate}</p>
+              <p><strong>Salary:</strong> $${salary}</p>
+            </div>
+          </div>
+        `,
+        confirmButtonColor: '#10B981',
+        confirmButtonText: 'Great!',
+        allowOutsideClick: false,
+        backdrop: `rgba(0,0,0,0.7)`,
+        showClass: {
+          popup: 'animate__animated animate__fadeIn animate__faster'
+        },
+        hideClass: {
+          popup: 'animate__animated animate__fadeOut animate__faster'
+        }
+      });
     } catch (error) {
       console.error("Error onboarding applicant:", error);
       toast.error(error.response?.data?.message || "Failed to onboard applicant");
@@ -310,8 +422,14 @@ const ApplicantDetails = () => {
     // Open the onboarding modal
     setOnboardModalOpen(true);
     
-    // Show a toast notification
-    toast.info("Please complete the onboarding details to hire this applicant.");
+    // Show a SweetAlert notification instead of toast
+    Swal.fire({
+      icon: 'info',
+      title: 'Complete Onboarding',
+      text: 'Please complete the onboarding details to hire this applicant.',
+      confirmButtonColor: '#3B82F6',
+      confirmButtonText: 'Will do!'
+    });
   };
 
   // Mark an interview as completed
@@ -709,7 +827,19 @@ const ApplicantDetails = () => {
       {onboardModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
-            <h2 className="text-2xl font-semibold mb-4">Onboard {applicant.name}</h2>
+            {/* Header with title and close button */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold">Onboard {applicant.name}</h2>
+              <button 
+                onClick={handleOnboardModalClose}
+                className={`p-1 rounded-full hover:bg-opacity-80 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
             <div className="grid grid-cols-1 gap-4 mb-4">
               <div>
                 <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Position</label>
@@ -767,18 +897,28 @@ const ApplicantDetails = () => {
             </div>
             <div className="flex justify-end space-x-2">
               <button 
-                onClick={() => setOnboardModalOpen(false)} 
+                onClick={handleOnboardModalClose} 
                 className={`px-4 py-2 rounded-lg ${
                   isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
+                disabled={loading}
               >
                 Cancel
               </button>
               <button 
                 onClick={handleOnboardApplicant} 
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+                disabled={loading}
               >
-                Process Onboarding
+                {loading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : "Process Onboarding"}
               </button>
             </div>
           </div>
