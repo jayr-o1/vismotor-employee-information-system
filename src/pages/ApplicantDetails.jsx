@@ -226,14 +226,21 @@ const ApplicantDetails = () => {
       }
 
       // Update applicant status
-      await apiService.applicants.updateStatus(applicant.id, "Hired");
+      await apiService.applicants.updateStatus(applicant.id, "Accepted");
       
       // Send welcome email
       await apiService.employees.sendWelcomeEmail(employeeResponse.data.id);
       
-      toast.success(`${applicant.name} successfully onboarded! Welcome email sent.`);
+      // Show success message with more details
+      toast.success(`${applicant.name} successfully onboarded! Welcome email sent.`, {
+        position: "top-center",
+        autoClose: 5000
+      });
       
-      setApplicant(prev => ({ ...prev, status: "Hired" }));
+      // Display confirmation alert
+      alert(`${applicant.name} has been successfully hired and added to Staff Directory!\n\nPosition: ${onboardData.position}\nDepartment: ${onboardData.department}\nStart Date: ${onboardData.startDate}\nSalary: $${salary}`);
+      
+      setApplicant(prev => ({ ...prev, status: "Accepted" }));
       setOnboardModalOpen(false);
       setOnboardData({
         position: "",
@@ -466,7 +473,7 @@ const ApplicantDetails = () => {
                   ? isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800" 
                   : applicant.status === "Interviewed" 
                   ? isDark ? "bg-purple-900 text-purple-200" : "bg-purple-100 text-purple-800"
-                  : applicant.status === "Hired" || applicant.status === "Accepted"
+                  : applicant.status === "Accepted"
                   ? isDark ? "bg-green-900 text-green-200" : "bg-green-100 text-green-800"
                   : isDark ? "bg-red-900 text-red-200" : "bg-red-100 text-red-800"
               }`}>
@@ -527,7 +534,7 @@ const ApplicantDetails = () => {
             </button>
             
             {/* Schedule Interview button - available when not hired, rejected, or already interviewed */}
-            {applicant.status !== "Hired" && applicant.status !== "Rejected" && applicant.status !== "Interviewed" && (
+            {applicant.status !== "Accepted" && applicant.status !== "Rejected" && applicant.status !== "Interviewed" && (
               <button
                 onClick={() => setScheduleModalOpen(true)}
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -549,7 +556,7 @@ const ApplicantDetails = () => {
             )}
             
             {/* Reject button - available when not hired or rejected */}
-            {applicant.status !== "Hired" && applicant.status !== "Rejected" && (
+            {applicant.status !== "Accepted" && applicant.status !== "Rejected" && (
               <button
                 onClick={handleRejectApplicant}
                 className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -613,7 +620,7 @@ const ApplicantDetails = () => {
                               </span>
                             </button>
                           )}
-                          {interview.status === "Completed" && (
+                          {interview.status === "Completed" && applicant.status !== "Accepted" ? (
                             <button
                               onClick={() => handleHireFromInterview(interview)}
                               className={`text-xs font-medium px-3 py-1.5 rounded ${
@@ -625,7 +632,16 @@ const ApplicantDetails = () => {
                                 Hire
                               </span>
                             </button>
-                          )}
+                          ) : interview.status === "Completed" && applicant.status === "Accepted" ? (
+                            <span className={`text-xs font-medium px-3 py-1.5 rounded opacity-50 cursor-not-allowed ${
+                              isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-500"
+                            }`}>
+                              <span className="flex items-center">
+                                <FaUserPlus className="mr-1" size={12} />
+                                Already Hired
+                              </span>
+                            </span>
+                          ) : null}
                         </td>
                       </tr>
                     ))}
@@ -635,7 +651,7 @@ const ApplicantDetails = () => {
             ) : (
               <div className={`text-center py-8 ${isDark ? 'bg-slate-800/50' : 'bg-gray-50'} rounded-lg border ${isDark ? 'border-slate-700' : 'border-gray-200'}`}>
                 <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No interviews scheduled yet.</p>
-                {applicant.status !== "Hired" && applicant.status !== "Rejected" && (
+                {applicant.status !== "Accepted" && applicant.status !== "Rejected" && (
                   <button
                     onClick={() => setScheduleModalOpen(true)}
                     className="mt-3 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
