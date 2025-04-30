@@ -158,6 +158,51 @@ const Applicants = () => {
     }
   };
 
+  // Add new applicant
+  const handleAddApplicant = async () => {
+    // Validate form
+    if (!newApplicantData.name || !newApplicantData.email || !newApplicantData.position) {
+      toast.error("Name, email and position are required");
+      return;
+    }
+    
+    try {
+      const response = await apiService.applicants.create({
+        ...newApplicantData,
+        status: "Pending",
+        applied_date: new Date().toISOString().split('T')[0]
+      });
+      
+      // Add the new applicant to the local state
+      setApplicants([
+        {
+          ...newApplicantData,
+          id: response.data.id,
+          status: "Pending",
+          applied_date: new Date().toISOString().split('T')[0]
+        },
+        ...applicants
+      ]);
+      
+      // Reset form
+      setNewApplicantData({
+        name: "",
+        email: "",
+        phone: "",
+        position: "",
+        education: "",
+        experience: "",
+        skills: ""
+      });
+      
+      setAddModalOpen(false);
+      toast.success("Applicant added successfully");
+    } catch (error) {
+      console.error("Error adding applicant:", error);
+      toast.error(error.message || "Failed to add applicant. Please try again.");
+    }
+  };
+
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
       <ToastContainer position="top-right" autoClose={3000} />
