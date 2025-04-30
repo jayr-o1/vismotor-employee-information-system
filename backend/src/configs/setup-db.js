@@ -18,6 +18,45 @@ CREATE TABLE IF NOT EXISTS applicants (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 )`;
 
+const CREATE_APPLICATIONS_TABLE = `
+CREATE TABLE IF NOT EXISTS applications (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  email VARCHAR(100) NOT NULL,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  gender VARCHAR(50) NOT NULL,
+  other_gender VARCHAR(100),
+  age VARCHAR(10),
+  marital_status VARCHAR(50),
+  other_marital_status VARCHAR(100),
+  highest_education VARCHAR(100),
+  other_highest_education VARCHAR(100),
+  region VARCHAR(50),
+  province VARCHAR(50),
+  city VARCHAR(50),
+  barangay VARCHAR(100),
+  street_address TEXT,
+  position_applying_for VARCHAR(100),
+  other_position VARCHAR(100),
+  branch_department VARCHAR(100),
+  other_branch_department VARCHAR(100),
+  date_availability VARCHAR(100),
+  other_date_availability VARCHAR(100),
+  desired_pay VARCHAR(100),
+  job_post_source VARCHAR(100),
+  other_job_source VARCHAR(100),
+  previously_employed VARCHAR(10),
+  resume_filename VARCHAR(255),
+  resume_originalname VARCHAR(255),
+  resume_path VARCHAR(255),
+  house_sketch_filename VARCHAR(255),
+  house_sketch_originalname VARCHAR(255),
+  house_sketch_path VARCHAR(255),
+  status VARCHAR(20) DEFAULT 'Pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)`;
+
 const CREATE_USERS_TABLE = `
 CREATE TABLE IF NOT EXISTS users (
   id INT PRIMARY KEY AUTO_INCREMENT,
@@ -127,6 +166,7 @@ async function setupDatabase() {
     await connection.query('DROP TABLE IF EXISTS employees');
     await connection.query('DROP TABLE IF EXISTS interviews');
     await connection.query('DROP TABLE IF EXISTS feedback');
+    await connection.query('DROP TABLE IF EXISTS applications');
     await connection.query('DROP TABLE IF EXISTS applicants');
     await connection.query('DROP TABLE IF EXISTS users');
     await connection.query('SET FOREIGN_KEY_CHECKS = 1');
@@ -135,6 +175,9 @@ async function setupDatabase() {
     console.log('Creating tables...');
     console.log('- Creating applicants table...');
     await connection.query(CREATE_APPLICANTS_TABLE);
+    
+    console.log('- Creating applications table...');
+    await connection.query(CREATE_APPLICATIONS_TABLE);
     
     console.log('- Creating users table...');
     await connection.query(CREATE_USERS_TABLE);

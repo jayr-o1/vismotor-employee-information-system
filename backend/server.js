@@ -7,6 +7,7 @@ const authRoutes = require("./src/controllers/auth/routes/routes");
 const employeeRoutes = require("./src/controllers/employee/routes");
 const applicantRoutes = require("./src/controllers/applicant/routes");
 const userRoutes = require("./src/controllers/user/routes");
+const applicationsRoutes = require("./src/routes/applications");
 const { validateToken, ensureVerified } = require("./src/utils/authMiddleware");
 
 const app = express();
@@ -28,7 +29,9 @@ app.use((req, res, next) => {
     '/api/forgot-password',
     '/api/reset-password',
     '/api/resend-verification',
-    '/api/check-user'
+    '/api/check-user',
+    '/api/applications/upload',
+    '/api/applications/submit'
   ];
   
   // Check if the request path starts with any of the public paths
@@ -51,6 +54,7 @@ app.use(authRoutes);
 app.use(employeeRoutes);
 app.use(applicantRoutes);
 app.use(userRoutes);
+app.use('/api/applications', applicationsRoutes);
 
 // Test database connection before starting server
 async function startServer() {
