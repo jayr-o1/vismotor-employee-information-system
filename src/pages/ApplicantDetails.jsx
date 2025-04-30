@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaCalendarAlt, FaStickyNote } from "react-icons/fa";
+import { FaArrowLeft, FaCalendarAlt, FaStickyNote, FaUserPlus, FaTimesCircle } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
@@ -16,6 +16,7 @@ const ApplicantDetails = () => {
   const [error, setError] = useState(null);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [onboardModalOpen, setOnboardModalOpen] = useState(false);
   const [interviewData, setInterviewData] = useState({
     date: "",
     time: "",
@@ -24,6 +25,12 @@ const ApplicantDetails = () => {
   });
   const [feedbackData, setFeedbackData] = useState("");
   const [notes, setNotes] = useState([]);
+  const [onboardData, setOnboardData] = useState({
+    position: "",
+    department: "",
+    startDate: "",
+    salary: ""
+  });
 
   useEffect(() => {
     fetchApplicantDetails();
@@ -66,24 +73,32 @@ const ApplicantDetails = () => {
   };
 
   const handleScheduleInterview = async () => {
+    // Validate form data
     if (!interviewData.date || !interviewData.time || !interviewData.location || !interviewData.interviewer) {
       toast.error("Please fill all interview details");
       return;
     }
-    
+
     try {
+      // Create interview record
       await apiService.interviews.schedule({
         applicant_id: applicant.id,
-        interview_date: interviewData.date,
-        interview_time: interviewData.time,
+        date: interviewData.date,
+        time: interviewData.time,
         location: interviewData.location,
         interviewer: interviewData.interviewer
       });
+
+      // Update applicant status to 'Interviewed'
+      await apiService.applicants.updateStatus(applicant.id, "Interviewed");
       
-      // Refresh applicant details
-      fetchApplicantDetails();
+      toast.success("Interview scheduled successfully!");
+      
+      // Update local state
+      setApplicant(prev => ({ ...prev, status: "Interviewed" }));
+      
+      // Close modal
       setScheduleModalOpen(false);
-      toast.success("Interview scheduled successfully");
     } catch (error) {
       console.error("Error scheduling interview:", error);
       toast.error(error.response?.data?.message || "Failed to schedule interview");
@@ -92,29 +107,128 @@ const ApplicantDetails = () => {
 
   const handleSubmitFeedback = async () => {
     if (!feedbackData.trim()) {
-      toast.error("Please enter feedback");
+      toast.error("Please enter some feedback");
+      return;
+    }
+
+    try {
+      await apiService.applicants.addNote(applicant.id, { feedback_text: feedbackData });
+      
+      // Refresh notes
+      const notesResponse = await apiService.applicants.getNotes(applicant.id);
+      setNotes(notesResponse.data || []);
+      
+      toast.success("Note added successfully!");
+      
+      setFeedbackData("");
+      setFeedbackModalOpen(false);
+    } catch (error) {
+      console.error("Error adding note:", error);
+      toast.error(error.response?.data?.message || "Failed to add note");
+    }
+  };
+
+  const handleOpenOnboardModal = () => {
+    // Validate applicant status
+    if (applicant.status !== 'Interviewed' && applicant.status !== 'Reviewed') {
+      toast.warning("Applicant must be interviewed before onboarding.", {
+        position: "top-right",
+        autoClose: 3000
+      });
+      return;
+    }
+
+    setOnboardData({
+      position: applicant.position || "",
+      department: "",
+      startDate: "",
+      salary: ""
+    });
+    setOnboardModalOpen(true);
+  };
+
+  const handleOnboardApplicant = async () => {
+    // Validate applicant
+    if (!applicant) {
+      toast.error("No applicant selected for onboarding.");
       return;
     }
     
+    // Verify the applicant has been interviewed
+    if (applicant.status !== 'Interviewed' && applicant.status !== 'Reviewed') {
+      toast.error("Applicant must be interviewed before onboarding.");
+      setOnboardModalOpen(false);
+      return;
+    }
+    
+    // Validate onboard form data
+    if (!onboardData.department || !onboardData.startDate || !onboardData.salary || !onboardData.position) {
+      toast.error("Please fill all onboarding details (Position, Department, Start Date, Salary)");
+      return;
+    }
+
+    // Validate salary is a number
+    const salary = parseFloat(onboardData.salary);
+    if (isNaN(salary)) {
+      toast.error("Salary must be a valid number");
+      return;
+    }
+    
+    setLoading(true);
     try {
-      console.log("Submitting feedback for applicant ID:", applicant.id);
-      
-      // Use the correct endpoint and parameter names for feedback
-      await apiService.applicants.addFeedback(applicant.id, {
-        feedback_text: feedbackData,
-        created_by: "HR User" // In a real app, this would be the current user's name
+      // 1. Create employee record
+      await apiService.employees.create({
+        applicant_id: applicant.id,
+        name: applicant.name,
+        email: applicant.email,
+        phone: applicant.phone || '',
+        position: onboardData.position,
+        department: onboardData.department,
+        hire_date: onboardData.startDate,
+        salary: salary
       });
+
+      // 2. Update applicant status to 'Hired'
+      await apiService.applicants.updateStatus(applicant.id, "Hired");
       
-      // Refresh applicant details after adding feedback
-      fetchApplicantDetails();
+      toast.success(`${applicant.name} successfully onboarded!`);
       
-      setFeedbackModalOpen(false);
-      setFeedbackData("");
-      toast.success("Feedback added successfully");
+      // Update local state
+      setApplicant(prev => ({ ...prev, status: "Hired" }));
+      
+      // Close the modal and clear form
+      setOnboardModalOpen(false);
+      setOnboardData({ position: "", department: "", startDate: "", salary: "" });
+      
     } catch (error) {
-      console.error("Error submitting feedback:", error);
-      console.error("Error response:", error.response);
-      toast.error(error.response?.data?.message || "Failed to add feedback");
+      console.error("Error onboarding applicant:", error);
+      let errorMessage = "Failed to onboard applicant. Please try again.";
+      
+      // Check for specific error messages from the backend if available
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRejectApplicant = async () => {
+    if (!applicant) return;
+    
+    try {
+      await apiService.applicants.updateStatus(applicant.id, "Rejected");
+      
+      toast.success("Applicant marked as rejected");
+      
+      // Update local state
+      setApplicant(prev => ({ ...prev, status: "Rejected" }));
+      
+    } catch (error) {
+      console.error("Error rejecting applicant:", error);
+      toast.error(error.response?.data?.message || "Failed to reject applicant");
     }
   };
 
@@ -179,7 +293,7 @@ const ApplicantDetails = () => {
                   ? isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800" 
                   : applicant.status === "Interviewed" 
                   ? isDark ? "bg-purple-900 text-purple-200" : "bg-purple-100 text-purple-800"
-                  : applicant.status === "Accepted" 
+                  : applicant.status === "Hired" || applicant.status === "Accepted"
                   ? isDark ? "bg-green-900 text-green-200" : "bg-green-100 text-green-800"
                   : isDark ? "bg-red-900 text-red-200" : "bg-red-100 text-red-800"
               }`}>
@@ -227,21 +341,48 @@ const ApplicantDetails = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-4 mb-6">
-            <button
-              onClick={() => setScheduleModalOpen(true)}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <FaCalendarAlt className="mr-2" />
-              Schedule Interview
-            </button>
+          <div className="flex flex-wrap gap-4 mb-6">
+            {/* Interview button - show only if not hired/rejected */}
+            {applicant.status !== "Hired" && applicant.status !== "Rejected" && (
+              <button
+                onClick={() => setScheduleModalOpen(true)}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <FaCalendarAlt className="mr-2" />
+                Schedule Interview
+              </button>
+            )}
+            
+            {/* Note button - always available */}
             <button
               onClick={() => setFeedbackModalOpen(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               <FaStickyNote className="mr-2" />
               Add Note
             </button>
+            
+            {/* Hire button - available when interviewed or reviewed */}
+            {(applicant.status === "Interviewed" || applicant.status === "Reviewed") && (
+              <button
+                onClick={handleOpenOnboardModal}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <FaUserPlus className="mr-2" />
+                Hire Applicant
+              </button>
+            )}
+            
+            {/* Reject button - available when not hired or rejected */}
+            {applicant.status !== "Hired" && applicant.status !== "Rejected" && (
+              <button
+                onClick={handleRejectApplicant}
+                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <FaTimesCircle className="mr-2" />
+                Reject Applicant
+              </button>
+            )}
           </div>
 
           {/* Notes Section */}
@@ -349,9 +490,9 @@ const ApplicantDetails = () => {
         </div>
       )}
 
-      {/* Add Feedback Modal */}
+      {/* Add Note Modal */}
       {feedbackModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className={`${isDark ? 'bg-[#232f46] text-white' : 'bg-white text-gray-800'} rounded-lg shadow-lg p-6 max-w-md w-full`}>
             <h3 className="text-xl font-semibold mb-4">Add Note</h3>
             <div>
@@ -382,6 +523,86 @@ const ApplicantDetails = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 Add Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboard Modal */}
+      {onboardModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
+            <h2 className="text-2xl font-semibold mb-4">Onboard {applicant.name}</h2>
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Position</label>
+                <input
+                  type="text"
+                  value={onboardData.position}
+                  onChange={(e) => setOnboardData({...onboardData, position: e.target.value})}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Department</label>
+                <input
+                  type="text"
+                  value={onboardData.department}
+                  onChange={(e) => setOnboardData({...onboardData, department: e.target.value})}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Start Date</label>
+                <input
+                  type="date"
+                  value={onboardData.startDate}
+                  onChange={(e) => setOnboardData({...onboardData, startDate: e.target.value})}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Salary</label>
+                <input
+                  type="text"
+                  value={onboardData.salary}
+                  onChange={(e) => setOnboardData({...onboardData, salary: e.target.value})}
+                  placeholder="e.g. 50000"
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    isDark 
+                      ? 'bg-slate-700/80 border-slate-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-800'
+                  }`}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button 
+                onClick={() => setOnboardModalOpen(false)} 
+                className={`px-4 py-2 rounded-lg ${
+                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleOnboardApplicant} 
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+              >
+                Process Onboarding
               </button>
             </div>
           </div>

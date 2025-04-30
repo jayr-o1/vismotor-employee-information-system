@@ -3,6 +3,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from "react-toastify";
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
+import { mockEmployees } from "../mocks/employeeData";
 
 const Onboarding = () => {
   const { theme } = useContext(ThemeContext);
@@ -19,6 +20,16 @@ const Onboarding = () => {
     const fetchOnboardingEmployees = async () => {
       setIsLoading(true);
       try {
+        // Check if token exists
+        const token = localStorage.getItem("userToken");
+        if (!token) {
+          console.warn("No authentication token found. Using mock data.");
+          const processedMockEmployees = processMockEmployees(mockEmployees);
+          setEmployees(processedMockEmployees);
+          setIsLoading(false);
+          return;
+        }
+        
         const response = await apiService.employees.getAll();
         console.log("Fetched employees data:", response.data);
         
@@ -63,7 +74,11 @@ const Onboarding = () => {
         setEmployees(processedEmployees);
       } catch (error) {
         console.error("Error fetching onboarding employees:", error);
-        toast.error("Failed to load employee data");
+        toast.error("Failed to load employee data from API. Using mock data for development.");
+        
+        // Use mock data when API fails
+        const processedMockEmployees = processMockEmployees(mockEmployees);
+        setEmployees(processedMockEmployees);
       } finally {
         setIsLoading(false);
       }
@@ -71,6 +86,46 @@ const Onboarding = () => {
 
     fetchOnboardingEmployees();
   }, [refreshData]);
+
+  // Helper function to process mock data
+  const processMockEmployees = (mockData) => {
+    return mockData.map(employee => {
+      if (employee.status === "Completed") {
+        return {
+          ...employee,
+          startDate: employee.hire_date,
+          status: "Completed",
+          progress: 100
+        };
+      }
+      
+      let progress = 0;
+      const hireDate = new Date(employee.hire_date);
+      const daysSinceHire = Math.floor((Date.now() - hireDate) / (1000 * 60 * 60 * 24));
+      
+      let status = "";
+      if (daysSinceHire < 3) {
+        status = "Documents Pending";
+        progress = 30;
+      } else if (daysSinceHire < 7) {
+        status = "Training";
+        progress = 65;
+      } else if (daysSinceHire < 14) {
+        status = "Orientation Complete";
+        progress = 90;
+      } else {
+        status = "Completed";
+        progress = 100;
+      }
+      
+      return {
+        ...employee,
+        startDate: employee.hire_date,
+        status,
+        progress
+      };
+    });
+  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
