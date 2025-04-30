@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import apiService from "../../services/api";
+import { ThemeContext } from "../../ThemeContext";
 
 import Logo from "../../assets/vismotor-splash-art.png";
-import FooterLogo from "../../assets/vismotor-logo.jpg";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,6 +18,31 @@ const Login = () => {
   const [resendSuccess, setResendSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext);
+
+  // Force light mode styles regardless of theme context
+  useEffect(() => {
+    // Apply light mode styles to this page
+    const root = document.documentElement;
+    const body = document.body;
+    
+    // Save current theme state
+    const prevThemeClass = root.classList.contains('dark');
+    const prevBgColor = body.style.backgroundColor;
+    const prevTextColor = body.style.color;
+    
+    // Force light mode
+    root.classList.remove('dark');
+    body.style.backgroundColor = '#f8fafc'; // light background
+    body.style.color = '#0f172a'; // dark text
+    
+    // Restore theme when component unmounts
+    return () => {
+      if (prevThemeClass) root.classList.add('dark');
+      body.style.backgroundColor = prevBgColor;
+      body.style.color = prevTextColor;
+    };
+  }, []);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("savedEmail") || sessionStorage.getItem("savedEmail");
@@ -55,6 +80,7 @@ const Login = () => {
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
+        theme: "light" // Force light theme for toast
       });
 
       // Redirect to home page
@@ -72,6 +98,7 @@ const Login = () => {
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
+          theme: "light" // Force light theme for toast
         });
       } else {
         setError(error.response?.data?.message || error.message || "Something went wrong. Please try again.");
@@ -84,6 +111,7 @@ const Login = () => {
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
+          theme: "light" // Force light theme for toast
         });
       }
     } finally {
@@ -110,6 +138,7 @@ const Login = () => {
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
+        theme: "light" // Force light theme for toast
       });
     } catch (error) {
       setError(error.response?.data?.message || "Failed to resend verification email. Please try again.");
@@ -122,6 +151,7 @@ const Login = () => {
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
+        theme: "light" // Force light theme for toast
       });
     } finally {
       setIsResendingEmail(false);
@@ -133,42 +163,41 @@ const Login = () => {
   };
 
   return (
-    <>
+    <div className="login-page">
       <div className="flex min-h-screen bg-gradient-to-b from-[#538b30] to-[#003519]">
         {/* Right Column (Login Form) */}
         <div className="flex items-center justify-center w-full p-10">
           <div className="bg-white p-10 rounded-xl shadow-lg w-[480px]">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Login</h2>
             <p className="text-gray-600 mb-6">Welcome back! We missed you!</p>
-
-            {/* Error message */}
+            
+            {/* Error Message */}
             {error && (
-              <div className="mb-4">
-                <p className="text-red-500">{error}</p>
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+                {error}
                 {unverifiedEmail && (
-                  <button
-                    type="button"
-                    onClick={handleResendVerificationEmail}
-                    disabled={isResendingEmail}
-                    className="mt-2 text-orange-500 hover:text-orange-700 font-semibold text-sm"
-                  >
-                    {isResendingEmail ? "Sending..." : "Resend verification email"}
-                  </button>
+                  <div className="mt-2">
+                    <button
+                      onClick={handleResendVerificationEmail}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      disabled={isResendingEmail}
+                    >
+                      {isResendingEmail
+                        ? "Sending..."
+                        : resendSuccess
+                        ? "Email sent successfully!"
+                        : "Resend verification email"}
+                    </button>
+                  </div>
                 )}
               </div>
             )}
 
-            {/* Success message for resent email */}
-            {resendSuccess && (
-              <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
-                Verification email has been sent! Please check your inbox.
-              </div>
-            )}
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
+            {/* Login Form */}
+            <form onSubmit={handleLogin}>
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700">
-                  E-Mail
+                  Email Address
                 </label>
                 <input
                   type="email"
@@ -260,58 +289,8 @@ const Login = () => {
       </div>
 
       {/* Toast container for alerts */}
-      <ToastContainer />
-
-      <footer className="w-full py-4 md:py-6 bg-orange-500 flex flex-col md:flex-row items-center justify-between px-6 md:px-10 text-white">
-        {/* Left - Logo & Address */}
-        <div className="flex flex-col md:flex-row items-center md:items-center space-y-4 md:space-y-0 md:space-x-6">
-          <img
-            src={FooterLogo}
-            alt="Vismotor Logo"
-            className="h-20 md:h-24 rounded-full shadow-lg"
-          />
-          <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-1">
-            <p className="text-md">
-              9W68+643, Carmel Drive cor, Gov. M. Cuenco Ave, Cebu City, Cebu
-            </p>
-            <p className="text-md">
-              contact@vismotor.com | +123 456 7890
-            </p>
-          </div>
-        </div>
-
-        {/* Center - Copyright */}
-        <p className="text-md font-semibold text-center w-full md:w-auto">
-          &copy; {new Date().getFullYear()} Vismotor Employee Information System
-          <br />
-          <button
-            onClick={() => navigate("/documentation")}
-            className="text-white hover:text-gray-200 underline text-sm"
-          >
-            View Documentation
-          </button>
-        </p>
-
-        {/* Right - Social Media & Links */}
-        <div className="flex flex-col items-center md:items-end space-y-3">
-          <div className="flex space-x-4">
-            <a href="#" className="text-white hover:text-[#538b30] transition">
-              <FaFacebook size={24} />
-            </a>
-            <a href="#" className="text-white hover:text-[#538b30] transition">
-              <FaTwitter size={24} />
-            </a>
-            <a href="#" className="text-white hover:text-[#538b30] transition">
-              <FaInstagram size={24} />
-            </a>
-            <a href="#" className="text-white hover:text-[#538b30] transition">
-              <FaLinkedin size={24} />
-            </a>
-          </div>
-          <p className="text-sm">Privacy Policy | Terms of Service</p>
-        </div>
-      </footer>
-    </>
+      <ToastContainer theme="light" />
+    </div>
   );
 };
 
