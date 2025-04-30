@@ -207,7 +207,7 @@ const Applicants = () => {
     <div className={`min-h-screen ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
       <ToastContainer position="top-right" autoClose={3000} />
       
-      <div className="max-w-7xl mx-auto p-4 pt-2">
+      <div className="">
         {/* Header with search and add button */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold">Applicants</h1>
@@ -275,7 +275,9 @@ const Applicants = () => {
                             {applicant.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">{applicant.applied_date}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {applicant.applied_date ? applicant.applied_date.split('T')[0] : ''}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex items-center space-x-3">
                             <button

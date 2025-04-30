@@ -56,7 +56,7 @@ const apiService = {
     
     // Notes
     getNotes: (id) => api.get(`/api/applicants/${id}/notes`),
-    addNote: (id, noteData) => api.post(`/api/applicants/${id}/notes`, noteData),
+    addNote: (noteData) => api.post(`/api/applicants/${noteData.applicant_id}/notes`, noteData),
     
     // Interviews
     getInterviews: (id) => api.get(`/api/applicants/${id}/interviews`),
