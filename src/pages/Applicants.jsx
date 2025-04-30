@@ -158,49 +158,9 @@ const Applicants = () => {
     }
   };
 
-  // Add new applicant
-  const handleAddApplicant = async () => {
-    // Validate form
-    if (!newApplicantData.name || !newApplicantData.email || !newApplicantData.position) {
-      toast.error("Name, email and position are required");
-      return;
-    }
-    
-    try {
-      const response = await apiService.applicants.create({
-        ...newApplicantData,
-        status: "Pending",
-        applied_date: new Date().toISOString().split('T')[0]
-      });
-      
-      // Add the new applicant to the local state
-      setApplicants([
-        {
-          ...newApplicantData,
-          id: response.data.id,
-          status: "Pending",
-          applied_date: new Date().toISOString().split('T')[0]
-        },
-        ...applicants
-      ]);
-      
-      // Reset form
-      setNewApplicantData({
-        name: "",
-        email: "",
-        phone: "",
-        position: "",
-        education: "",
-        experience: "",
-        skills: ""
-      });
-      
-      setAddModalOpen(false);
-      toast.success("Applicant added successfully");
-    } catch (error) {
-      console.error("Error adding applicant:", error);
-      toast.error(error.message || "Failed to add applicant. Please try again.");
-    }
+  // Navigate to application form
+  const handleAddApplicant = () => {
+    navigate('/apply');
   };
 
   return (
@@ -229,7 +189,7 @@ const Applicants = () => {
               </div>
                 </div>
                 <button 
-                  onClick={() => setAddModalOpen(true)}
+                  onClick={handleAddApplicant}
               className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                 >
               <i className="fas fa-user-plus mr-2"></i>
@@ -347,159 +307,6 @@ const Applicants = () => {
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
                     Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-      {/* Add Applicant Modal */}
-          {addModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
-                <h2 className="text-2xl font-semibold mb-6 text-center">Add New Applicant</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
-                  {/* Left Column */}
-                  <div>
-                    <div className="mb-4">
-                  <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Name*</label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={newApplicantData.name}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isDark 
-                        ? 'bg-slate-700/80 border-slate-600 text-white' 
-                        : 'bg-white/80 border-gray-300 text-gray-800'
-                    }`}
-                        placeholder="Full Name"
-                      />
-                    </div>
-                    <div className="mb-4">
-                  <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Position Applied For*</label>
-                      <input
-                        type="text"
-                        name="position"
-                        value={newApplicantData.position}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isDark 
-                        ? 'bg-slate-700/80 border-slate-600 text-white' 
-                        : 'bg-white/80 border-gray-300 text-gray-800'
-                    }`}
-                        placeholder="Position"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Right Column */}
-                  <div>
-                    <div className="mb-4">
-                  <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Education</label>
-                      <input
-                        type="text"
-                        name="education"
-                        value={newApplicantData.education}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isDark 
-                        ? 'bg-slate-700/80 border-slate-600 text-white' 
-                        : 'bg-white/80 border-gray-300 text-gray-800'
-                    }`}
-                        placeholder="Education"
-                      />
-                    </div>
-                    <div className="mb-4">
-                  <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Experience</label>
-                      <input
-                        type="text"
-                        name="experience"
-                        value={newApplicantData.experience}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isDark 
-                        ? 'bg-slate-700/80 border-slate-600 text-white' 
-                        : 'bg-white/80 border-gray-300 text-gray-800'
-                    }`}
-                        placeholder="Experience"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Email and Phone - Left Column */}
-                  <div>
-                    <div className="mb-4">
-                  <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Email*</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={newApplicantData.email}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isDark 
-                        ? 'bg-slate-700/80 border-slate-600 text-white' 
-                        : 'bg-white/80 border-gray-300 text-gray-800'
-                    }`}
-                        placeholder="Email Address"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Phone - Right Column */}
-                  <div>
-                    <div className="mb-4">
-                  <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Phone</label>
-                      <input
-                        type="text"
-                        name="phone"
-                        value={newApplicantData.phone}
-                        onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                      isDark 
-                        ? 'bg-slate-700/80 border-slate-600 text-white' 
-                        : 'bg-white/80 border-gray-300 text-gray-800'
-                    }`}
-                        placeholder="Phone Number"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Skills - Full Width */}
-                  <div className="md:col-span-2">
-                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Skills</label>
-                    <textarea
-                      name="skills"
-                      value={newApplicantData.skills}
-                      onChange={(e) => setNewApplicantData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 h-40 ${
-                    isDark 
-                      ? 'bg-slate-700/80 border-slate-600 text-white' 
-                      : 'bg-white/80 border-gray-300 text-gray-800'
-                  }`}
-                      placeholder="Enter skills (one per line)
-Example:
-Coding Skills
-Teaching Skills"
-                    ></textarea>
-                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1`}>Press Enter after each skill to add multiple skills</p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end space-x-3 border-t pt-4">
-                  <button 
-                    onClick={() => setAddModalOpen(false)} 
-                className={`px-5 py-2 rounded-lg ${
-                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300 border border-gray-300'
-                }`}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={handleAddApplicant} 
-                className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition duration-150"
-                  >
-                    Add Applicant
                   </button>
                 </div>
               </div>
