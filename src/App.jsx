@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./utils/ProtectedRoute";
+import AuthRoute from "./utils/AuthRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Spinner from "./components/Layouts/Spinner";
@@ -43,12 +44,14 @@ function App() {
           </div>
         }>
           <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Public Auth Routes - Redirect to home if already logged in */}
+            <Route path="/login" element={<AuthRoute element={<Login />} />} />
+            <Route path="/signup" element={<AuthRoute element={<Signup />} />} />
+            <Route path="/verify-email" element={<AuthRoute element={<VerifyEmail />} />} />
+            <Route path="/forgot-password" element={<AuthRoute element={<ForgotPassword />} />} />
+            <Route path="/reset-password" element={<AuthRoute element={<ResetPassword />} />} />
+            
+            {/* Truly Public Routes */}
             <Route path="/documentation" element={<Documentation />} />
             <Route path="/apply" element={<ApplicationForm />} />
             {/* QR Profile Public Route */}
