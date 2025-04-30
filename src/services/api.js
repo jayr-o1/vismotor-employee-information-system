@@ -50,6 +50,18 @@ const apiService = {
     updateStatus: (id, status) => api.patch(`/api/applicants/${id}/status`, { status }),
     delete: (id) => api.delete(`/api/applicants/${id}`),
     
+    // File uploads
+    uploadFiles: (formData) => {
+      // Create a special instance for file uploads with multipart/form-data
+      const formDataConfig = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+        }
+      };
+      return api.post('/api/applications/upload', formData, formDataConfig);
+    },
+    
     // Feedback
     addFeedback: (id, feedbackData) => api.post(`/api/applicants/${id}/feedback`, feedbackData),
     getFeedback: (id) => api.get(`/api/applicants/${id}/feedback`),
