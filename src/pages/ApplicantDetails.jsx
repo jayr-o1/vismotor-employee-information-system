@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaCalendarAlt, FaStickyNote, FaUserPlus, FaTimesCircle } from "react-icons/fa";
+import { FaArrowLeft, FaCalendarAlt, FaStickyNote, FaUserPlus, FaTimesCircle, FaPaperclip, FaStar } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
@@ -23,13 +23,24 @@ const ApplicantDetails = () => {
     location: "",
     interviewer: ""
   });
-  const [feedbackData, setFeedbackData] = useState("");
+  const [feedbackData, setFeedbackData] = useState({
+    text: "",
+    rating: 0,
+    category: "Technical",
+    strengths: "",
+    areas_for_improvement: "",
+    recommendation: "Hire"
+  });
   const [notes, setNotes] = useState([]);
   const [onboardData, setOnboardData] = useState({
     position: "",
     department: "",
     startDate: "",
-    salary: ""
+    salary: "",
+    equipment: [],
+    documents: [],
+    trainingSchedule: [],
+    mentor: ""
   });
 
   useEffect(() => {
@@ -73,58 +84,128 @@ const ApplicantDetails = () => {
   };
 
   const handleScheduleInterview = async () => {
-    // Validate form data
-    if (!interviewData.date || !interviewData.time || !interviewData.location || !interviewData.interviewer) {
-      toast.error("Please fill all interview details");
-      return;
-    }
-
     try {
-      // Create interview record
-      await apiService.interviews.schedule({
-        applicant_id: applicant.id,
-        date: interviewData.date,
-        time: interviewData.time,
-        location: interviewData.location,
-        interviewer: interviewData.interviewer
-      });
+      // Basic validation
+      if (!interviewData.date || !interviewData.time || !interviewData.location || !interviewData.interviewer) {
+        toast.error("Please fill in all interview details");
+        return;
+      }
 
-      // Update applicant status to 'Interviewed'
-      await apiService.applicants.updateStatus(applicant.id, "Interviewed");
+      // Format the date and time for API
+      const interviewDateTime = new Date(`${interviewData.date}T${interviewData.time}`);
+      const now = new Date();
       
-      toast.success("Interview scheduled successfully!");
+      if (interviewDateTime <= now) {
+        toast.error("Interview date and time must be in the future");
+        return;
+      }
+
+      // Create interview record with correct structure based on backend requirements
+      const interviewPayload = {
+        applicant_id: parseInt(applicant.id),
+        interview_date: interviewDateTime.toISOString().split('.')[0],  // Remove milliseconds
+        location: interviewData.location,
+        interviewer: interviewData.interviewer,
+        status: "Scheduled",
+        interview_type: "Technical", // Renamed from 'type' to match backend
+        duration_minutes: 60, // Renamed from 'duration' to match backend
+        notes: "",
+        title: `Interview with ${applicant.name}`,
+        description: `Interview for ${applicant.position} position`,
+        start_time: interviewDateTime.toISOString().split('.')[0],
+        end_time: new Date(interviewDateTime.getTime() + 60 * 60000).toISOString().split('.')[0]
+      };
+
+      console.log("Sending interview payload:", interviewPayload);
+
+      // Schedule interview
+      const response = await apiService.interviews.schedule(interviewPayload);
       
-      // Update local state
-      setApplicant(prev => ({ ...prev, status: "Interviewed" }));
+      if (response?.data) {
+        // Update applicant status
+        await apiService.applicants.updateStatus(applicant.id, "Interview Scheduled");
+        
+        // Update local state
+        setApplicant(prev => ({
+          ...prev,
+          status: "Interview Scheduled",
+          interview: {
+            id: response.data.id,
+            interview_date: interviewDateTime.toISOString(),
+            location: interviewData.location,
+            interviewer: interviewData.interviewer,
+            status: "Scheduled"
+          }
+        }));
+
+        // Reset form and close modal
+        setInterviewData({
+          date: "",
+          time: "",
+          location: "",
+          interviewer: ""
+        });
+        setScheduleModalOpen(false);
+        
+        toast.success("Interview scheduled successfully!");
+      }
       
-      // Close modal
-      setScheduleModalOpen(false);
     } catch (error) {
       console.error("Error scheduling interview:", error);
+      console.error("Error details:", error.response?.data);
       toast.error(error.response?.data?.message || "Failed to schedule interview");
     }
   };
 
   const handleSubmitFeedback = async () => {
-    if (!feedbackData.trim()) {
-      toast.error("Please enter some feedback");
+    if (!feedbackData.text.trim()) {
+      toast.error("Please enter feedback text");
+      return;
+    }
+
+    if (feedbackData.rating === 0) {
+      toast.error("Please provide a rating");
       return;
     }
 
     try {
-      await apiService.applicants.addNote(applicant.id, { feedback_text: feedbackData });
+      const feedbackPayload = {
+        applicant_id: applicant.id,
+        ...feedbackData,
+        created_by: "Current User" // This should come from auth context
+      };
+
+      await apiService.applicants.addNote(feedbackPayload);
       
-      // Refresh notes
-      const notesResponse = await apiService.applicants.getNotes(applicant.id);
+      // Update applicant status based on recommendation
+      if (feedbackData.recommendation === "Hire") {
+        await apiService.applicants.updateStatus(applicant.id, "Reviewed");
+      }
+      
+      // Refresh notes and applicant data
+      const [notesResponse, applicantResponse] = await Promise.all([
+        apiService.applicants.getNotes(applicant.id),
+        apiService.applicants.getById(applicant.id)
+      ]);
+      
       setNotes(notesResponse.data || []);
+      setApplicant(applicantResponse.data);
       
-      toast.success("Note added successfully!");
+      toast.success("Feedback submitted successfully!");
       
-      setFeedbackData("");
+      setFeedbackData({
+        text: "",
+        rating: 0,
+        category: "Technical",
+        strengths: "",
+        areas_for_improvement: "",
+        recommendation: "Hire"
+      });
       setFeedbackModalOpen(false);
+      
     } catch (error) {
-      console.error("Error adding note:", error);
-      toast.error(error.response?.data?.message || "Failed to add note");
+      console.error("Error submitting feedback:", error);
+      toast.error(error.response?.data?.message || "Failed to submit feedback");
     }
   };
 
@@ -142,32 +223,32 @@ const ApplicantDetails = () => {
       position: applicant.position || "",
       department: "",
       startDate: "",
-      salary: ""
+      salary: "",
+      equipment: [],
+      documents: [],
+      trainingSchedule: [],
+      mentor: ""
     });
     setOnboardModalOpen(true);
   };
 
   const handleOnboardApplicant = async () => {
-    // Validate applicant
     if (!applicant) {
-      toast.error("No applicant selected for onboarding.");
+      toast.error("No applicant selected for onboarding");
       return;
     }
     
-    // Verify the applicant has been interviewed
     if (applicant.status !== 'Interviewed' && applicant.status !== 'Reviewed') {
-      toast.error("Applicant must be interviewed before onboarding.");
+      toast.error("Applicant must be interviewed before onboarding");
       setOnboardModalOpen(false);
       return;
     }
     
-    // Validate onboard form data
     if (!onboardData.department || !onboardData.startDate || !onboardData.salary || !onboardData.position) {
-      toast.error("Please fill all onboarding details (Position, Department, Start Date, Salary)");
+      toast.error("Please fill all required onboarding details");
       return;
     }
 
-    // Validate salary is a number
     const salary = parseFloat(onboardData.salary);
     if (isNaN(salary)) {
       toast.error("Salary must be a valid number");
@@ -176,8 +257,8 @@ const ApplicantDetails = () => {
     
     setLoading(true);
     try {
-      // 1. Create employee record
-      await apiService.employees.create({
+      // Create employee record
+      const employeeResponse = await apiService.employees.create({
         applicant_id: applicant.id,
         name: applicant.name,
         email: applicant.email,
@@ -185,31 +266,49 @@ const ApplicantDetails = () => {
         position: onboardData.position,
         department: onboardData.department,
         hire_date: onboardData.startDate,
-        salary: salary
+        salary: salary,
+        mentor: onboardData.mentor
       });
 
-      // 2. Update applicant status to 'Hired'
+      // Process equipment requests
+      if (onboardData.equipment.length > 0) {
+        await apiService.employees.requestEquipment(employeeResponse.data.id, onboardData.equipment);
+      }
+
+      // Process document uploads
+      if (onboardData.documents.length > 0) {
+        await apiService.employees.uploadDocuments(employeeResponse.data.id, onboardData.documents);
+      }
+
+      // Schedule training
+      if (onboardData.trainingSchedule.length > 0) {
+        await apiService.employees.scheduleTraining(employeeResponse.data.id, onboardData.trainingSchedule);
+      }
+
+      // Update applicant status
       await apiService.applicants.updateStatus(applicant.id, "Hired");
       
-      toast.success(`${applicant.name} successfully onboarded!`);
+      // Send welcome email
+      await apiService.employees.sendWelcomeEmail(employeeResponse.data.id);
       
-      // Update local state
+      toast.success(`${applicant.name} successfully onboarded! Welcome email sent.`);
+      
       setApplicant(prev => ({ ...prev, status: "Hired" }));
-      
-      // Close the modal and clear form
       setOnboardModalOpen(false);
-      setOnboardData({ position: "", department: "", startDate: "", salary: "" });
+      setOnboardData({
+        position: "",
+        department: "",
+        startDate: "",
+        salary: "",
+        equipment: [],
+        documents: [],
+        trainingSchedule: [],
+        mentor: ""
+      });
       
     } catch (error) {
       console.error("Error onboarding applicant:", error);
-      let errorMessage = "Failed to onboard applicant. Please try again.";
-      
-      // Check for specific error messages from the backend if available
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-      
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.message || "Failed to onboard applicant");
     } finally {
       setLoading(false);
     }
@@ -497,8 +596,8 @@ const ApplicantDetails = () => {
             <h3 className="text-xl font-semibold mb-4">Add Note</h3>
             <div>
               <textarea
-                value={feedbackData}
-                onChange={(e) => setFeedbackData(e.target.value)}
+                value={feedbackData.text}
+                onChange={(e) => setFeedbackData({...feedbackData, text: e.target.value})}
                 placeholder="Enter your notes or feedback..."
                 className={`w-full px-3 py-2 border rounded-lg h-32 ${
                   isDark 
