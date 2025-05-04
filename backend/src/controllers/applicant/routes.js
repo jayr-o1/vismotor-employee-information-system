@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../../configs/database");
+const path = require("path");
+const fs = require("fs");
 
 // APPLICANTS ENDPOINTS
 
@@ -532,6 +534,33 @@ router.post("/api/applicants/:id/notes", async (req, res) => {
   } catch (error) {
     console.error("Error adding note:", error);
     res.status(500).json({ message: "Failed to add note" });
+  }
+});
+
+// Add a file download endpoint
+router.get("/api/applicants/download/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    
+    // Security check to prevent directory traversal
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({ message: "Invalid filename" });
+    }
+    
+    // Path to uploads folder
+    const uploadsDir = path.join(__dirname, "../../../uploads");
+    const filePath = path.join(uploadsDir, filename);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "File not found" });
+    }
+    
+    // Send file
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error("Error downloading file:", error);
+    res.status(500).json({ message: "Failed to download file" });
   }
 });
 

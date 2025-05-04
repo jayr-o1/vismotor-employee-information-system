@@ -844,8 +844,90 @@ const ApplicantDetails = () => {
                 </div>
                 
                 <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.phone}</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Gender</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.gender}
+                    {applicant.other_gender && ` (${applicant.other_gender})`}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Age</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.age || 'N/A'}</p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Marital Status</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.marital_status}
+                    {applicant.other_marital_status && ` (${applicant.other_marital_status})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Education</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.highest_education}
+                    {applicant.other_highest_education && ` (${applicant.other_highest_education})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Position Applying For</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.position}
+                    {applicant.other_position && ` (${applicant.other_position})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Desired Pay</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.desired_pay || 'N/A'}</p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Previously Employed at Vismotor</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.previously_employed || 'N/A'}</p>
+                </div>
+              </div>
+              
+              {/* Right Column */}
+              <div>
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Branch/Department</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.branch_department}
+                    {applicant.other_branch_department && ` (${applicant.other_branch_department})`}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Date Availability</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.date_availability}
+                    {applicant.other_date_availability && ` (${applicant.other_date_availability})`}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Job Post Source</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.job_post_source}
+                    {applicant.other_job_source && ` (${applicant.other_job_source})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {[
+                      applicant.street_address,
+                      applicant.barangay,
+                      applicant.city,
+                      applicant.province,
+                      applicant.region
+                    ].filter(Boolean).join(', ')}
+                  </p>
                 </div>
                 
                 <div className="mb-6">
@@ -854,23 +936,33 @@ const ApplicantDetails = () => {
                     {applicant.applied_date ? applicant.applied_date.split('T')[0] : ''}
                   </p>
                 </div>
-              </div>
-              
-              {/* Right Column */}
-              <div>
+
                 <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Education</p>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.highest_education || 'N/A'}</p>
-                </div>
-                
-                <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Gender</p>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.gender || 'N/A'}</p>
-                </div>
-                
-                <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Job Source</p>
-                  <p className={`font-medium whitespace-pre-line ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.job_post_source || 'N/A'}</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Files</p>
+                  <div className="flex flex-col space-y-2 mt-2">
+                    {applicant.resume_filename && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/applicants/download/${applicant.resume_filename}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={`flex items-center ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                      >
+                        <FaPaperclip className="mr-2" /> 
+                        Resume/CV: {applicant.resume_originalname}
+                      </a>
+                    )}
+                    {applicant.house_sketch_filename && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/applicants/download/${applicant.house_sketch_filename}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={`flex items-center ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                      >
+                        <FaPaperclip className="mr-2" /> 
+                        House Sketch: {applicant.house_sketch_originalname}
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

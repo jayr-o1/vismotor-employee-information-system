@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
+const path = require("path");
+const fs = require("fs");
 require('dotenv').config(); // Load environment variables
 const db = require("./src/configs/database");
 const authRoutes = require("./src/controllers/auth/routes/routes");
@@ -13,6 +15,13 @@ const { validateToken, ensureVerified } = require("./src/utils/authMiddleware");
 const app = express();
 const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads directory at:', uploadsDir);
+}
 
 // Allow requests from the frontend and network
 app.use(cors({
@@ -38,7 +47,8 @@ app.use((req, res, next) => {
     '/api/resend-verification',
     '/api/check-user',
     '/api/applications/upload',
-    '/api/applications/submit'
+    '/api/applications/submit',
+    '/api/applicants/download'
   ];
   
   // Check if the request path starts with any of the public paths
