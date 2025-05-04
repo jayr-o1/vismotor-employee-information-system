@@ -12,10 +12,22 @@ const EmployeeQRProfile = () => {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const response = await apiService.employees.getById(id);
+        console.log(`Fetching employee with ID: ${id}`);
+        if (!id) {
+          throw new Error("No employee ID provided in URL");
+        }
+        
+        const response = await apiService.employees.getPublicProfile(id);
+        
+        if (!response.data) {
+          throw new Error("No employee data returned from API");
+        }
+        
+        console.log("Employee data received:", response.data);
         setEmployee(response.data);
       } catch (err) {
-        setError("Employee not found or an error occurred.");
+        console.error("Error fetching employee:", err);
+        setError(`Employee not found or an error occurred. Error: ${err.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
@@ -37,6 +49,10 @@ const EmployeeQRProfile = () => {
         <div className="bg-white p-8 rounded-xl shadow-lg text-center">
           <h2 className="text-2xl font-bold text-red-500 mb-2">Error</h2>
           <p className="text-gray-700">{error}</p>
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">Employee ID: {id || 'Not provided'}</p>
+            <p className="text-sm text-gray-500">Please make sure the QR code is valid.</p>
+          </div>
         </div>
       </div>
     );
@@ -67,6 +83,10 @@ const EmployeeQRProfile = () => {
           <div className="flex items-center text-gray-700">
             <i className="fas fa-phone mr-2 text-green-600"></i>
             <span>{employee.phone || 'N/A'}</span>
+          </div>
+          <div className="flex items-center text-gray-700">
+            <i className="fas fa-id-badge mr-2 text-green-600"></i>
+            <span>EMP-{employee.id.toString().padStart(4, '0')}</span>
           </div>
         </div>
         <div className="mt-8 text-xs text-gray-400">Powered by Vismotor Employee Information System</div>

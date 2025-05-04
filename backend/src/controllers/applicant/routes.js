@@ -628,4 +628,28 @@ router.get("/api/applicants/download/:filename", async (req, res) => {
   }
 });
 
+// Public endpoint for QR code scanning - doesn't require authentication
+router.get("/api/applicants/:id/public-profile", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await db.getConnection();
+    const [rows] = await connection.query(`
+      SELECT id, CONCAT(first_name, ' ', last_name) as name, 
+      email, phone, position, status 
+      FROM applicants WHERE id = ?`, 
+      [id]
+    );
+    connection.release();
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Applicant not found" });
+    }
+    
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("Error fetching applicant public profile:", error);
+    res.status(500).json({ message: "Failed to fetch applicant profile" });
+  }
+});
+
 module.exports = router; 

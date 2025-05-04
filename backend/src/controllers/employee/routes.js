@@ -181,7 +181,8 @@ router.post("/api/employees", async (req, res) => {
       position,
       department,
       hire_date,
-      salary
+      salary,
+      mentor
     } = req.body;
     
     // Validate required fields
@@ -201,10 +202,13 @@ router.post("/api/employees", async (req, res) => {
     
     const applicant = applicants[0];
     
+    // Combine first_name and last_name to create the full name
+    const fullName = `${applicant.first_name} ${applicant.last_name}`;
+    
     // Add to employees table
     const [result] = await connection.query(
-      "INSERT INTO employees (name, email, phone, position, department, hire_date, salary, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())",
-      [applicant.name, applicant.email, applicant.phone, position, department, hire_date, salary]
+      "INSERT INTO employees (applicant_id, name, email, phone, position, department, hire_date, salary, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+      [applicant_id, fullName, applicant.email, applicant.phone, position, department, hire_date, salary]
     );
     
     // Update applicant status to "Accepted"
@@ -212,6 +216,24 @@ router.post("/api/employees", async (req, res) => {
       "UPDATE applicants SET status = 'Accepted' WHERE id = ?",
       [applicant_id]
     );
+    
+    // Send welcome email to the newly hired employee
+    try {
+      const { sendWelcomeEmail } = require('../../services/emailService');
+      await sendWelcomeEmail(
+        applicant.email,
+        fullName,
+        {
+          position,
+          department,
+          hire_date,
+          reporting_manager: mentor || 'HR Manager'
+        }
+      );
+    } catch (emailError) {
+      console.error("Error sending welcome email:", emailError);
+      // Continue even if email sending fails
+    }
     
     connection.release();
     
@@ -241,10 +263,20 @@ router.get("/api/dashboard", async (req, res) => {
       "SELECT COUNT(*) as total FROM applicants WHERE status = 'Accepted'"
     );
     
-    // Get recent applicants
-    const [recentApplicants] = await connection.query(
-      "SELECT id, name, position, status, applied_date as date FROM applicants ORDER BY applied_date DESC LIMIT 5"
-    );
+    // Get recent applicants with properly formatted name
+    const [recentApplicants] = await connection.query(`
+      SELECT 
+        id, 
+        CONCAT(first_name, ' ', last_name) as name, 
+        position, 
+        status, 
+        applied_date as date 
+      FROM 
+        applicants 
+      ORDER BY 
+        applied_date DESC 
+      LIMIT 5
+    `);
     
     connection.release();
     
@@ -264,6 +296,31 @@ router.get("/api/dashboard", async (req, res) => {
 router.get("/api/dashboard/applicant-trends", async (req, res) => {
   try {
     const connection = await db.getConnection();
+    
+    // Check if applicants table has any records
+    const [countCheck] = await connection.query("SELECT COUNT(*) as count FROM applicants");
+    const applicantsCount = countCheck[0].count;
+    
+    if (applicantsCount === 0) {
+      connection.release();
+      // Return empty data structure with zero counts
+      const months = [];
+      const counts = [];
+      
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const monthName = date.toLocaleString('default', { month: 'short' });
+        months.push(monthName);
+        counts.push(0);
+      }
+      
+      return res.json({
+        labels: months,
+        data: counts,
+        isEmpty: true
+      });
+    }
     
     // Get applicants grouped by month
     const [trends] = await connection.query(`
@@ -293,11 +350,13 @@ router.get("/api/dashboard/applicant-trends", async (req, res) => {
     const counts = [];
     
     for (let i = 11; i >= 0; i--) {
-      const month = (currentMonth - i + 12) % 12; // Ensure it's a positive number
-      const year = currentYear - Math.floor((i - currentMonth) / 12);
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const month = date.getMonth(); // 0-11
+      const year = date.getFullYear();
       
-      // Get the month name
-      const monthName = new Date(year, month, 1).toLocaleString('default', { month: 'short' });
+      // Get the month name - using full date object to ensure proper localization
+      const monthName = date.toLocaleString('default', { month: 'short' });
       months.push(monthName);
       
       // Find the count for this month in the database results
@@ -307,7 +366,8 @@ router.get("/api/dashboard/applicant-trends", async (req, res) => {
     
     res.json({
       labels: months,
-      data: counts
+      data: counts,
+      isEmpty: false
     });
   } catch (error) {
     console.error("Error fetching applicant trends:", error);
@@ -864,32 +924,82 @@ router.get("/api/employees/:id/onboarding-progress", async (req, res) => {
   }
 });
 
-// Send welcome email to onboarded employee (placeholder - would need email service)
+// Send welcome email to onboarded employee
 router.post("/api/employees/:id/send-welcome-email", async (req, res) => {
   try {
     const { id } = req.params;
     const connection = await db.getConnection();
     
     // Check if employee exists
-    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    const [employees] = await connection.query(`
+      SELECT e.*, a.first_name, a.last_name, a.status as applicant_status 
+      FROM employees e 
+      LEFT JOIN applicants a ON e.applicant_id = a.id 
+      WHERE e.id = ?
+    `, [id]);
     
     if (employees.length === 0) {
       connection.release();
       return res.status(404).json({ message: "Employee not found" });
     }
     
+    const employee = employees[0];
+    
     connection.release();
     
-    // This is a placeholder - in a real implementation, you would call your email service here
-    console.log(`✉️ Welcome email sent to ${employees[0].name} at ${employees[0].email}`);
-    
-    res.json({ 
-      success: true,
-      message: "Welcome email sent successfully" 
-    });
+    // Send the welcome email
+    try {
+      const { sendWelcomeEmail } = require('../../services/emailService');
+      
+      // Use the name field from employees table, or construct from first_name and last_name if available
+      const employeeName = employee.name || 
+                          (employee.first_name && employee.last_name ? 
+                           `${employee.first_name} ${employee.last_name}` : 
+                           'New Employee');
+      
+      await sendWelcomeEmail(
+        employee.email,
+        employeeName,
+        {
+          position: employee.position,
+          department: employee.department,
+          hire_date: employee.hire_date,
+          reporting_manager: employee.mentor || 'HR Manager'
+        }
+      );
+      
+      console.log(`✉️ Welcome email sent to ${employeeName} at ${employee.email}`);
+      
+      res.json({ 
+        success: true,
+        message: "Welcome email sent successfully" 
+      });
+    } catch (emailError) {
+      console.error("Error sending welcome email:", emailError);
+      res.status(500).json({ message: "Failed to send welcome email" });
+    }
   } catch (error) {
     console.error("Error sending welcome email:", error);
     res.status(500).json({ message: "Failed to send welcome email" });
+  }
+});
+
+// Public endpoint for QR code scanning - doesn't require authentication
+router.get("/api/employees/:id/public-profile", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await db.getConnection();
+    const [rows] = await connection.query("SELECT id, name, email, phone, position, department, status FROM employees WHERE id = ?", [id]);
+    connection.release();
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("Error fetching employee public profile:", error);
+    res.status(500).json({ message: "Failed to fetch employee profile" });
   }
 });
 

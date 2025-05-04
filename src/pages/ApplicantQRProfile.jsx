@@ -12,10 +12,23 @@ const ApplicantQRProfile = () => {
   useEffect(() => {
     const fetchApplicant = async () => {
       try {
-        const response = await apiService.applicants.getById(id);
+        console.log(`Fetching applicant with ID: ${id}`);
+        if (!id) {
+          throw new Error("No applicant ID provided in URL");
+        }
+        
+        // Use the public endpoint that doesn't require authentication
+        const response = await apiService.applicants.getPublicProfile(id);
+        
+        if (!response.data) {
+          throw new Error("No applicant data returned from API");
+        }
+        
+        console.log("Applicant data received:", response.data);
         setApplicant(response.data);
       } catch (err) {
-        setError("Applicant not found or an error occurred.");
+        console.error("Error fetching applicant:", err);
+        setError(`Applicant not found or an error occurred. Error: ${err.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
@@ -37,6 +50,10 @@ const ApplicantQRProfile = () => {
         <div className="bg-white p-8 rounded-xl shadow-lg text-center">
           <h2 className="text-2xl font-bold text-red-500 mb-2">Error</h2>
           <p className="text-gray-700">{error}</p>
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">Applicant ID: {id || 'Not provided'}</p>
+            <p className="text-sm text-gray-500">Please make sure the QR code is valid.</p>
+          </div>
         </div>
       </div>
     );
@@ -67,6 +84,10 @@ const ApplicantQRProfile = () => {
           <div className="flex items-center text-gray-700">
             <i className="fas fa-phone mr-2 text-green-600"></i>
             <span>{applicant.phone || 'N/A'}</span>
+          </div>
+          <div className="flex items-center text-gray-700">
+            <i className="fas fa-id-badge mr-2 text-green-600"></i>
+            <span>APP-{applicant.id.toString().padStart(4, '0')}</span>
           </div>
         </div>
         <div className="mt-8 text-xs text-gray-400">Powered by Vismotor Employee Information System</div>

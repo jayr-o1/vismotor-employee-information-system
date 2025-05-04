@@ -302,9 +302,6 @@ const ApplicantDetails = () => {
       // Create employee record
       const employeeResponse = await apiService.employees.create({
         applicant_id: applicant.id,
-        name: applicant.name,
-        email: applicant.email,
-        phone: applicant.phone || '',
         position: onboardingData.position,
         department: onboardingData.department,
         hire_date: onboardingData.startDate,
@@ -336,46 +333,43 @@ const ApplicantDetails = () => {
       // Update applicant state
       setApplicant(prev => ({ ...prev, status: "Accepted" }));
       
-      // Show toast success message
-      toast.success(`${applicant.name} successfully onboarded!`, {
-        position: "top-right",
-        autoClose: 3000
-      });
+      setLoading(false);
       
-      // Refresh the page immediately to show updated data
-      window.location.reload();
-      
-      // Note: The code below will not execute because of the page refresh
-      // but we'll keep it in case the refresh behavior changes later
-      Swal.fire({
+      // Show success message with navigation options
+      const navigationResult = await Swal.fire({
         icon: 'success',
-        title: 'Applicant Onboarded!',
+        title: 'Applicant Hired Successfully!',
         html: `
           <div class="text-left">
-            <p><strong>${applicant.name}</strong> has been successfully hired and added to Staff Directory!</p>
+            <p><strong>${applicant.name}</strong> has been successfully hired and added to the staff directory!</p>
             <div class="mt-3">
               <p><strong>Position:</strong> ${onboardingData.position}</p>
               <p><strong>Department:</strong> ${onboardingData.department}</p>
               <p><strong>Start Date:</strong> ${onboardingData.startDate}</p>
-              <p><strong>Salary:</strong> $${salary}</p>
             </div>
           </div>
         `,
+        showDenyButton: true,
+        showCancelButton: true,
         confirmButtonColor: '#10B981',
-        confirmButtonText: 'Great!',
-        allowOutsideClick: false,
-        backdrop: `rgba(0,0,0,0.7)`,
-        showClass: {
-          popup: 'animate__animated animate__fadeIn animate__faster'
-        },
-        hideClass: {
-          popup: 'animate__animated animate__fadeOut animate__faster'
-        }
+        denyButtonColor: '#3B82F6',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Go to Onboarding',
+        denyButtonText: 'View Staff Directory',
+        cancelButtonText: 'Stay Here'
       });
+      
+      if (navigationResult.isConfirmed) {
+        // Navigate to onboarding page
+        navigate('/onboarding');
+      } else if (navigationResult.isDenied) {
+        // Navigate to employees page
+        navigate('/employees');
+      }
+      
     } catch (error) {
       console.error("Error onboarding applicant:", error);
       toast.error(error.response?.data?.message || "Failed to onboard applicant");
-    } finally {
       setLoading(false);
     }
   };
@@ -441,29 +435,42 @@ const ApplicantDetails = () => {
 
   // Mark an interview as completed
   const handleMarkInterviewCompleted = async (interview) => {
+    if (!applicant) return;
+    
     try {
+      // Update interview status to "Completed"
       await apiService.interviews.updateStatus(interview.id, { status: "Completed" });
       
-      // Update applicant status
-      await apiService.applicants.updateStatus(applicant.id, "Interviewed");
-      
       // Update local state
-      setApplicant(prev => {
-        // Update both the applicant status and the interview status in the interviews array
-        const updatedInterviews = prev.interviews.map(item => 
-          item.id === interview.id ? { ...item, status: "Completed" } : item
-        );
-        
-        return { 
-          ...prev, 
-          status: "Interviewed",
-          interviews: updatedInterviews
-        };
-      });
+      const updatedInterviews = applicant.interviews.map(i => 
+        i.id === interview.id ? { ...i, status: "Completed" } : i
+      );
+      
+      setApplicant(prev => ({ 
+        ...prev, 
+        interviews: updatedInterviews,
+        status: "Interviewed"
+      }));
       
       toast.success("Interview marked as completed");
+      
+      // Ask if the user wants to proceed with hiring
+      const result = await Swal.fire({
+        title: 'Interview Completed',
+        html: `The interview with <strong>${applicant.name}</strong> is now marked as completed. Would you like to proceed with the hiring process?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10B981',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, Hire Now',
+        cancelButtonText: 'Not Yet'
+      });
+      
+      if (result.isConfirmed) {
+        handleHireFromInterview(interview);
+      }
     } catch (error) {
-      console.error("Error updating interview status:", error);
+      console.error("Error marking interview as completed:", error);
       toast.error(error.response?.data?.message || "Failed to update interview status");
     }
   };

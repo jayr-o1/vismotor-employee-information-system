@@ -45,6 +45,7 @@ const apiService = {
   applicants: {
     getAll: () => api.get('/api/applicants'),
     getById: (id) => api.get(`/api/applicants/${id}`),
+    getPublicProfile: (id) => axios.get(`${API_URL}/api/applicants/${id}/public-profile`),
     create: (applicantData) => api.post('/api/applicants', applicantData),
     update: (id, applicantData) => api.put(`/api/applicants/${id}`, applicantData),
     updateStatus: (id, status) => api.patch(`/api/applicants/${id}/status`, { status }),
@@ -87,6 +88,7 @@ const apiService = {
   employees: {
     getAll: () => api.get('/api/employees'),
     getById: (id) => api.get(`/api/employees/${id}`),
+    getPublicProfile: (id) => axios.get(`${API_URL}/api/employees/${id}/public-profile`),
     create: (employeeData) => api.post('/api/employees', employeeData),
     update: (id, employeeData) => api.put(`/api/employees/${id}`, employeeData),
     updateStatus: (id, status) => api.put(`/api/employees/${id}`, { status }),

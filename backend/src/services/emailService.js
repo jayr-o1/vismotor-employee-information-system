@@ -172,10 +172,59 @@ const sendInterviewCancellationEmail = async (applicantEmail, applicantName, int
   await transporter.sendMail(mailOptions);
 };
 
+// Send welcome email to newly hired employees
+const sendWelcomeEmail = async (employeeEmail, employeeName, employmentDetails) => {
+  const { position, department, hire_date, reporting_manager } = employmentDetails;
+  
+  // Format the start date for display
+  const formattedDate = new Date(hire_date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  const mailOptions = {
+    from: "olores.jayrm@gmail.com",
+    to: employeeEmail,
+    subject: "Welcome to Vismotor Inc!",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #2c3e50;">Welcome to Vismotor Inc!</h2>
+        </div>
+        
+        <p>Dear ${employeeName},</p>
+        
+        <p>Congratulations! We are delighted to welcome you to Vismotor Inc. as our new <strong>${position}</strong> in the <strong>${department}</strong> department.</p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #2c3e50;">Employment Details</h3>
+          <p><strong>Position:</strong> ${position}</p>
+          <p><strong>Department:</strong> ${department}</p>
+          <p><strong>Start Date:</strong> ${formattedDate}</p>
+          ${reporting_manager ? `<p><strong>Reporting Manager:</strong> ${reporting_manager}</p>` : ''}
+        </div>
+        
+        <p>Please be at the office by 9:00 AM on your first day. Our HR team will guide you through the onboarding process, which includes completing necessary paperwork, receiving equipment, and orientation.</p>
+        
+        <p>We're excited to have you join our team and look forward to your contributions. If you have any questions before your start date, please don't hesitate to contact our HR department.</p>
+        
+        <p>Best regards,<br>
+        HR Department<br>
+        Vismotor Inc.</p>
+      </div>
+    `
+  };
+  
+  await transporter.sendMail(mailOptions);
+};
+
 module.exports = { 
   sendVerificationEmail, 
   sendResetPasswordEmail, 
   sendInterviewNotification,
   sendInterviewCompletionEmail,
-  sendInterviewCancellationEmail
+  sendInterviewCancellationEmail,
+  sendWelcomeEmail
 };

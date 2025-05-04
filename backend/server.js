@@ -48,12 +48,20 @@ app.use((req, res, next) => {
     '/api/check-user',
     '/api/applications/upload',
     '/api/applications/submit',
-    '/api/applicants/download'
+    '/api/applicants/download',
+    '/api/employees', // This will match /api/employees/:id/public-profile
+    '/api/applicants', // This will match /api/applicants/:id/public-profile
   ];
   
   // Check if the request path starts with any of the public paths
   const isPublicPath = publicPaths.some(path => req.path.startsWith(path));
-  if (isPublicPath) {
+  
+  // Special check for the public profile endpoints
+  const isPublicProfilePath = 
+    req.path.match(/\/api\/employees\/\d+\/public-profile$/) || 
+    req.path.match(/\/api\/applicants\/\d+\/public-profile$/);
+  
+  if (isPublicPath || isPublicProfilePath) {
     return next();
   }
   

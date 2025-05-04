@@ -69,6 +69,22 @@ const mockFetch = (endpoint, delay = 800) => {
   });
 };
 
+// Function to render sample data warning banner when using demo data
+const SampleDataBanner = ({ isDark }) => (
+  <div className={`mb-6 px-4 py-3 rounded-lg ${
+    isDark ? 'bg-amber-900/20 border border-amber-800/30 text-amber-200' : 
+    'bg-amber-50 border border-amber-200 text-amber-800'
+  }`}>
+    <div className="flex items-center">
+      <i className="fas fa-info-circle mr-2 text-lg"></i>
+      <span className="font-medium">Sample Data Mode</span>
+    </div>
+    <p className="text-sm mt-1">
+      The dashboard is currently displaying sample data. Connect to the database to see real data.
+    </p>
+  </div>
+);
+
 const Home = () => {
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
@@ -103,108 +119,45 @@ const Home = () => {
       setIsLoading(true);
       setIsRefreshing(true);
       
-      let response;
       try {
-        // Attempt to fetch from real API with a short timeout
-        response = await Promise.race([
-          fetch('http://10.10.1.71:5000/api/dashboard/applicant-trends', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Connection timeout')), 2000)
-          )
-        ]);
-      } catch (connectionError) {
-        console.log('Connection to backend failed, using mock data instead');
-        // Use mock data if real API fails
-        response = await mockFetch('http://10.10.1.71:5000/api/dashboard/applicant-trends');
-        toast.info("Using demo data - backend server not available", {
-          autoClose: 3000,
-          position: "bottom-right"
-        });
-      }
-      
-      if (response.status === 404) {
-        // Handle case where no data is found
-        console.log('No application data found in the system');
-        toast.info("No applications found in the system. Add applications to see real data.", {
-          autoClose: 5000,
-          position: "bottom-right"
-        });
+        // Get trends data from API
+        const response = await apiService.dashboard.getApplicantTrends();
+        console.log('API response for trends data:', response.data);
         
-        // Fall back to default trends data for visualization
+        if (response.data) {
+          // Check if the API returns flag indicating empty data
+          if (response.data.isEmpty) {
+            setTrendsData({
+              ...response.data,
+              isDemo: false
+            });
+          } else if (response.data.labels && response.data.data) {
+            // Valid data from API
+            setTrendsData({
+              labels: response.data.labels,
+              data: response.data.data,
+              isDemo: false
+            });
+          } else {
+            // Fallback to default data if structure is unexpected
+            console.warn('Unexpected API response structure, using default data');
+            setTrendsData({
+              ...defaultTrendsData,
+              isDemo: true
+            });
+          }
+        } else {
+          throw new Error('Invalid API response');
+        }
+      } catch (error) {
+        console.error('Error fetching trends data:', error);
+        // Use default data as fallback
         setTrendsData({
           ...defaultTrendsData,
           isDemo: true
         });
-        return;
-      }
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('API response for trends data:', data);
-      
-      // Check if the expected property exists
-      if (!data.monthlyTrends || !Array.isArray(data.monthlyTrends)) {
-        console.error('Could not locate monthlyTrends array in API response', data);
-        // Use default data instead of referencing undefined variable
-        setTrendsData(defaultTrendsData);
-        return;
-      }
-      
-      // Process the monthlyTrends data for the chart
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const processedMonthlyTrends = data.monthlyTrends.map(item => {
-        // If the month is already in 'YYYY-MM' format
-        if (typeof item.month === 'string' && item.month.includes('-')) {
-          const [year, monthNum] = item.month.split('-');
-          const monthIndex = parseInt(monthNum, 10) - 1; // Convert 1-based to 0-based
-          return {
-            month: monthNames[monthIndex],
-            count: item.count
-          };
-        }
         
-        // If it's already in the expected format
-        return item;
-      });
-      
-      console.log('Processed monthly trends data:', processedMonthlyTrends);
-      
-      // Calculate totals for the statistics
-      const totalApplicants = processedMonthlyTrends.reduce((sum, item) => sum + item.count, 0);
-      const totalApril = processedMonthlyTrends.find(item => item.month === 'Apr')?.count || 0;
-      
-      console.log(`Total applicants: ${totalApplicants}, April total: ${totalApril}`);
-      
-      // Extract data properly for the chart
-      const labels = processedMonthlyTrends.map(item => item.month);
-      const counts = processedMonthlyTrends.map(item => item.count);
-      
-      setTrendsData({
-        labels: labels,
-        data: counts,
-        statusCounts: data.statusCounts || []
-      });
-      
-    } catch (error) {
-      console.error('Error fetching trends data:', error);
-      
-      // Use default data as fallback
-      setTrendsData(defaultTrendsData);
-      
-      // Check if the error is likely due to empty tables rather than a connection issue
-      if (error.message && (error.message.includes('no data') || error.message.includes('empty'))) {
-        toast.info("No application data found. Submit applications to see statistics.", {
-          autoClose: 5000,
-          position: "bottom-right"
-        });
-      } else {
-        toast.error("Error loading data. Using default values instead.");
+        toast.error("Could not load trend data from server. Using sample data instead.");
       }
     } finally {
       setIsLoading(false);
@@ -217,32 +170,27 @@ const Home = () => {
     setIsLoading(true);
 
     try {
-      let statsResponse;
+      // Get dashboard stats
+      const statsResponse = await apiService.dashboard.getStats();
       
-      try {
-        // Try to get actual stats from the API
-        statsResponse = await apiService.dashboard.getStats();
-      } catch (error) {
-        console.log('Error fetching from real API, using mock data');
-        // If the real API fails, use our mock data
-        const mockResponse = await mockFetch('/api/dashboard/stats');
-        statsResponse = { data: await mockResponse.json() };
-      }
-        
+      if (statsResponse.data) {
         setStats({
           applicants: statsResponse.data.totalApplicants || 0,
           employees: statsResponse.data.totalEmployees || 0,
           onboarding: statsResponse.data.totalOnboarding || 0,
           recentApplicants: statsResponse.data.recentApplicants || []
         });
+      } else {
+        throw new Error('Invalid stats response');
+      }
 
       // Fetch trends data
       await fetchTrendsData();
       
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        
-        setStats({
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      
+      setStats({
         applicants: 0,
         employees: 0,
         onboarding: 0,
@@ -250,9 +198,9 @@ const Home = () => {
       });
       
       toast.error("Failed to load dashboard data. Please check your connection or contact support.");
-      } finally {
-        setIsLoading(false);
-      }
+    } finally {
+      setIsLoading(false);
+    }
   }, [fetchTrendsData]);
 
   // Initial data fetch on component mount
@@ -503,9 +451,11 @@ const Home = () => {
 
   // Filter tabs
   const renderTabContent = () => {
-    switch(activeTab) {
-      case 'dashboard':
-        return (
+    if (activeTab === 'dashboard') {
+      return (
+        <>
+          {trendsData.isDemo && <SampleDataBanner isDark={isDark} />}
+          
           <div className="flex flex-col gap-6 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <DashboardCard
@@ -682,14 +632,16 @@ const Home = () => {
               </div>
             </div>
           </div>
-        );
-      default:
-        return (
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <p>No content available for this tab.</p>
-          </div>
-        );
+        </>
+      );
     }
+    
+    // Default case for unknown tabs
+    return (
+      <div className={`${isDark ? 'bg-slate-800' : 'bg-white'} rounded-xl shadow-md p-6`}>
+        <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>No content available for this tab.</p>
+      </div>
+    );
   };
 
   return (

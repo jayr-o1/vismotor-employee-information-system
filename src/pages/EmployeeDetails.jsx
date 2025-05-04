@@ -209,7 +209,7 @@ const EmployeeDetails = () => {
                     <h3 className="text-xl font-semibold mb-6 text-center">Employee ID Card</h3>
                     <div className={`p-4 bg-white rounded-xl shadow-md`}>
                       <QRCodeSVG 
-                        value={`http://10.10.1.71:5173/qr/employee/${employee.id}`}
+                        value={`${window.location.origin}/qr/employee/${employee.id}`}
                         size={200}
                         level="H"
                         includeMargin={true}
