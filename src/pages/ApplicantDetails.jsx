@@ -44,6 +44,13 @@ const ApplicantDetails = () => {
     trainingSchedule: [],
     mentor: ""
   });
+  const [activeTab, setActiveTab] = useState('details');
+  const [equipmentTypes, setEquipmentTypes] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [trainingTypes, setTrainingTypes] = useState([]);
+  const [equipmentNotes, setEquipmentNotes] = useState('');
+  const [selectedTraining, setSelectedTraining] = useState(null);
+  const [onboardingProgress, setOnboardingProgress] = useState(25);
 
   useEffect(() => {
     fetchApplicantDetails();
@@ -524,6 +531,239 @@ const ApplicantDetails = () => {
     }
   };
 
+  // Calculate onboarding progress
+  useEffect(() => {
+    if (!onboardModalOpen) return;
+    
+    let progress = 0;
+    let totalSteps = 4; // 4 tabs
+    
+    // Basic details progress (25%)
+    if (onboardData.position && onboardData.department && onboardData.startDate && onboardData.salary) {
+      progress += 25;
+    } else if (onboardData.position || onboardData.department || onboardData.startDate || onboardData.salary) {
+      progress += 10; // Partial completion
+    }
+    
+    // Equipment progress (25%)
+    if (onboardData.equipment.length > 0) {
+      progress += 25;
+    }
+    
+    // Documents progress (25%)
+    if (onboardData.documents.length > 0) {
+      progress += 25;
+    }
+    
+    // Training progress (25%)
+    if (onboardData.trainingSchedule.length > 0) {
+      progress += 25;
+    }
+    
+    setOnboardingProgress(progress);
+  }, [onboardData, onboardModalOpen]);
+
+  // Fetch equipment, document, and training types when modal opens
+  useEffect(() => {
+    if (onboardModalOpen) {
+      fetchEquipmentTypes();
+      fetchDocumentTypes();
+      fetchTrainingTypes();
+    }
+  }, [onboardModalOpen]);
+
+  // Fetch equipment types
+  const fetchEquipmentTypes = async () => {
+    try {
+      const response = await apiService.employees.getEquipmentTypes();
+      setEquipmentTypes(response.data);
+    } catch (error) {
+      console.error("Error fetching equipment types:", error);
+      toast.error("Failed to load equipment types");
+      setEquipmentTypes([]);
+    }
+  };
+
+  // Fetch document types
+  const fetchDocumentTypes = async () => {
+    try {
+      const response = await apiService.employees.getDocumentTypes();
+      setDocumentTypes(response.data);
+    } catch (error) {
+      console.error("Error fetching document types:", error);
+      toast.error("Failed to load document types");
+      setDocumentTypes([]);
+    }
+  };
+
+  // Fetch training types
+  const fetchTrainingTypes = async () => {
+    try {
+      const response = await apiService.employees.getTrainingTypes();
+      setTrainingTypes(response.data);
+    } catch (error) {
+      console.error("Error fetching training types:", error);
+      toast.error("Failed to load training types");
+      setTrainingTypes([]);
+    }
+  };
+
+  // Handle tab navigation
+  const handleNextTab = () => {
+    if (activeTab === 'details') {
+      // Validate required fields before moving to next tab
+      if (!onboardData.position || !onboardData.department || !onboardData.startDate || !onboardData.salary) {
+        toast.error("Please fill in all required fields marked with *");
+        return;
+      }
+      setActiveTab('equipment');
+    } else if (activeTab === 'equipment') {
+      setActiveTab('documents');
+    } else if (activeTab === 'documents') {
+      setActiveTab('training');
+    }
+  };
+
+  const handlePreviousTab = () => {
+    if (activeTab === 'equipment') {
+      setActiveTab('details');
+    } else if (activeTab === 'documents') {
+      setActiveTab('equipment');
+    } else if (activeTab === 'training') {
+      setActiveTab('documents');
+    }
+  };
+
+  // Equipment handlers
+  const handleToggleEquipment = (equipmentType) => {
+    const existing = onboardData.equipment.findIndex(eq => eq.equipment_type === equipmentType);
+    
+    if (existing >= 0) {
+      // Already selected, remove it
+      const updated = [...onboardData.equipment];
+      updated.splice(existing, 1);
+      setOnboardData({...onboardData, equipment: updated});
+    } else {
+      // Add new equipment
+      setOnboardData({
+        ...onboardData, 
+        equipment: [...onboardData.equipment, { 
+          equipment_type: equipmentType,
+          description: '',
+          notes: ''
+        }]
+      });
+    }
+  };
+
+  const handleRemoveEquipment = (index) => {
+    const updated = [...onboardData.equipment];
+    updated.splice(index, 1);
+    setOnboardData({...onboardData, equipment: updated});
+  };
+
+  const handleUpdateEquipmentNotes = () => {
+    if (onboardData.equipment.length === 0) return;
+    
+    // Update the notes for all selected equipment
+    const updatedEquipment = onboardData.equipment.map(eq => ({
+      ...eq,
+      notes: equipmentNotes
+    }));
+    
+    setOnboardData({...onboardData, equipment: updatedEquipment});
+    toast.success("Equipment notes updated");
+  };
+
+  // Document handlers
+  const handleToggleDocument = (documentType, daysToSubmit = 7) => {
+    const existing = onboardData.documents.findIndex(doc => doc.document_type === documentType);
+    
+    if (existing >= 0) {
+      // Already selected, remove it
+      const updated = [...onboardData.documents];
+      updated.splice(existing, 1);
+      setOnboardData({...onboardData, documents: updated});
+    } else {
+      // Add new document
+      const docType = documentTypes.find(dt => dt.name === documentType);
+      const isRequired = docType ? docType.required : true;
+      
+      setOnboardData({
+        ...onboardData, 
+        documents: [...onboardData.documents, { 
+          document_type: documentType,
+          document_name: documentType,
+          required: isRequired,
+          days_to_submit: daysToSubmit,
+          notes: ''
+        }]
+      });
+    }
+  };
+
+  const handleRemoveDocument = (index) => {
+    const updated = [...onboardData.documents];
+    updated.splice(index, 1);
+    setOnboardData({...onboardData, documents: updated});
+  };
+
+  // Training handlers
+  const handleToggleTraining = (trainingType) => {
+    const existing = onboardData.trainingSchedule.findIndex(tr => tr.training_type === trainingType);
+    
+    if (existing >= 0) {
+      // Already selected, remove it
+      const updated = [...onboardData.trainingSchedule];
+      updated.splice(existing, 1);
+      setOnboardData({...onboardData, trainingSchedule: updated});
+      setSelectedTraining(null);
+    } else {
+      // Add new training
+      const newTraining = { 
+        training_type: trainingType,
+        description: '',
+        trainer: '',
+        location: '',
+        scheduled_date: '',
+        scheduled_time: '',
+        duration_minutes: 60
+      };
+      
+      setOnboardData({
+        ...onboardData, 
+        trainingSchedule: [...onboardData.trainingSchedule, newTraining]
+      });
+      
+      // Set this as the selected training to edit details
+      setSelectedTraining(newTraining);
+    }
+  };
+
+  const handleRemoveTraining = (index) => {
+    const updated = [...onboardData.trainingSchedule];
+    const removedItem = updated[index];
+    updated.splice(index, 1);
+    setOnboardData({...onboardData, trainingSchedule: updated});
+    
+    // If we were editing this training, reset the selection
+    if (selectedTraining && selectedTraining.training_type === removedItem.training_type) {
+      setSelectedTraining(null);
+    }
+  };
+
+  const handleUpdateTrainingDetails = () => {
+    if (!selectedTraining) return;
+    
+    // Find the training in our list and update it
+    const updated = onboardData.trainingSchedule.map(tr => 
+      tr.training_type === selectedTraining.training_type ? selectedTraining : tr
+    );
+    
+    setOnboardData({...onboardData, trainingSchedule: updated});
+    toast.success(`${selectedTraining.training_type} training details updated`);
+  };
+
   if (loading) {
     return (
       <div className="w-full min-h-screen">
@@ -822,7 +1062,7 @@ const ApplicantDetails = () => {
       {/* Onboard Modal */}
       {onboardModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
+          <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-2xl w-full backdrop-blur-md`}>
             {/* Header with title and close button */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-semibold">Onboard {applicant.name}</h2>
@@ -836,86 +1076,454 @@ const ApplicantDetails = () => {
                 </svg>
               </button>
             </div>
-            <div className="grid grid-cols-1 gap-4 mb-4">
-              <div>
-                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Position</label>
-                <input
-                  type="text"
-                  value={onboardData.position}
-                  onChange={(e) => setOnboardData({...onboardData, position: e.target.value})}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark 
-                      ? 'bg-slate-700/80 border-slate-600 text-white' 
-                      : 'bg-white/80 border-gray-300 text-gray-800'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Department</label>
-                <input
-                  type="text"
-                  value={onboardData.department}
-                  onChange={(e) => setOnboardData({...onboardData, department: e.target.value})}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark 
-                      ? 'bg-slate-700/80 border-slate-600 text-white' 
-                      : 'bg-white/80 border-gray-300 text-gray-800'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Start Date</label>
-                <input
-                  type="date"
-                  value={onboardData.startDate ? onboardData.startDate.split('T')[0] : onboardData.startDate}
-                  onChange={(e) => setOnboardData({...onboardData, startDate: e.target.value})}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark 
-                      ? 'bg-slate-700/80 border-slate-600 text-white' 
-                      : 'bg-white/80 border-gray-300 text-gray-800'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Salary</label>
-                <input
-                  type="text"
-                  value={onboardData.salary}
-                  onChange={(e) => setOnboardData({...onboardData, salary: e.target.value})}
-                  placeholder="e.g. 50000"
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark 
-                      ? 'bg-slate-700/80 border-slate-600 text-white' 
-                      : 'bg-white/80 border-gray-300 text-gray-800'
-                  }`}
-                />
+
+            {/* Tabs for multi-step form */}
+            <div className="mb-6">
+              <div className="flex border-b border-gray-200 dark:border-gray-700">
+                <button 
+                  className={`py-2 px-4 border-b-2 ${activeTab === 'details' 
+                    ? 'border-green-500 text-green-500' 
+                    : 'border-transparent hover:border-gray-300'}`}
+                  onClick={() => setActiveTab('details')}
+                >
+                  Basic Details
+                </button>
+                <button 
+                  className={`py-2 px-4 border-b-2 ${activeTab === 'equipment' 
+                    ? 'border-green-500 text-green-500' 
+                    : 'border-transparent hover:border-gray-300'}`}
+                  onClick={() => setActiveTab('equipment')}
+                >
+                  Equipment
+                </button>
+                <button 
+                  className={`py-2 px-4 border-b-2 ${activeTab === 'documents' 
+                    ? 'border-green-500 text-green-500' 
+                    : 'border-transparent hover:border-gray-300'}`}
+                  onClick={() => setActiveTab('documents')}
+                >
+                  Documents
+                </button>
+                <button 
+                  className={`py-2 px-4 border-b-2 ${activeTab === 'training' 
+                    ? 'border-green-500 text-green-500' 
+                    : 'border-transparent hover:border-gray-300'}`}
+                  onClick={() => setActiveTab('training')}
+                >
+                  Training
+                </button>
               </div>
             </div>
-            <div className="flex justify-end space-x-2">
-              <button 
-                onClick={handleOnboardModalClose} 
-                className={`px-4 py-2 rounded-lg ${
-                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                }`}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleOnboardApplicant} 
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing...
-                  </>
-                ) : "Process Onboarding"}
-              </button>
+            
+            {/* Tab Content */}
+            <div className="overflow-y-auto max-h-[60vh]">
+              {/* Basic Details Tab */}
+              {activeTab === 'details' && (
+                <div className="grid grid-cols-1 gap-4 mb-4">
+                  <div>
+                    <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Position <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={onboardData.position}
+                      onChange={(e) => setOnboardData({...onboardData, position: e.target.value})}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                        isDark 
+                          ? 'bg-slate-700/80 border-slate-600 text-white' 
+                          : 'bg-white/80 border-gray-300 text-gray-800'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Department <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={onboardData.department}
+                      onChange={(e) => setOnboardData({...onboardData, department: e.target.value})}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                        isDark 
+                          ? 'bg-slate-700/80 border-slate-600 text-white' 
+                          : 'bg-white/80 border-gray-300 text-gray-800'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Start Date <span className="text-red-500">*</span></label>
+                    <input
+                      type="date"
+                      value={onboardData.startDate ? onboardData.startDate.split('T')[0] : onboardData.startDate}
+                      onChange={(e) => setOnboardData({...onboardData, startDate: e.target.value})}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                        isDark 
+                          ? 'bg-slate-700/80 border-slate-600 text-white' 
+                          : 'bg-white/80 border-gray-300 text-gray-800'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Salary <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={onboardData.salary}
+                      onChange={(e) => setOnboardData({...onboardData, salary: e.target.value})}
+                      placeholder="e.g. 50000"
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                        isDark 
+                          ? 'bg-slate-700/80 border-slate-600 text-white' 
+                          : 'bg-white/80 border-gray-300 text-gray-800'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Mentor/Buddy</label>
+                    <input
+                      type="text"
+                      value={onboardData.mentor}
+                      onChange={(e) => setOnboardData({...onboardData, mentor: e.target.value})}
+                      placeholder="Name of assigned mentor"
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                        isDark 
+                          ? 'bg-slate-700/80 border-slate-600 text-white' 
+                          : 'bg-white/80 border-gray-300 text-gray-800'
+                      }`}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {/* Equipment Tab */}
+              {activeTab === 'equipment' && (
+                <div>
+                  <h3 className={`text-lg font-medium mb-3 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Required Equipment
+                  </h3>
+                  {equipmentTypes.length === 0 ? (
+                    <div className={`text-center py-4 ${isDark ? 'bg-slate-700/50' : 'bg-gray-50'} rounded-lg mb-4`}>
+                      <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>Loading equipment types...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {equipmentTypes.map(type => (
+                          <div 
+                            key={type.id}
+                            className={`px-3 py-2 rounded-lg cursor-pointer ${
+                              onboardData.equipment.some(eq => eq.equipment_type === type.name)
+                                ? 'bg-green-600 text-white'
+                                : isDark ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                            }`}
+                            onClick={() => handleToggleEquipment(type.name)}
+                          >
+                            {type.name}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {onboardData.equipment.length > 0 && (
+                        <div className={`p-3 rounded-lg overflow-hidden ${isDark ? 'bg-slate-700/50' : 'bg-gray-50'}`}>
+                          <h4 className="font-medium mb-2">Selected Equipment:</h4>
+                          <div className="space-y-2">
+                            {onboardData.equipment.map((eq, index) => (
+                              <div key={index} className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <span className={`${isDark ? 'text-white' : 'text-gray-800'}`}>{eq.equipment_type}</span>
+                                  {eq.description && (
+                                    <span className={`ml-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                      ({eq.description})
+                                    </span>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => handleRemoveEquipment(index)}
+                                  className="text-red-500 hover:text-red-600"
+                                >
+                                  <FaTimesCircle />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {onboardData.equipment.length > 0 && (
+                        <div className="mt-4">
+                          <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                            Additional Notes for Selected Equipment
+                          </label>
+                          <textarea
+                            value={equipmentNotes}
+                            onChange={(e) => setEquipmentNotes(e.target.value)}
+                            placeholder="Any special requirements or configurations..."
+                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                              isDark 
+                                ? 'bg-slate-700/80 border-slate-600 text-white' 
+                                : 'bg-white/80 border-gray-300 text-gray-800'
+                            }`}
+                            rows={3}
+                          ></textarea>
+                          <div className="flex justify-end mt-2">
+                            <button
+                              onClick={handleUpdateEquipmentNotes}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                              Update Notes
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+              
+              {/* Documents Tab */}
+              {activeTab === 'documents' && (
+                <div>
+                  <h3 className={`text-lg font-medium mb-3 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Required Documents
+                  </h3>
+                  {documentTypes.length === 0 ? (
+                    <div className={`text-center py-4 ${isDark ? 'bg-slate-700/50' : 'bg-gray-50'} rounded-lg mb-4`}>
+                      <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>Loading document types...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {documentTypes.map(type => (
+                          <div 
+                            key={type.id}
+                            className={`px-3 py-2 rounded-lg cursor-pointer flex items-center ${
+                              onboardData.documents.some(doc => doc.document_type === type.name)
+                                ? 'bg-green-600 text-white'
+                                : isDark ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                            }`}
+                            onClick={() => handleToggleDocument(type.name, type.days_to_submit)}
+                          >
+                            <FaPaperclip className="mr-1" />
+                            {type.name}
+                            {type.required && <span className="ml-1 text-red-500">*</span>}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {onboardData.documents.length > 0 && (
+                        <div className={`p-3 rounded-lg overflow-hidden ${isDark ? 'bg-slate-700/50' : 'bg-gray-50'}`}>
+                          <h4 className="font-medium mb-2">Selected Documents:</h4>
+                          <div className="space-y-2">
+                            {onboardData.documents.map((doc, index) => (
+                              <div key={index} className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <span className={`${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                    {doc.document_type}
+                                    {doc.required && <span className="text-red-500 ml-1">*</span>}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => handleRemoveDocument(index)}
+                                  className="text-red-500 hover:text-red-600"
+                                >
+                                  <FaTimesCircle />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+              
+              {/* Training Tab */}
+              {activeTab === 'training' && (
+                <div>
+                  <h3 className={`text-lg font-medium mb-3 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Training Schedule
+                  </h3>
+                  {trainingTypes.length === 0 ? (
+                    <div className={`text-center py-4 ${isDark ? 'bg-slate-700/50' : 'bg-gray-50'} rounded-lg mb-4`}>
+                      <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>Loading training types...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {trainingTypes.map(type => (
+                          <div 
+                            key={type.id}
+                            className={`px-3 py-2 rounded-lg cursor-pointer ${
+                              onboardData.trainingSchedule.some(tr => tr.training_type === type.name)
+                                ? 'bg-green-600 text-white'
+                                : isDark ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                            }`}
+                            onClick={() => handleToggleTraining(type.name)}
+                          >
+                            {type.name}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {onboardData.trainingSchedule.length > 0 && (
+                        <div className={`p-3 rounded-lg overflow-hidden ${isDark ? 'bg-slate-700/50' : 'bg-gray-50'}`}>
+                          <h4 className="font-medium mb-2">Selected Training:</h4>
+                          <div className="space-y-2">
+                            {onboardData.trainingSchedule.map((training, index) => (
+                              <div key={index} className="flex items-center justify-between">
+                                <span className={`${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                  {training.training_type}
+                                </span>
+                                <button
+                                  onClick={() => handleRemoveTraining(index)}
+                                  className="text-red-500 hover:text-red-600"
+                                >
+                                  <FaTimesCircle />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Training Schedule Fields */}
+                      {selectedTraining && (
+                        <div className="mt-4 p-3 rounded-lg border border-green-500">
+                          <h4 className="font-medium mb-2">Schedule "{selectedTraining.training_type}" Training</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className={`block text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                Trainer
+                              </label>
+                              <input
+                                type="text"
+                                value={selectedTraining.trainer || ''}
+                                onChange={(e) => setSelectedTraining({...selectedTraining, trainer: e.target.value})}
+                                className={`w-full px-3 py-2 text-sm border rounded-lg ${
+                                  isDark 
+                                    ? 'bg-slate-700/80 border-slate-600 text-white' 
+                                    : 'bg-white/80 border-gray-300 text-gray-800'
+                                }`}
+                              />
+                            </div>
+                            <div>
+                              <label className={`block text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                Location
+                              </label>
+                              <input
+                                type="text"
+                                value={selectedTraining.location || ''}
+                                onChange={(e) => setSelectedTraining({...selectedTraining, location: e.target.value})}
+                                className={`w-full px-3 py-2 text-sm border rounded-lg ${
+                                  isDark 
+                                    ? 'bg-slate-700/80 border-slate-600 text-white' 
+                                    : 'bg-white/80 border-gray-300 text-gray-800'
+                                }`}
+                              />
+                            </div>
+                            <div>
+                              <label className={`block text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                Date
+                              </label>
+                              <input
+                                type="date"
+                                value={selectedTraining.scheduled_date || ''}
+                                onChange={(e) => setSelectedTraining({...selectedTraining, scheduled_date: e.target.value})}
+                                className={`w-full px-3 py-2 text-sm border rounded-lg ${
+                                  isDark 
+                                    ? 'bg-slate-700/80 border-slate-600 text-white' 
+                                    : 'bg-white/80 border-gray-300 text-gray-800'
+                                }`}
+                              />
+                            </div>
+                            <div>
+                              <label className={`block text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                Time
+                              </label>
+                              <input
+                                type="time"
+                                value={selectedTraining.scheduled_time || ''}
+                                onChange={(e) => setSelectedTraining({...selectedTraining, scheduled_time: e.target.value})}
+                                className={`w-full px-3 py-2 text-sm border rounded-lg ${
+                                  isDark 
+                                    ? 'bg-slate-700/80 border-slate-600 text-white' 
+                                    : 'bg-white/80 border-gray-300 text-gray-800'
+                                }`}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end mt-3">
+                            <button
+                              onClick={handleUpdateTrainingDetails}
+                              className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
+                            >
+                              Update Training Details
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Progress indicator */}
+            <div className="flex justify-between items-center my-4">
+              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                <div 
+                  className="bg-green-600 h-2.5 rounded-full" 
+                  style={{ width: `${onboardingProgress}%` }}
+                ></div>
+              </div>
+              <span className="ml-2 text-sm">{onboardingProgress}%</span>
+            </div>
+            
+            {/* Action buttons */}
+            <div className="flex justify-between mt-4">
+              <div>
+                {activeTab !== 'details' && (
+                  <button 
+                    onClick={handlePreviousTab}
+                    className={`px-4 py-2 rounded-lg ${
+                      isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                    }`}
+                  >
+                    Previous
+                  </button>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={handleOnboardModalClose} 
+                  className={`px-4 py-2 rounded-lg ${
+                    isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  }`}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                {activeTab !== 'training' ? (
+                  <button 
+                    onClick={handleNextTab}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button 
+                    onClick={handleOnboardApplicant} 
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : "Complete Onboarding"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

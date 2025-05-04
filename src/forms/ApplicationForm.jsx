@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { regions, provinces, cities, barangays } from '../utils/locations';
+import apiService from '../services/api';  // Import the API service
 
 function ApplicationForm() {
   const [formData, setFormData] = useState({
@@ -262,18 +263,9 @@ function ApplicationForm() {
         formDataFiles.append('houseSketchFile', formData.houseSketchFile);
       }
       
-      // Send files to the server using our new API endpoint
-      const fileUploadResponse = await fetch('/api/applications/upload', {
-        method: 'POST',
-        body: formDataFiles,
-      });
-      
-      if (!fileUploadResponse.ok) {
-        const errorData = await fileUploadResponse.json();
-        throw new Error(errorData.message || 'Failed to upload files');
-      }
-      
-      const uploadResult = await fileUploadResponse.json();
+      // Use apiService to upload files instead of direct fetch
+      const fileUploadResponse = await apiService.applicants.uploadFiles(formDataFiles);
+      const uploadResult = fileUploadResponse.data;
       console.log('Files uploaded:', uploadResult);
       
       // Prepare data for submission with file references
@@ -283,8 +275,9 @@ function ApplicationForm() {
         houseSketchFile: uploadResult.files.houseSketchFile || null
       };
       
-      // Submit application data to MySQL database via API
-      const submitResponse = await fetch('/api/applications/submit', {
+      // Use API_URL from environment to construct the full URL for the API call
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const submitResponse = await fetch(`${API_URL}/api/applications/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -315,4 +315,582 @@ router.get("/api/dashboard/applicant-trends", async (req, res) => {
   }
 });
 
+// Get all equipment types
+router.get("/api/equipment-types", async (req, res) => {
+  try {
+    const connection = await db.getConnection();
+    const [rows] = await connection.query("SELECT * FROM equipment_types WHERE is_active = TRUE ORDER BY name");
+    connection.release();
+    
+    res.json(rows);
+  } catch (error) {
+    console.error("Error fetching equipment types:", error);
+    res.status(500).json({ message: "Failed to fetch equipment types" });
+  }
+});
+
+// Get all document types
+router.get("/api/document-types", async (req, res) => {
+  try {
+    const connection = await db.getConnection();
+    const [rows] = await connection.query("SELECT * FROM document_types WHERE is_active = TRUE ORDER BY name");
+    connection.release();
+    
+    res.json(rows);
+  } catch (error) {
+    console.error("Error fetching document types:", error);
+    res.status(500).json({ message: "Failed to fetch document types" });
+  }
+});
+
+// Get all training types
+router.get("/api/training-types", async (req, res) => {
+  try {
+    const connection = await db.getConnection();
+    const [rows] = await connection.query("SELECT * FROM training_types WHERE is_active = TRUE ORDER BY name");
+    connection.release();
+    
+    res.json(rows);
+  } catch (error) {
+    console.error("Error fetching training types:", error);
+    res.status(500).json({ message: "Failed to fetch training types" });
+  }
+});
+
+// Request equipment for employee
+router.post("/api/employees/:id/equipment", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const equipmentItems = req.body.equipment;
+    
+    if (!Array.isArray(equipmentItems) || equipmentItems.length === 0) {
+      return res.status(400).json({ message: "Equipment list is required and must be an array" });
+    }
+    
+    const connection = await db.getConnection();
+    
+    // Verify employee exists
+    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    
+    if (employees.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    // Insert equipment requests
+    const values = [];
+    const placeholders = [];
+    
+    for (const item of equipmentItems) {
+      placeholders.push("(?, ?, ?, ?)");
+      values.push(
+        id,
+        item.equipment_type,
+        item.description || null,
+        item.notes || null
+      );
+    }
+    
+    const query = `
+      INSERT INTO employee_equipment 
+      (employee_id, equipment_type, description, notes)
+      VALUES ${placeholders.join(", ")}
+    `;
+    
+    await connection.query(query, values);
+    connection.release();
+    
+    res.status(201).json({ 
+      message: "Equipment requested successfully",
+      count: equipmentItems.length
+    });
+  } catch (error) {
+    console.error("Error requesting equipment:", error);
+    res.status(500).json({ message: "Failed to request equipment" });
+  }
+});
+
+// Upload documents for employee
+router.post("/api/employees/:id/documents", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const documents = req.body.documents;
+    
+    if (!Array.isArray(documents) || documents.length === 0) {
+      return res.status(400).json({ message: "Documents list is required and must be an array" });
+    }
+    
+    const connection = await db.getConnection();
+    
+    // Verify employee exists
+    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    
+    if (employees.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    // Calculate required by dates based on hire date
+    const hireDate = new Date(employees[0].hire_date);
+    
+    // Get document types with submission days
+    const [docTypes] = await connection.query("SELECT * FROM document_types WHERE is_active = TRUE");
+    const docTypeMap = {};
+    docTypes.forEach(dt => {
+      docTypeMap[dt.name] = dt.days_to_submit;
+    });
+    
+    // Insert document requirements
+    const values = [];
+    const placeholders = [];
+    
+    for (const doc of documents) {
+      const daysToSubmit = docTypeMap[doc.document_type] || 7; // Default to 7 days if not specified
+      const requiredByDate = new Date(hireDate);
+      requiredByDate.setDate(requiredByDate.getDate() + daysToSubmit);
+      
+      placeholders.push("(?, ?, ?, ?, ?, ?)");
+      values.push(
+        id,
+        doc.document_type,
+        doc.document_name || doc.document_type,
+        doc.required !== undefined ? doc.required : true,
+        requiredByDate.toISOString().split('T')[0],
+        doc.notes || null
+      );
+    }
+    
+    const query = `
+      INSERT INTO employee_documents 
+      (employee_id, document_type, document_name, required, required_by_date, notes)
+      VALUES ${placeholders.join(", ")}
+    `;
+    
+    await connection.query(query, values);
+    connection.release();
+    
+    res.status(201).json({ 
+      message: "Documents added successfully",
+      count: documents.length
+    });
+  } catch (error) {
+    console.error("Error adding documents:", error);
+    res.status(500).json({ message: "Failed to add documents" });
+  }
+});
+
+// Schedule training for employee
+router.post("/api/employees/:id/training", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const trainingItems = req.body.training;
+    
+    if (!Array.isArray(trainingItems) || trainingItems.length === 0) {
+      return res.status(400).json({ message: "Training list is required and must be an array" });
+    }
+    
+    const connection = await db.getConnection();
+    
+    // Verify employee exists
+    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    
+    if (employees.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    // Get default durations from training types
+    const [trainingTypes] = await connection.query("SELECT * FROM training_types WHERE is_active = TRUE");
+    const trainingTypesMap = {};
+    trainingTypes.forEach(tt => {
+      trainingTypesMap[tt.name] = tt.duration_minutes;
+    });
+    
+    // Insert training schedule
+    const values = [];
+    const placeholders = [];
+    
+    for (const training of trainingItems) {
+      const defaultDuration = trainingTypesMap[training.training_type] || 60;
+      
+      placeholders.push("(?, ?, ?, ?, ?, ?, ?, ?)");
+      values.push(
+        id,
+        training.training_type,
+        training.description || null,
+        training.trainer || null,
+        training.location || null,
+        training.scheduled_date || null,
+        training.scheduled_time || null,
+        training.duration_minutes || defaultDuration
+      );
+    }
+    
+    const query = `
+      INSERT INTO employee_training 
+      (employee_id, training_type, description, trainer, location, scheduled_date, scheduled_time, duration_minutes)
+      VALUES ${placeholders.join(", ")}
+    `;
+    
+    await connection.query(query, values);
+    connection.release();
+    
+    res.status(201).json({ 
+      message: "Training scheduled successfully",
+      count: trainingItems.length
+    });
+  } catch (error) {
+    console.error("Error scheduling training:", error);
+    res.status(500).json({ message: "Failed to schedule training" });
+  }
+});
+
+// Get equipment for employee
+router.get("/api/employees/:id/equipment", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await db.getConnection();
+    
+    const [equipment] = await connection.query(
+      "SELECT * FROM employee_equipment WHERE employee_id = ? ORDER BY status, request_date DESC", 
+      [id]
+    );
+    
+    connection.release();
+    res.json(equipment);
+  } catch (error) {
+    console.error("Error fetching employee equipment:", error);
+    res.status(500).json({ message: "Failed to fetch employee equipment" });
+  }
+});
+
+// Get documents for employee
+router.get("/api/employees/:id/documents", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await db.getConnection();
+    
+    const [documents] = await connection.query(
+      "SELECT * FROM employee_documents WHERE employee_id = ? ORDER BY required_by_date", 
+      [id]
+    );
+    
+    connection.release();
+    res.json(documents);
+  } catch (error) {
+    console.error("Error fetching employee documents:", error);
+    res.status(500).json({ message: "Failed to fetch employee documents" });
+  }
+});
+
+// Get training for employee
+router.get("/api/employees/:id/training", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await db.getConnection();
+    
+    const [training] = await connection.query(
+      "SELECT * FROM employee_training WHERE employee_id = ? ORDER BY scheduled_date, scheduled_time", 
+      [id]
+    );
+    
+    connection.release();
+    res.json(training);
+  } catch (error) {
+    console.error("Error fetching employee training:", error);
+    res.status(500).json({ message: "Failed to fetch employee training" });
+  }
+});
+
+// Update employee document status (e.g., when document is submitted or verified)
+router.patch("/api/employees/:employeeId/documents/:documentId", async (req, res) => {
+  try {
+    const { employeeId, documentId } = req.params;
+    const { status, notes, submission_date } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+    
+    const connection = await db.getConnection();
+    
+    // Check if document exists and belongs to employee
+    const [documents] = await connection.query(
+      "SELECT * FROM employee_documents WHERE id = ? AND employee_id = ?", 
+      [documentId, employeeId]
+    );
+    
+    if (documents.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Document not found or does not belong to this employee" });
+    }
+    
+    // Update document status
+    let query = "UPDATE employee_documents SET status = ?";
+    let params = [status];
+    
+    if (notes) {
+      query += ", notes = ?";
+      params.push(notes);
+    }
+    
+    if (submission_date) {
+      query += ", submission_date = ?";
+      params.push(submission_date);
+    } else if (status === 'Submitted' || status === 'Verified') {
+      query += ", submission_date = CURRENT_DATE()";
+    }
+    
+    query += " WHERE id = ?";
+    params.push(documentId);
+    
+    await connection.query(query, params);
+    connection.release();
+    
+    res.json({ message: "Document status updated successfully" });
+  } catch (error) {
+    console.error("Error updating document status:", error);
+    res.status(500).json({ message: "Failed to update document status" });
+  }
+});
+
+// Update employee equipment status
+router.patch("/api/employees/:employeeId/equipment/:equipmentId", async (req, res) => {
+  try {
+    const { employeeId, equipmentId } = req.params;
+    const { status, notes, fulfillment_date } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+    
+    const connection = await db.getConnection();
+    
+    // Check if equipment exists and belongs to employee
+    const [equipment] = await connection.query(
+      "SELECT * FROM employee_equipment WHERE id = ? AND employee_id = ?", 
+      [equipmentId, employeeId]
+    );
+    
+    if (equipment.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Equipment not found or does not belong to this employee" });
+    }
+    
+    // Update equipment status
+    let query = "UPDATE employee_equipment SET status = ?";
+    let params = [status];
+    
+    if (notes) {
+      query += ", notes = ?";
+      params.push(notes);
+    }
+    
+    if (fulfillment_date) {
+      query += ", fulfillment_date = ?";
+      params.push(fulfillment_date);
+    } else if (status === 'Assigned') {
+      query += ", fulfillment_date = CURRENT_DATE()";
+    }
+    
+    query += " WHERE id = ?";
+    params.push(equipmentId);
+    
+    await connection.query(query, params);
+    connection.release();
+    
+    res.json({ message: "Equipment status updated successfully" });
+  } catch (error) {
+    console.error("Error updating equipment status:", error);
+    res.status(500).json({ message: "Failed to update equipment status" });
+  }
+});
+
+// Update employee training status
+router.patch("/api/employees/:employeeId/training/:trainingId", async (req, res) => {
+  try {
+    const { employeeId, trainingId } = req.params;
+    const { status, notes, completion_date } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+    
+    const connection = await db.getConnection();
+    
+    // Check if training exists and belongs to employee
+    const [training] = await connection.query(
+      "SELECT * FROM employee_training WHERE id = ? AND employee_id = ?", 
+      [trainingId, employeeId]
+    );
+    
+    if (training.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Training not found or does not belong to this employee" });
+    }
+    
+    // Update training status
+    let query = "UPDATE employee_training SET status = ?";
+    let params = [status];
+    
+    if (notes) {
+      query += ", notes = ?";
+      params.push(notes);
+    }
+    
+    if (completion_date) {
+      query += ", completion_date = ?";
+      params.push(completion_date);
+    } else if (status === 'Completed') {
+      query += ", completion_date = CURRENT_DATE()";
+    }
+    
+    query += " WHERE id = ?";
+    params.push(trainingId);
+    
+    await connection.query(query, params);
+    connection.release();
+    
+    res.json({ message: "Training status updated successfully" });
+  } catch (error) {
+    console.error("Error updating training status:", error);
+    res.status(500).json({ message: "Failed to update training status" });
+  }
+});
+
+// Get onboarding progress for employee (aggregated data for dashboard)
+router.get("/api/employees/:id/onboarding-progress", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await db.getConnection();
+    
+    // First check if employee exists
+    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    
+    if (employees.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    const employee = employees[0];
+    
+    // Get counts of documents by status
+    const [documents] = await connection.query(`
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'Verified' THEN 1 ELSE 0 END) as verified,
+        SUM(CASE WHEN status = 'Submitted' THEN 1 ELSE 0 END) as submitted,
+        SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'Rejected' THEN 1 ELSE 0 END) as rejected,
+        SUM(CASE WHEN required = 1 THEN 1 ELSE 0 END) as required
+      FROM employee_documents
+      WHERE employee_id = ?
+    `, [id]);
+    
+    // Get counts of equipment by status
+    const [equipment] = await connection.query(`
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'Assigned' THEN 1 ELSE 0 END) as assigned,
+        SUM(CASE WHEN status = 'Ordered' THEN 1 ELSE 0 END) as ordered,
+        SUM(CASE WHEN status = 'Requested' THEN 1 ELSE 0 END) as requested
+      FROM employee_equipment
+      WHERE employee_id = ?
+    `, [id]);
+    
+    // Get counts of training by status
+    const [training] = await connection.query(`
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status = 'Scheduled' THEN 1 ELSE 0 END) as scheduled,
+        SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled,
+        SUM(CASE WHEN status = 'Postponed' THEN 1 ELSE 0 END) as postponed
+      FROM employee_training
+      WHERE employee_id = ?
+    `, [id]);
+    
+    // Calculate progress
+    const docRequired = documents[0].required || 0;
+    const docVerified = documents[0].verified || 0;
+    const docProgress = docRequired > 0 ? Math.round((docVerified / docRequired) * 100) : 100;
+    
+    const equipmentTotal = equipment[0].total || 0;
+    const equipmentAssigned = equipment[0].assigned || 0;
+    const equipmentProgress = equipmentTotal > 0 ? Math.round((equipmentAssigned / equipmentTotal) * 100) : 100;
+    
+    const trainingTotal = training[0].total || 0;
+    const trainingCompleted = training[0].completed || 0;
+    const trainingProgress = trainingTotal > 0 ? Math.round((trainingCompleted / trainingTotal) * 100) : 100;
+    
+    // Overall progress - gives more weight to documents as they're usually more critical
+    let overallProgress = 0;
+    if (docRequired > 0 || equipmentTotal > 0 || trainingTotal > 0) {
+      const weightedProgress = (docProgress * 0.5) + (equipmentProgress * 0.25) + (trainingProgress * 0.25);
+      overallProgress = Math.round(weightedProgress);
+    } else {
+      overallProgress = 100; // No requirements means complete
+    }
+    
+    connection.release();
+    
+    // Calculate days since hire
+    const hireDate = new Date(employee.hire_date);
+    const today = new Date();
+    const daysSinceHire = Math.ceil((today - hireDate) / (1000 * 60 * 60 * 24));
+    
+    res.json({
+      employee: {
+        id: employee.id,
+        name: employee.name,
+        position: employee.position,
+        department: employee.department,
+        hire_date: employee.hire_date,
+        days_since_hire: daysSinceHire
+      },
+      documents: documents[0],
+      equipment: equipment[0],
+      training: training[0],
+      progress: {
+        documents: docProgress,
+        equipment: equipmentProgress,
+        training: trainingProgress,
+        overall: overallProgress
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching onboarding progress:", error);
+    res.status(500).json({ message: "Failed to fetch onboarding progress" });
+  }
+});
+
+// Send welcome email to onboarded employee (placeholder - would need email service)
+router.post("/api/employees/:id/send-welcome-email", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const connection = await db.getConnection();
+    
+    // Check if employee exists
+    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
+    
+    if (employees.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    
+    connection.release();
+    
+    // This is a placeholder - in a real implementation, you would call your email service here
+    console.log(`✉️ Welcome email sent to ${employees[0].name} at ${employees[0].email}`);
+    
+    res.json({ 
+      success: true,
+      message: "Welcome email sent successfully" 
+    });
+  } catch (error) {
+    console.error("Error sending welcome email:", error);
+    res.status(500).json({ message: "Failed to send welcome email" });
+  }
+});
+
 module.exports = router; 

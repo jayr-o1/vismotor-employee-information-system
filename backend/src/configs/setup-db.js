@@ -1,5 +1,7 @@
 const mysql = require('mysql2/promise');
 const dbConfig = require('./database');
+const fs = require('fs').promises;
+const path = require('path');
 
 // SQL statements to create tables and insert sample data
 const CREATE_APPLICANTS_TABLE = `
@@ -148,7 +150,7 @@ async function setupDatabase() {
     console.log('Connecting to MySQL server...');
     
     connection = await mysql.createConnection(connectionConfig);
-    
+
     // Create database if it doesn't exist
     console.log(`Creating database '${database}' if it doesn't exist...`);
     await connection.query(`CREATE DATABASE IF NOT EXISTS ${database}`);
@@ -158,23 +160,13 @@ async function setupDatabase() {
     console.log(`Connecting to database '${database}'...`);
     connection = await mysql.createConnection(dbConfig);
     
-    // Drop existing tables if they exist
-    console.log('Dropping existing tables if they exist...');
-    await connection.query('SET FOREIGN_KEY_CHECKS = 0');
-    await connection.query('DROP TABLE IF EXISTS employees');
-    await connection.query('DROP TABLE IF EXISTS interviews');
-    await connection.query('DROP TABLE IF EXISTS feedback');
-    await connection.query('DROP TABLE IF EXISTS applicants');
-    await connection.query('DROP TABLE IF EXISTS users');
-    await connection.query('SET FOREIGN_KEY_CHECKS = 1');
-    
-    // Create tables
-    console.log('Creating tables...');
-    console.log('- Creating applicants table...');
-    await connection.query(CREATE_APPLICANTS_TABLE);
-    
+    // Create tables (don't drop existing tables)
+    console.log('Creating tables if they don\'t exist...');
     console.log('- Creating users table...');
     await connection.query(CREATE_USERS_TABLE);
+    
+    console.log('- Creating applicants table...');
+    await connection.query(CREATE_APPLICANTS_TABLE);
     
     console.log('- Creating feedback table...');
     await connection.query(CREATE_FEEDBACK_TABLE);
@@ -185,20 +177,183 @@ async function setupDatabase() {
     console.log('- Creating employees table...');
     await connection.query(CREATE_EMPLOYEES_TABLE);
     
-    // No sample data insertion
+    // Create onboarding tables using the SQL file
+    console.log('- Creating onboarding tables from SQL file...');
+    try {
+      const onboardingTablesPath = path.join(__dirname, 'sql', 'onboarding_tables.sql');
+      const onboardingTablesSQL = await fs.readFile(onboardingTablesPath, 'utf8');
+      
+      // Split the SQL file into individual statements
+      const statements = onboardingTablesSQL.split(';')
+        .map(statement => statement.trim())
+        .filter(statement => statement.length > 0);
+      
+      // Execute each statement
+      for (const statement of statements) {
+        await connection.query(statement);
+      }
+      
+      console.log('  ✓ Onboarding tables created successfully!');
+    } catch (error) {
+      console.error('  ✗ Error creating onboarding tables:', error.message);
+      
+      // Fallback to inline SQL if file not found
+      console.log('  ⚠ Falling back to inline SQL for onboarding tables');
+      
+      console.log('  - Creating employee_equipment table...');
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS employee_equipment (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          employee_id INT NOT NULL,
+          equipment_type VARCHAR(100) NOT NULL,
+          description TEXT,
+          status ENUM('Requested', 'Ordered', 'Assigned', 'Cancelled') DEFAULT 'Requested',
+          request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          fulfillment_date DATE DEFAULT NULL,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+        )
+      `);
+      
+      console.log('  - Creating employee_documents table...');
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS employee_documents (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          employee_id INT NOT NULL,
+          document_type VARCHAR(100) NOT NULL,
+          document_name VARCHAR(255) NOT NULL,
+          required BOOLEAN DEFAULT TRUE,
+          required_by_date DATE NOT NULL,
+          status ENUM('Pending', 'Submitted', 'Verified', 'Rejected') DEFAULT 'Pending',
+          submission_date DATE DEFAULT NULL,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+        )
+      `);
+      
+      console.log('  - Creating employee_training table...');
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS employee_training (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          employee_id INT NOT NULL,
+          training_type VARCHAR(100) NOT NULL,
+          description TEXT,
+          trainer VARCHAR(100),
+          location VARCHAR(255),
+          scheduled_date DATE,
+          scheduled_time TIME,
+          duration_minutes INT DEFAULT 60,
+          status ENUM('Scheduled', 'Completed', 'Cancelled', 'Postponed') DEFAULT 'Scheduled',
+          completion_date DATE DEFAULT NULL,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+        )
+      `);
+      
+      console.log('  - Creating equipment_types table...');
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS equipment_types (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          name VARCHAR(100) NOT NULL,
+          description TEXT,
+          is_active BOOLEAN DEFAULT TRUE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `);
+      
+      console.log('  - Creating document_types table...');
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS document_types (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          name VARCHAR(100) NOT NULL,
+          description TEXT,
+          required BOOLEAN DEFAULT TRUE,
+          days_to_submit INT DEFAULT 7,
+          is_active BOOLEAN DEFAULT TRUE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `);
+      
+      console.log('  - Creating training_types table...');
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS training_types (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          name VARCHAR(100) NOT NULL,
+          description TEXT,
+          duration_minutes INT DEFAULT 60,
+          is_active BOOLEAN DEFAULT TRUE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `);
+    }
+
+    // Check if reference tables have data, if not, add sample data
+    const [equipmentTypes] = await connection.query("SELECT COUNT(*) as count FROM equipment_types");
+    if (equipmentTypes[0].count === 0) {
+      console.log('- Inserting sample equipment types...');
+      await connection.query(`
+        INSERT INTO equipment_types (name, description) VALUES
+        ('Laptop', 'Standard company laptop with appropriate software'),
+        ('Monitor', '24-inch monitor for workstation'),
+        ('Mouse', 'Wireless ergonomic mouse'),
+        ('Keyboard', 'Ergonomic keyboard for desk use'),
+        ('Phone', 'Company mobile phone or desk phone'),
+        ('Headset', 'Noise-cancelling headset for calls'),
+        ('Office Chair', 'Ergonomic office chair'),
+        ('Standing Desk', 'Height-adjustable desk for ergonomic work')
+      `);
+    }
     
-    // Verify tables
-    console.log('\nVerifying tables were created...');
-    const [tables] = await connection.query('SHOW TABLES');
+    const [documentTypes] = await connection.query("SELECT COUNT(*) as count FROM document_types");
+    if (documentTypes[0].count === 0) {
+      console.log('- Inserting sample document types...');
+      await connection.query(`
+        INSERT INTO document_types (name, description, required, days_to_submit) VALUES
+        ('ID Proof', 'Government-issued ID like passport or driver license', TRUE, 3),
+        ('Bank Details', 'Bank account information for salary payment', TRUE, 7),
+        ('Tax Forms', 'Required tax documentation', TRUE, 7),
+        ('Employment Contract', 'Signed employment contract', TRUE, 1),
+        ('Education Certificates', 'Proof of education qualifications', TRUE, 14),
+        ('Work Reference', 'References from previous employers', FALSE, 14),
+        ('Background Check Consent', 'Consent for background verification', TRUE, 3),
+        ('Health Insurance Form', 'Form for health insurance enrollment', TRUE, 7)
+      `);
+    }
+    
+    const [trainingTypes] = await connection.query("SELECT COUNT(*) as count FROM training_types");
+    if (trainingTypes[0].count === 0) {
+      console.log('- Inserting sample training types...');
+      await connection.query(`
+        INSERT INTO training_types (name, description, duration_minutes) VALUES
+        ('Company Orientation', 'Introduction to company culture, values, and history', 120),
+        ('Health & Safety', 'Workplace health and safety procedures', 60),
+        ('IT Systems', 'Introduction to IT systems and security protocols', 90),
+        ('HR Policies', 'Overview of HR policies and procedures', 60),
+        ('Department Introduction', 'Specific department onboarding and introductions', 120),
+        ('Role-specific Training', 'Specialized training for specific job role', 180),
+        ('Customer Service', 'Customer service standards and procedures', 90),
+        ('Product Knowledge', 'Detailed training on company products and services', 120)
+      `);
+    }
+
+    // List tables in database
+    const [tables] = await connection.query(`SHOW TABLES FROM ${database}`);
     console.log('Tables in database:');
     tables.forEach(table => {
       const tableName = table[`Tables_in_${database}`];
       console.log(`- ${tableName}`);
     });
-    
-    console.log('\n✅ Database setup completed successfully!');
-    console.log('You can now start the server with: npm run dev');
-    
+
+    console.log('\n✅ Database setup complete!');
   } catch (error) {
     console.error('\n❌ Error setting up database:', error);
   } finally {
