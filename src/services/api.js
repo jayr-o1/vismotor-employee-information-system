@@ -29,7 +29,7 @@ const apiService = {
   auth: {
     login: (credentials) => api.post('/api/login', credentials),
     signup: (userData) => api.post('/api/signup', userData),
-    forgotPassword: (email) => api.post('/api/forgot-password', { email }),
+    forgotPassword: (email) => api.post('/api/forgot-password', email),
     resetPassword: (resetData) => api.post('/api/reset-password', resetData),
     verifyEmail: (token) => api.get(`/api/verify-email?token=${token}`),
     resendVerification: (email) => api.post('/api/resend-verification', { email }),
@@ -78,8 +78,7 @@ const apiService = {
   interviews: {
     getAll: () => api.get('/api/interviews'),
     getById: (id) => api.get(`/api/interviews/${id}`),
-    schedule: (interviewData) => api.post('/api/interviews', interviewData),
-    update: (id, interviewData) => api.put(`/api/interviews/${id}`, interviewData),
+    schedule: (applicantId, interviewData) => api.post(`/api/applicants/${applicantId}/interviews`, interviewData),
     updateStatus: (id, statusData) => api.patch(`/api/interviews/${id}/status`, statusData),
     delete: (id) => api.delete(`/api/interviews/${id}`),
   },

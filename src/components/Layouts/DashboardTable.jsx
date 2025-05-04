@@ -9,13 +9,19 @@ const DashboardTable = ({ data = [] }) => {
   // If no data, show a message
   if (!data || data.length === 0) {
     return (
-      <div className={`flex flex-col items-center justify-center p-8 rounded-lg ${
-        isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-500'
+      <div className={`flex flex-col items-center justify-center py-12 px-4 rounded-lg ${
+        isDark ? 'bg-gray-800 text-gray-300' : 'bg-gray-50 text-gray-500'
       }`}>
-        <i className={`fas fa-inbox text-4xl mb-3 ${
-          isDark ? 'text-gray-500' : 'text-gray-400'
-        }`}></i>
-        <p>No recent applicants found.</p>
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 ${
+          isDark ? 'bg-gray-700' : 'bg-gray-100'
+        }`}>
+          <i className={`fas fa-folder-open text-4xl ${
+            isDark ? 'text-gray-500' : 'text-gray-400'
+          }`}></i>
+        </div>
+        <h3 className="text-lg font-semibold mb-1">No Data Found</h3>
+        <p className="text-center text-sm mb-4">There are no records to display at this time</p>
+        <div className={`w-16 h-1 ${isDark ? 'bg-gray-700' : 'bg-gray-300'} rounded-full`}></div>
       </div>
     );
   }

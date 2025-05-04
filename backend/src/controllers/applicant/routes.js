@@ -1,17 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql2/promise");
-const dbConfig = require("../../configs/database");
-
-// Create a connection pool
-const pool = mysql.createPool(dbConfig);
+const db = require("../../configs/database");
 
 // APPLICANTS ENDPOINTS
 
 // Get all applicants
 router.get("/api/applicants", async (req, res) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     const [rows] = await connection.query("SELECT * FROM applicants ORDER BY applied_date DESC");
     connection.release();
     
@@ -26,24 +22,23 @@ router.get("/api/applicants", async (req, res) => {
 router.post("/api/applicants", async (req, res) => {
   try {
     const { 
-      name, 
-      email, 
-      phone, 
-      position, 
-      education, 
-      experience, 
-      skills 
+      firstName,
+      lastName,
+      email,
+      gender,
+      position,
+      highestEducation
     } = req.body;
     
     // Validate required fields
-    if (!name || !email || !position) {
-      return res.status(400).json({ message: "Name, email and position are required" });
+    if (!firstName || !lastName || !email || !position) {
+      return res.status(400).json({ message: "First name, last name, email and position are required" });
     }
     
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     const [result] = await connection.query(
-      "INSERT INTO applicants (name, email, phone, position, education, experience, skills, status, applied_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())",
-      [name, email, phone, position, education, experience, skills, "Pending"]
+      "INSERT INTO applicants (first_name, last_name, email, gender, position, highest_education, status, applied_date) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())",
+      [firstName, lastName, email, gender, position, highestEducation, "Pending"]
     );
     connection.release();
     
@@ -61,7 +56,7 @@ router.post("/api/applicants", async (req, res) => {
 router.get("/api/applicants/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     const [rows] = await connection.query("SELECT * FROM applicants WHERE id = ?", [id]);
     connection.release();
     
@@ -81,25 +76,24 @@ router.put("/api/applicants/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { 
-      name, 
-      email, 
-      phone, 
-      position, 
-      education, 
-      experience, 
-      skills, 
-      status 
+      firstName,
+      lastName,
+      email,
+      gender,
+      position,
+      highestEducation,
+      status
     } = req.body;
     
     // Validate required fields
-    if (!name || !email || !position) {
-      return res.status(400).json({ message: "Name, email and position are required" });
+    if (!firstName || !lastName || !email || !position) {
+      return res.status(400).json({ message: "First name, last name, email and position are required" });
     }
     
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     const [result] = await connection.query(
-      "UPDATE applicants SET name = ?, email = ?, phone = ?, position = ?, education = ?, experience = ?, skills = ?, status = ? WHERE id = ?",
-      [name, email, phone, position, education, experience, skills, status || "Pending", id]
+      "UPDATE applicants SET first_name = ?, last_name = ?, email = ?, gender = ?, position = ?, highest_education = ?, status = ? WHERE id = ?",
+      [firstName, lastName, email, gender, position, highestEducation, status || "Pending", id]
     );
     connection.release();
     
@@ -124,7 +118,7 @@ router.patch("/api/applicants/:id/status", async (req, res) => {
       return res.status(400).json({ message: "Status is required" });
     }
     
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     const [result] = await connection.query(
       "UPDATE applicants SET status = ? WHERE id = ?",
       [status, id]
@@ -146,7 +140,7 @@ router.patch("/api/applicants/:id/status", async (req, res) => {
 router.delete("/api/applicants/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // Begin transaction to delete related records
     await connection.beginTransaction();
@@ -188,7 +182,7 @@ router.delete("/api/applicants/:id", async (req, res) => {
 router.get("/api/applicants/:id/feedback", async (req, res) => {
   try {
     const { id } = req.params;
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // First check if the applicant exists
     const [applicants] = await connection.query("SELECT * FROM applicants WHERE id = ?", [id]);
@@ -222,7 +216,7 @@ router.post("/api/applicants/:id/feedback", async (req, res) => {
       return res.status(400).json({ message: "Feedback text is required" });
     }
     
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // First check if the applicant exists
     const [applicants] = await connection.query("SELECT * FROM applicants WHERE id = ?", [id]);
@@ -268,7 +262,7 @@ router.put("/api/feedback/:id", async (req, res) => {
       return res.status(400).json({ message: "Feedback text is required" });
     }
     
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     const [result] = await connection.query(
       "UPDATE feedback SET feedback_text = ?, updated_at = NOW() WHERE id = ?",
       [feedback_text, id]
@@ -290,7 +284,7 @@ router.put("/api/feedback/:id", async (req, res) => {
 router.delete("/api/feedback/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     const [result] = await connection.query("DELETE FROM feedback WHERE id = ?", [id]);
     connection.release();
     
@@ -310,7 +304,7 @@ router.delete("/api/feedback/:id", async (req, res) => {
 // Get all interviews
 router.get("/api/interviews", async (req, res) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     const [rows] = await connection.query(`
       SELECT i.*, a.name as applicant_name, a.position as applicant_position
       FROM interviews i
@@ -326,11 +320,62 @@ router.get("/api/interviews", async (req, res) => {
   }
 });
 
-// Get interviews for an applicant
+// Schedule an interview
+router.post("/api/applicants/:id/interviews", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { interview_date, interview_time, location, interviewer } = req.body;
+
+    if (!interview_date || !interview_time || !location || !interviewer) {
+      return res.status(400).json({ message: "All interview details are required" });
+    }
+
+    // Start a transaction
+    const connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      // Insert interview record
+      const [result] = await connection.query(
+        "INSERT INTO interviews (applicant_id, interview_date, interview_time, location, interviewer) VALUES (?, ?, ?, ?, ?)",
+        [id, interview_date, interview_time, location, interviewer]
+      );
+
+      // Update applicant status
+      await connection.query(
+        "UPDATE applicants SET status = 'Scheduled' WHERE id = ?",
+        [id]
+      );
+
+      await connection.commit();
+      connection.release();
+
+      res.status(201).json({
+        id: result.insertId,
+        applicant_id: id,
+        interview_date,
+        interview_time,
+        location,
+        interviewer,
+        status: 'Scheduled',
+        created_at: new Date()
+      });
+    } catch (error) {
+      await connection.rollback();
+      connection.release();
+      throw error;
+    }
+  } catch (error) {
+    console.error("Error scheduling interview:", error);
+    res.status(500).json({ message: "Error scheduling interview" });
+  }
+});
+
+// Get all interviews for an applicant
 router.get("/api/applicants/:id/interviews", async (req, res) => {
   try {
     const { id } = req.params;
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // First check if the applicant exists
     const [applicants] = await connection.query("SELECT * FROM applicants WHERE id = ?", [id]);
@@ -354,105 +399,17 @@ router.get("/api/applicants/:id/interviews", async (req, res) => {
   }
 });
 
-// Schedule an interview
-router.post("/api/interviews", async (req, res) => {
-  try {
-    const { 
-      applicant_id, 
-      interview_date, 
-      interview_time, 
-      location, 
-      interviewer 
-    } = req.body;
-    
-    // Validate required fields
-    if (!applicant_id || !interview_date || !interview_time) {
-      return res.status(400).json({ message: "Applicant ID, date, and time are required" });
-    }
-    
-    const connection = await pool.getConnection();
-    
-    // First check if the applicant exists
-    const [applicants] = await connection.query("SELECT * FROM applicants WHERE id = ?", [applicant_id]);
-    
-    if (applicants.length === 0) {
-      connection.release();
-      return res.status(404).json({ message: "Applicant not found" });
-    }
-    
-    // Schedule interview
-    const [result] = await connection.query(
-      "INSERT INTO interviews (applicant_id, interview_date, interview_time, location, interviewer, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())",
-      [applicant_id, interview_date, interview_time, location, interviewer, "Scheduled"]
-    );
-    
-    // Update applicant status to "Scheduled" if not already past that stage
-    if (applicants[0].status === "Pending" || applicants[0].status === "Reviewed") {
-      await connection.query(
-        "UPDATE applicants SET status = 'Scheduled' WHERE id = ?",
-        [applicant_id]
-      );
-    }
-    
-    connection.release();
-    
-    res.status(201).json({ 
-      id: result.insertId,
-      message: "Interview scheduled successfully" 
-    });
-  } catch (error) {
-    console.error("Error scheduling interview:", error);
-    res.status(500).json({ message: "Failed to schedule interview" });
-  }
-});
-
-// Update interview
-router.put("/api/interviews/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { 
-      interview_date, 
-      interview_time, 
-      location, 
-      interviewer,
-      status,
-      notes
-    } = req.body;
-    
-    // Validate required fields
-    if (!interview_date || !interview_time) {
-      return res.status(400).json({ message: "Interview date and time are required" });
-    }
-    
-    const connection = await pool.getConnection();
-    const [result] = await connection.query(
-      "UPDATE interviews SET interview_date = ?, interview_time = ?, location = ?, interviewer = ?, status = ?, notes = ?, updated_at = NOW() WHERE id = ?",
-      [interview_date, interview_time, location, interviewer, status, notes, id]
-    );
-    connection.release();
-    
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Interview not found" });
-    }
-    
-    res.json({ message: "Interview updated successfully" });
-  } catch (error) {
-    console.error("Error updating interview:", error);
-    res.status(500).json({ message: "Failed to update interview" });
-  }
-});
-
 // Update interview status
 router.patch("/api/interviews/:id/status", async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, notes } = req.body;
-    
-    if (!status) {
-      return res.status(400).json({ message: "Status is required" });
+    const { status } = req.body;
+
+    if (!['Scheduled', 'Completed', 'Cancelled'].includes(status)) {
+      return res.status(400).json({ message: "Invalid interview status" });
     }
-    
-    const connection = await pool.getConnection();
+
+    const connection = await db.getConnection();
     
     // Get the interview to find the applicant_id
     const [interviews] = await connection.query("SELECT * FROM interviews WHERE id = ?", [id]);
@@ -465,9 +422,9 @@ router.patch("/api/interviews/:id/status", async (req, res) => {
     const interview = interviews[0];
     
     // Update interview status
-    await connection.query(
-      "UPDATE interviews SET status = ?, notes = ?, updated_at = NOW() WHERE id = ?",
-      [status, notes, id]
+    const [result] = await connection.query(
+      "UPDATE interviews SET status = ? WHERE id = ?",
+      [status, id]
     );
     
     // If interview is completed, update applicant status to "Interviewed"
@@ -480,10 +437,14 @@ router.patch("/api/interviews/:id/status", async (req, res) => {
     
     connection.release();
     
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Interview not found" });
+    }
+
     res.json({ message: "Interview status updated successfully" });
   } catch (error) {
     console.error("Error updating interview status:", error);
-    res.status(500).json({ message: "Failed to update interview status" });
+    res.status(500).json({ message: "Error updating interview status" });
   }
 });
 
@@ -491,7 +452,7 @@ router.patch("/api/interviews/:id/status", async (req, res) => {
 router.delete("/api/interviews/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     const [result] = await connection.query("DELETE FROM interviews WHERE id = ?", [id]);
     connection.release();
     
@@ -512,7 +473,7 @@ router.delete("/api/interviews/:id", async (req, res) => {
 router.get("/api/applicants/:id/notes", async (req, res) => {
   try {
     const { id } = req.params;
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // First check if the applicant exists
     const [applicants] = await connection.query("SELECT * FROM applicants WHERE id = ?", [id]);
@@ -546,7 +507,7 @@ router.post("/api/applicants/:id/notes", async (req, res) => {
       return res.status(400).json({ message: "Note text is required" });
     }
     
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // First check if the applicant exists
     const [applicants] = await connection.query("SELECT * FROM applicants WHERE id = ?", [id]);

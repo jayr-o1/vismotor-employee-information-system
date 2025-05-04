@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-const mysql = require('mysql2/promise');
-const dbConfig = require('../configs/database');
+const db = require('../configs/database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_jwt_secret_replace_in_production';
 
@@ -32,7 +31,7 @@ const ensureVerified = async (req, res, next) => {
     const userId = req.user.userId;
     
     // Connect to database
-    const connection = await mysql.createPool(dbConfig).getConnection();
+    const connection = await db.getConnection();
     
     // Check if user exists and is verified
     const [users] = await connection.query(

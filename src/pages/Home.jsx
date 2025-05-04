@@ -107,7 +107,7 @@ const Home = () => {
       try {
         // Attempt to fetch from real API with a short timeout
         response = await Promise.race([
-          fetch('http://localhost:8081/api/dashboard/applicant-trends', {
+          fetch('http://10.10.1.71:5000/api/dashboard/applicant-trends', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
           }),
@@ -118,11 +118,27 @@ const Home = () => {
       } catch (connectionError) {
         console.log('Connection to backend failed, using mock data instead');
         // Use mock data if real API fails
-        response = await mockFetch('http://localhost:8081/api/dashboard/applicant-trends');
+        response = await mockFetch('http://10.10.1.71:5000/api/dashboard/applicant-trends');
         toast.info("Using demo data - backend server not available", {
           autoClose: 3000,
           position: "bottom-right"
         });
+      }
+      
+      if (response.status === 404) {
+        // Handle case where no data is found
+        console.log('No application data found in the system');
+        toast.info("No applications found in the system. Add applications to see real data.", {
+          autoClose: 5000,
+          position: "bottom-right"
+        });
+        
+        // Fall back to default trends data for visualization
+        setTrendsData({
+          ...defaultTrendsData,
+          isDemo: true
+        });
+        return;
       }
       
       if (!response.ok) {
@@ -180,7 +196,16 @@ const Home = () => {
       
       // Use default data as fallback
       setTrendsData(defaultTrendsData);
-      toast.error("Error loading data. Using default values instead.");
+      
+      // Check if the error is likely due to empty tables rather than a connection issue
+      if (error.message && (error.message.includes('no data') || error.message.includes('empty'))) {
+        toast.info("No application data found. Submit applications to see statistics.", {
+          autoClose: 5000,
+          position: "bottom-right"
+        });
+      } else {
+        toast.error("Error loading data. Using default values instead.");
+      }
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -255,6 +280,15 @@ const Home = () => {
   useEffect(() => {
     if (trendsData.labels && trendsData.labels.length > 0 && trendsData.data && trendsData.data.length > 0) {
       createChart();
+      
+      // If using demo data, show an info message
+      if (trendsData.isDemo) {
+        toast.info("Showing demo chart data. Submit applications to see real statistics.", {
+          autoClose: 5000,
+          position: "bottom-right",
+          toastId: "demo-data-toast" // Prevent duplicate toasts
+        });
+      }
     }
   }, [trendsData, theme]); // Re-create chart when theme changes or trends data updates
 

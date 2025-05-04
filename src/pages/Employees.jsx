@@ -6,7 +6,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
 import { useNavigate } from "react-router-dom";
-import { mockEmployees } from "../mocks/employeeData";
 
 const Employees = () => {
   const { theme } = useContext(ThemeContext);
@@ -21,6 +20,7 @@ const Employees = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     department: "",
@@ -41,12 +41,12 @@ const Employees = () => {
   // Fetch employees from API
   const fetchEmployees = async () => {
     setLoading(true);
+    setError(null);
     try {
       // Check if token exists
       const token = localStorage.getItem("userToken");
       if (!token) {
-        console.warn("No authentication token found. Using mock data.");
-        setEmployees(mockEmployees);
+        setError("Authentication required. Please log in to view employee data.");
         setLoading(false);
         return;
       }
@@ -55,10 +55,8 @@ const Employees = () => {
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      toast.error("Failed to fetch employees from API. Using mock data for development.");
-      
-      // Use mock data when API fails
-      setEmployees(mockEmployees);
+      setError(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
+      toast.error(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -187,6 +185,25 @@ const Employees = () => {
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        ) : error ? (
+          <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md p-8 flex flex-col justify-center items-center h-64`}>
+            <div className="text-red-500 text-5xl mb-4">
+              <i className="fas fa-exclamation-circle"></i>
+            </div>
+            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} text-center mb-2 font-semibold`}>
+              Error Loading Data
+            </p>
+            <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-center`}>
+              {error}
+            </p>
+            <button 
+              onClick={fetchEmployees}
+              className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <i className="fas fa-sync-alt mr-2"></i>
+              Retry
+            </button>
           </div>
         ) : (
           <>

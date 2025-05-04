@@ -1,10 +1,10 @@
 const mysql = require('mysql2/promise');
-const dbConfig = require('./src/configs/database');
+const db = require('./src/configs/database');
 
 async function checkDatabase() {
   try {
-    const connection = await mysql.createConnection(dbConfig);
-    console.log('Connected to database:', dbConfig.database);
+    const connection = await mysql.createConnection(db.config);
+    console.log('Connected to database:', db.config.database);
     
     // List all tables
     const [tables] = await connection.query('SHOW TABLES');

@@ -15,6 +15,10 @@ export default defineConfig(({ command, mode }) => {
     // Pass env variables to the client
     define: {
       'process.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL)
+    },
+    server: {
+      host: '0.0.0.0', // Listen on all network interfaces
+      port: 5173, // Default Vite port
     }
   }
 })

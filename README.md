@@ -48,37 +48,37 @@ A comprehensive web application for managing employee and applicant information.
    sudo systemctl start mysql
    ```
 
-2. Create the database:
-   ```
-   mysql -u root -p
-   ```
-   
-   Then in the MySQL prompt:
-   ```sql
-   CREATE DATABASE vismotordb;
-   EXIT;
-   ```
-
-3. Set up database tables:
+2. Set up database and tables:
    ```
    npm run setup-database
    ```
-   This script will create all necessary tables with their relationships.
+   
+   This script will:
+   - Create the vismotordb database if it doesn't exist
+   - Create all required tables with appropriate relationships
+   - Set up proper relationships between tables including foreign keys
+   - Configure appropriate indexes for optimal performance
+   - Load sample data for testing
 
-4. (Optional) Load sample data:
-   ```
-   npm run setup-sample-data
-   ```
-
-5. Database schema overview:
-   - `users`: System users with authentication details
+   The updated setup uses consolidated SQL files in the `backend/src/configs/sql` folder:
+   - `schema.sql`: Contains database and table creation statements
+   - `sample-data.sql`: Contains sample data for testing
+   
+3. Database tables overview:
+   - `users`: System users with authentication details and role-based permissions
    - `employees`: Employee records with personal and professional information  
-   - `applicants`: Job applicant information and application status
-   - `departments`: Company departments and hierarchical structure
-   - `positions`: Job positions and their requirements
-   - `documents`: Employee and applicant document storage
+   - `applicants`: Job applicant information and application status tracking
+   - `feedback`: Feedback entries for applicants during the hiring process
+   - `interviews`: Interview scheduling and status tracking
+   - `applicant_notes`: Additional notes for applicants
 
-6. Start the backend server:
+4. Verify database setup:
+   You can verify the tables were created correctly by running:
+   ```
+   npm run check-db
+   ```
+
+5. Start the backend server:
    ```
    npm run dev
    ```
@@ -109,3 +109,46 @@ A comprehensive web application for managing employee and applicant information.
 - Frontend: React, Tailwind CSS, Vite
 - Backend: Node.js, Express
 - Database: MySQL
+
+## Project Structure
+The project has been reorganized for better maintainability:
+
+### Backend Structure
+```
+backend/
+├── server.js              # Main entry point
+├── src/
+│   ├── configs/           # Configuration files
+│   │   ├── database.js    # Unified database configuration
+│   │   ├── email.js       # Email service configuration
+│   │   ├── jwt.js         # JWT authentication configuration
+│   │   └── sql/           # SQL files for database setup
+│   │       ├── schema.sql       # Database and table creation
+│   │       └── sample-data.sql  # Sample data for testing
+│   ├── controllers/       # Request handlers
+│   ├── routes/            # API routes
+│   ├── services/          # Business logic
+│   └── utils/             # Utility functions
+```
+
+### Recent Changes
+- Consolidated database configuration to remove redundancy
+- Moved SQL files to a dedicated folder for better organization
+- Unified email configuration
+- Improved database connection handling throughout the application
+- Fixed inconsistent database access patterns
+- Enhanced database initialization scripts with better error handling
+
+## Running Database Setup
+To set up the database, simply run:
+```
+cd backend
+npm run setup-database
+```
+
+This command executes the `create-tables.js` script which:
+1. Creates the database if it doesn't exist
+2. Drops any existing tables (with foreign key checks disabled)
+3. Creates all tables based on the schema.sql file
+4. Populates tables with sample data from sample-data.sql
+5. Verifies the setup was successful

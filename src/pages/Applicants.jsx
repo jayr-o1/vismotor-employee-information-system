@@ -79,7 +79,7 @@ const Applicants = () => {
 
   // Filter applicants based on search term
   const filteredApplicants = applicants.filter(applicant =>
-    applicant.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    `${applicant.first_name} ${applicant.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -207,61 +207,86 @@ const Applicants = () => {
               <>
             {/* Applicants Table */}
             <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md overflow-hidden mb-4`}>
-              <div className="overflow-x-auto">
-                <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Position</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Applied Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                    {currentItems.map((applicant) => (
-                      <tr key={applicant.id} className={isDark ? 'hover:bg-slate-600' : 'hover:bg-gray-100'}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="font-medium">{applicant.name}</div>
-                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{applicant.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">{applicant.position}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={getStatusStyle(applicant.status)}>
-                            {applicant.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {applicant.applied_date ? applicant.applied_date.split('T')[0] : ''}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center space-x-3">
-                            <button
-                              onClick={() => handleViewApplicant(applicant)}
-                              className={`${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-900'}`}
-                              title="View Details"
-                            >
-                              <i className="fas fa-eye"></i>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteClick(applicant)}
-                              className={`${isDark ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-900'}`}
-                              title="Delete"
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {currentItems.length === 0 ? (
+                <div className={`flex flex-col items-center justify-center py-16 px-4 ${
+                  isDark ? 'text-gray-300' : 'text-gray-500'
+                }`}>
+                  <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 ${
+                    isDark ? 'bg-slate-700' : 'bg-gray-100'
+                  }`}>
+                    <i className="fas fa-users-slash text-5xl text-gray-400"></i>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No Applicants Found</h3>
+                  <p className="text-center max-w-md mb-6">
+                    {searchTerm ? 
+                      `No results match '${searchTerm}'. Try a different search term.` : 
+                      'There are no applicants in the system yet. Add new applicants to get started.'}
+                  </p>
+                  <button 
+                    onClick={handleAddApplicant}
+                    className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <i className="fas fa-user-plus mr-2"></i>
+                    Add Applicant
+                  </button>
                 </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                    <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Position</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Applied Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                      {currentItems.map((applicant) => (
+                        <tr key={applicant.id} className={isDark ? 'hover:bg-slate-600' : 'hover:bg-gray-100'}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div>
+                                <div className="font-medium">{`${applicant.first_name} ${applicant.last_name}`}</div>
+                                <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{applicant.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">{applicant.position}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={getStatusStyle(applicant.status)}>
+                              {applicant.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {applicant.applied_date ? applicant.applied_date.split('T')[0] : ''}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex items-center space-x-3">
+                              <button
+                                onClick={() => handleViewApplicant(applicant)}
+                                className={`${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-900'}`}
+                                title="View Details"
+                              >
+                                <i className="fas fa-eye"></i>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(applicant)}
+                                className={`${isDark ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-900'}`}
+                                title="Delete"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
 
                 {/* Pagination */}
             <div className="flex justify-center my-4">

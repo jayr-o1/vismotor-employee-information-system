@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
 require('dotenv').config(); // Load environment variables
-const dbConfig = require("./src/configs/database");
+const db = require("./src/configs/database");
 const authRoutes = require("./src/controllers/auth/routes/routes");
 const employeeRoutes = require("./src/controllers/employee/routes");
 const applicantRoutes = require("./src/controllers/applicant/routes");
@@ -14,8 +14,15 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-// Allow requests from the frontend
-app.use(cors({ origin: FRONTEND_URL }));
+// Allow requests from the frontend and network
+app.use(cors({
+  origin: [
+    FRONTEND_URL,
+    "http://10.10.1.71:5173", // Your network IP with frontend port
+    /^http:\/\/192\.168\.\d+\.\d+:5173$/, // For other possible local network IPs
+    /^http:\/\/10\.\d+\.\d+\.\d+:5173$/ // For 10.x.x.x network IPs
+  ]
+}));
 
 app.use(express.json());
 
@@ -61,15 +68,16 @@ async function startServer() {
   try {
     // Test database connection
     console.log('Testing database connection...');
-    const connection = await mysql.createConnection(dbConfig);
+    const connection = await mysql.createConnection(db.config);
     await connection.ping();
     console.log('✅ Database connection successful!');
     await connection.end();
     
     // Start the server
-    app.listen(PORT, () => {
-      console.log(`✅ Server running on http://localhost:${PORT}`);
-      console.log(`API Documentation: http://localhost:${PORT}/api-docs`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
+      console.log(`✅ Server accessible at http://10.10.1.71:${PORT}`);
+      console.log(`API Documentation: http://0.0.0.0:${PORT}/api-docs`);
     });
   } catch (error) {
     console.error('❌ Database connection failed:', error);

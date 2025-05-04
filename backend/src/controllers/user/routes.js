@@ -2,15 +2,12 @@ const express = require('express');
 const router = express.Router();
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
-const dbConfig = require('../../configs/database');
-
-// Create a connection pool
-const pool = mysql.createPool(dbConfig);
+const db = require('../../configs/database');
 
 // Get all users
 router.get('/api/users', async (req, res) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // Select all fields except password for security
     const [rows] = await connection.query(`
@@ -38,7 +35,7 @@ router.get('/api/users', async (req, res) => {
 router.get('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // Select all fields except password for security
     const [rows] = await connection.query(`
@@ -76,7 +73,7 @@ router.post('/api/users', async (req, res) => {
       return res.status(400).json({ message: 'First name, last name, username, email, and password are required' });
     }
     
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // Check if email already exists
     const [existingEmails] = await connection.query('SELECT * FROM users WHERE email = ?', [email]);
@@ -127,7 +124,7 @@ router.put('/api/users/:id', async (req, res) => {
       return res.status(400).json({ message: 'First name, last name, username, and email are required' });
     }
     
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // Check if email already exists for a different user
     const [existingEmails] = await connection.query(
@@ -181,7 +178,7 @@ router.patch('/api/users/:id/password', async (req, res) => {
       return res.status(400).json({ message: 'Password is required' });
     }
     
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // Hash password
     const salt = await bcrypt.genSalt(10);
@@ -210,7 +207,7 @@ router.patch('/api/users/:id/password', async (req, res) => {
 router.delete('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const connection = await pool.getConnection();
+    const connection = await db.getConnection();
     
     // Delete user
     const [result] = await connection.query('DELETE FROM users WHERE id = ?', [id]);

@@ -1,5 +1,5 @@
 const mysql = require('mysql2/promise');
-const dbConfig = require('../../configs/database');
+const db = require('../../configs/database');
 
 const verifyEmail = async (req, res) => {
   const { token } = req.query;
@@ -10,7 +10,7 @@ const verifyEmail = async (req, res) => {
   }
 
   try {
-    const connection = await mysql.createPool(dbConfig).getConnection();
+    const connection = await db.getConnection();
     
     // First check if there is a user with this verification token
     const [users] = await connection.query(

@@ -3,7 +3,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from "react-toastify";
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
-import { mockEmployees } from "../mocks/employeeData";
 
 const Onboarding = () => {
   const { theme } = useContext(ThemeContext);
@@ -14,18 +13,18 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [refreshData, setRefreshData] = useState(false);
+  const [error, setError] = useState(null);
 
   // Fetch employees with Accepted status (in onboarding process)
   useEffect(() => {
     const fetchOnboardingEmployees = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         // Check if token exists
         const token = localStorage.getItem("userToken");
         if (!token) {
-          console.warn("No authentication token found. Using mock data.");
-          const processedMockEmployees = processMockEmployees(mockEmployees);
-          setEmployees(processedMockEmployees);
+          setError("Authentication required. Please log in to view employee data.");
           setIsLoading(false);
           return;
         }
@@ -74,11 +73,8 @@ const Onboarding = () => {
         setEmployees(processedEmployees);
       } catch (error) {
         console.error("Error fetching onboarding employees:", error);
-        toast.error("Failed to load employee data from API. Using mock data for development.");
-        
-        // Use mock data when API fails
-        const processedMockEmployees = processMockEmployees(mockEmployees);
-        setEmployees(processedMockEmployees);
+        setError(`Failed to load employee data: ${error.response?.data?.message || error.message}`);
+        toast.error(`Failed to load employee data: ${error.response?.data?.message || error.message}`);
       } finally {
         setIsLoading(false);
       }
@@ -86,46 +82,6 @@ const Onboarding = () => {
 
     fetchOnboardingEmployees();
   }, [refreshData]);
-
-  // Helper function to process mock data
-  const processMockEmployees = (mockData) => {
-    return mockData.map(employee => {
-      if (employee.status === "Completed") {
-        return {
-          ...employee,
-          startDate: employee.hire_date,
-          status: "Completed",
-          progress: 100
-        };
-      }
-      
-      let progress = 0;
-      const hireDate = new Date(employee.hire_date);
-      const daysSinceHire = Math.floor((Date.now() - hireDate) / (1000 * 60 * 60 * 24));
-      
-      let status = "";
-      if (daysSinceHire < 3) {
-        status = "Documents Pending";
-        progress = 30;
-      } else if (daysSinceHire < 7) {
-        status = "Training";
-        progress = 65;
-      } else if (daysSinceHire < 14) {
-        status = "Orientation Complete";
-        progress = 90;
-      } else {
-        status = "Completed";
-        progress = 100;
-      }
-      
-      return {
-        ...employee,
-        startDate: employee.hire_date,
-        status,
-        progress
-      };
-    });
-  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -213,6 +169,25 @@ const Onboarding = () => {
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        ) : error ? (
+          <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md p-8 flex flex-col justify-center items-center h-64`}>
+            <div className="text-red-500 text-5xl mb-4">
+              <i className="fas fa-exclamation-circle"></i>
+            </div>
+            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} text-center mb-2 font-semibold`}>
+              Error Loading Data
+            </p>
+            <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-center`}>
+              {error}
+            </p>
+            <button 
+              onClick={() => setRefreshData(prev => !prev)}
+              className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <i className="fas fa-sync-alt mr-2"></i>
+              Retry
+            </button>
           </div>
         ) : filteredEmployees.length === 0 ? (
           <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md p-6 flex justify-center items-center h-64`}>

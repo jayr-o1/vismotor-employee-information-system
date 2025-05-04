@@ -1,10 +1,10 @@
 const mysql = require('mysql2/promise');
-const dbConfig = require('./src/configs/database');
+const db = require('./src/configs/database');
 
 async function checkUsersTable() {
   let connection;
   try {
-    connection = await mysql.createConnection(dbConfig);
+    connection = await mysql.createConnection(db.config);
     console.log('Connected to database successfully');
     
     // Check if users table exists

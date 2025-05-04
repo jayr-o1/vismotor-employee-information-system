@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "setup-database": "node setup-database.js",
-    "setup-sample-data": "node setup-database.js --sample"
+    "setup-sample-data": "node setup-database.js --sample",
+    "check-db": "node check-db.js"
   },
   "keywords": [],
   "author": "",

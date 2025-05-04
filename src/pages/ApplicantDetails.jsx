@@ -469,9 +469,8 @@ const ApplicantDetails = () => {
     }
     
     try {
-      // Schedule the interview
-      await apiService.interviews.schedule({
-        applicant_id: applicant.id,
+      // Schedule the interview using the correct endpoint
+      await apiService.interviews.schedule(applicant.id, {
         interview_date: interviewData.date,
         interview_time: interviewData.time,
         location: interviewData.location,
@@ -488,15 +487,10 @@ const ApplicantDetails = () => {
         interview_scheduled: true 
       }));
       
-      // Note: The API service doesn't have an addNote function in the applicants object
-      // So we'll either need to add feedback instead or skip adding the note
-      
+      // Try to add feedback about the interview scheduling instead
       try {
-        // Try to add feedback about the interview scheduling instead
         const feedbackPayload = {
-          text: `Interview scheduled on ${interviewData.date} at ${interviewData.time} with ${interviewData.interviewer} at ${interviewData.location}`,
-          rating: 0,
-          category: "Administrative",
+          feedback_text: `Interview scheduled on ${interviewData.date} at ${interviewData.time} with ${interviewData.interviewer} at ${interviewData.location}`,
           created_by: "Current User"
         };
         
@@ -581,7 +575,9 @@ const ApplicantDetails = () => {
           <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-lg shadow-md p-6 mb-6`}>
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{applicant.name}</h1>
+                <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
+                  {`${applicant.first_name} ${applicant.last_name}`}
+                </h1>
                 <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{applicant.position}</p>
               </div>
               <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
@@ -624,17 +620,17 @@ const ApplicantDetails = () => {
               <div>
                 <div className="mb-6">
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Education</p>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.education}</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.highest_education || 'N/A'}</p>
                 </div>
                 
                 <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Experience</p>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.experience}</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Gender</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.gender || 'N/A'}</p>
                 </div>
                 
                 <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Skills</p>
-                  <p className={`font-medium whitespace-pre-line ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.skills}</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Job Source</p>
+                  <p className={`font-medium whitespace-pre-line ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.job_post_source || 'N/A'}</p>
                 </div>
               </div>
             </div>
