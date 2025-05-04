@@ -39,4 +39,143 @@ const sendResetPasswordEmail = async (email, link) => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendVerificationEmail, sendResetPasswordEmail };
+// Send interview notification email
+const sendInterviewNotification = async (applicantEmail, applicantName, interviewDetails) => {
+  const { interview_date, interview_time, location, interviewer } = interviewDetails;
+  
+  // Format the date for display
+  const formattedDate = new Date(interview_date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  // Create location display text
+  const locationText = location.toLowerCase().includes('google meet') || 
+                      location.toLowerCase().includes('virtual') || 
+                      location.toLowerCase().includes('online') 
+                      ? `<strong>Online Meeting:</strong> ${location}` 
+                      : `<strong>Location:</strong> ${location}`;
+  
+  const mailOptions = {
+    from: "olores.jayrm@gmail.com",
+    to: applicantEmail,
+    subject: "Interview Scheduled - Next Steps",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #2c3e50;">Interview Confirmation</h2>
+        </div>
+        
+        <p>Dear ${applicantName},</p>
+        
+        <p>We're pleased to confirm your interview has been scheduled. We look forward to discussing your qualifications and experience further.</p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #2c3e50;">Interview Details</h3>
+          <p><strong>Date:</strong> ${formattedDate}</p>
+          <p><strong>Time:</strong> ${interview_time}</p>
+          <p>${locationText}</p>
+          <p><strong>Interviewer:</strong> ${interviewer}</p>
+        </div>
+        
+        <p>Please arrive 10 minutes early. If you need to reschedule or have any questions, please contact us as soon as possible.</p>
+        
+        <p>Best regards,<br>
+        HR Department<br>
+        Vismotor Inc.</p>
+      </div>
+    `
+  };
+  
+  await transporter.sendMail(mailOptions);
+};
+
+// Send interview completion notification
+const sendInterviewCompletionEmail = async (applicantEmail, applicantName, interviewDetails) => {
+  const { interview_date, interview_time, interviewer } = interviewDetails;
+  
+  // Format the date for display
+  const formattedDate = new Date(interview_date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  const mailOptions = {
+    from: "olores.jayrm@gmail.com",
+    to: applicantEmail,
+    subject: "Thank You for Your Interview",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #2c3e50;">Interview Completed</h2>
+        </div>
+        
+        <p>Dear ${applicantName},</p>
+        
+        <p>Thank you for attending your interview on ${formattedDate} at ${interview_time} with ${interviewer}.</p>
+        
+        <p>We appreciate the time you took to discuss your qualifications and experience with us. Our team is currently reviewing all candidates, and we will be in touch with you regarding the next steps in our hiring process.</p>
+        
+        <p>If you have any questions in the meantime, please don't hesitate to contact us.</p>
+        
+        <p>Best regards,<br>
+        HR Department<br>
+        Vismotor Inc.</p>
+      </div>
+    `
+  };
+  
+  await transporter.sendMail(mailOptions);
+};
+
+// Send interview cancellation notification
+const sendInterviewCancellationEmail = async (applicantEmail, applicantName, interviewDetails) => {
+  const { interview_date, interview_time } = interviewDetails;
+  
+  // Format the date for display
+  const formattedDate = new Date(interview_date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  const mailOptions = {
+    from: "olores.jayrm@gmail.com",
+    to: applicantEmail,
+    subject: "Interview Cancellation Notice",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #2c3e50;">Interview Cancellation</h2>
+        </div>
+        
+        <p>Dear ${applicantName},</p>
+        
+        <p>We regret to inform you that your interview scheduled for ${formattedDate} at ${interview_time} has been cancelled.</p>
+        
+        <p>Our HR team will be in touch with you shortly to reschedule or provide further information. We apologize for any inconvenience this may cause.</p>
+        
+        <p>If you have any questions, please feel free to contact us.</p>
+        
+        <p>Best regards,<br>
+        HR Department<br>
+        Vismotor Inc.</p>
+      </div>
+    `
+  };
+  
+  await transporter.sendMail(mailOptions);
+};
+
+module.exports = { 
+  sendVerificationEmail, 
+  sendResetPasswordEmail, 
+  sendInterviewNotification,
+  sendInterviewCompletionEmail,
+  sendInterviewCancellationEmail
+};

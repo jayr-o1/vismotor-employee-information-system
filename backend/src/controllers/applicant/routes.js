@@ -337,6 +337,20 @@ router.post("/api/applicants/:id/interviews", async (req, res) => {
     await connection.beginTransaction();
 
     try {
+      // Get applicant information to send email
+      const [applicants] = await connection.query(
+        "SELECT * FROM applicants WHERE id = ?",
+        [id]
+      );
+      
+      if (applicants.length === 0) {
+        await connection.rollback();
+        connection.release();
+        return res.status(404).json({ message: "Applicant not found" });
+      }
+      
+      const applicant = applicants[0];
+
       // Insert interview record
       const [result] = await connection.query(
         "INSERT INTO interviews (applicant_id, interview_date, interview_time, location, interviewer) VALUES (?, ?, ?, ?, ?)",
@@ -352,7 +366,7 @@ router.post("/api/applicants/:id/interviews", async (req, res) => {
       await connection.commit();
       connection.release();
 
-      res.status(201).json({
+      const interviewDetails = {
         id: result.insertId,
         applicant_id: id,
         interview_date,
@@ -361,7 +375,22 @@ router.post("/api/applicants/:id/interviews", async (req, res) => {
         interviewer,
         status: 'Scheduled',
         created_at: new Date()
-      });
+      };
+
+      // Send email notification to the applicant
+      try {
+        const { sendInterviewNotification } = require('../../services/emailService');
+        await sendInterviewNotification(
+          applicant.email,
+          applicant.name,
+          interviewDetails
+        );
+      } catch (emailError) {
+        console.error("Error sending interview notification email:", emailError);
+        // Continue even if email sending fails
+      }
+
+      res.status(201).json(interviewDetails);
     } catch (error) {
       await connection.rollback();
       connection.release();
@@ -423,6 +452,16 @@ router.patch("/api/interviews/:id/status", async (req, res) => {
     
     const interview = interviews[0];
     
+    // Get applicant information for email notification
+    const [applicants] = await connection.query("SELECT * FROM applicants WHERE id = ?", [interview.applicant_id]);
+    
+    if (applicants.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: "Applicant not found" });
+    }
+    
+    const applicant = applicants[0];
+    
     // Update interview status
     const [result] = await connection.query(
       "UPDATE interviews SET status = ? WHERE id = ?",
@@ -441,6 +480,31 @@ router.patch("/api/interviews/:id/status", async (req, res) => {
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Interview not found" });
+    }
+
+    // Send appropriate email notification based on status
+    try {
+      const { 
+        sendInterviewCompletionEmail, 
+        sendInterviewCancellationEmail 
+      } = require('../../services/emailService');
+      
+      if (status === 'Completed') {
+        await sendInterviewCompletionEmail(
+          applicant.email,
+          applicant.name,
+          interview
+        );
+      } else if (status === 'Cancelled') {
+        await sendInterviewCancellationEmail(
+          applicant.email,
+          applicant.name,
+          interview
+        );
+      }
+    } catch (emailError) {
+      console.error(`Error sending interview ${status.toLowerCase()} email:`, emailError);
+      // Continue even if email sending fails
     }
 
     res.json({ message: "Interview status updated successfully" });
