@@ -382,9 +382,9 @@ const ApplicantDetails = () => {
 
   // Load equipment, document, and training types on component mount
   useEffect(() => {
-    fetchEquipmentTypes();
-    fetchDocumentTypes();
-    fetchTrainingTypes();
+      fetchEquipmentTypes();
+      fetchDocumentTypes();
+      fetchTrainingTypes();
   }, []);
 
   // Fetch equipment types
@@ -582,9 +582,9 @@ const ApplicantDetails = () => {
   if (loading) {
     return (
       <>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-        </div>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          </div>
       </>
     );
   }
@@ -592,17 +592,17 @@ const ApplicantDetails = () => {
   if (error || !applicant) {
     return (
       <>
-        <div className="text-center">
-          <h2 className={`text-2xl font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-            {error || "Applicant not found"}
-          </h2>
-          <button
-            onClick={() => navigate('/applicants')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Return to Applicants List
-          </button>
-        </div>
+          <div className="text-center">
+            <h2 className={`text-2xl font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+              {error || "Applicant not found"}
+            </h2>
+            <button
+              onClick={() => navigate('/applicants')}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Return to Applicants List
+            </button>
+          </div>
       </>
     );
   }
@@ -611,313 +611,313 @@ const ApplicantDetails = () => {
     <>
       <ToastContainer position="top-right" />
       
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate('/applicants')}
-          className={`flex items-center ${isDark ? 'text-gray-300 hover:text-gray-100' : 'text-gray-600 hover:text-gray-800'} mb-6`}
-        >
-          <FaArrowLeft className="mr-2" />
-          Back to Applicants
-        </button>
+        <div className="max-w-7xl mx-auto p-6">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate('/applicants')}
+            className={`flex items-center ${isDark ? 'text-gray-300 hover:text-gray-100' : 'text-gray-600 hover:text-gray-800'} mb-6`}
+          >
+            <FaArrowLeft className="mr-2" />
+            Back to Applicants
+          </button>
 
-        {/* Applicant Details */}
-        <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-lg shadow-md p-6 mb-6`}>
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
-                {`${applicant.first_name} ${applicant.last_name}`}
-              </h1>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{applicant.position}</p>
+          {/* Applicant Details */}
+          <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-lg shadow-md p-6 mb-6`}>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
+                  {`${applicant.first_name} ${applicant.last_name}`}
+                </h1>
+                <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{applicant.position}</p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                applicant.status === "Pending" 
+                  ? isDark ? "bg-yellow-900 text-yellow-200" : "bg-yellow-100 text-yellow-800" 
+                  : applicant.status === "Reviewed" 
+                  ? isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800" 
+                  : applicant.status === "Interviewed" 
+                  ? isDark ? "bg-purple-900 text-purple-200" : "bg-purple-100 text-purple-800"
+                  : applicant.status === "Accepted"
+                  ? isDark ? "bg-green-900 text-green-200" : "bg-green-100 text-green-800"
+                  : isDark ? "bg-red-900 text-red-200" : "bg-red-100 text-red-800"
+              }`}>
+                {applicant.status}
+              </span>
             </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-              applicant.status === "Pending" 
-                ? isDark ? "bg-yellow-900 text-yellow-200" : "bg-yellow-100 text-yellow-800" 
-                : applicant.status === "Reviewed" 
-                ? isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800" 
-                : applicant.status === "Interviewed" 
-                ? isDark ? "bg-purple-900 text-purple-200" : "bg-purple-100 text-purple-800"
-                : applicant.status === "Accepted"
-                ? isDark ? "bg-green-900 text-green-200" : "bg-green-100 text-green-800"
-                : isDark ? "bg-red-900 text-red-200" : "bg-red-100 text-red-800"
-            }`}>
-              {applicant.status}
-            </span>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Column */}
-            <div>
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.email}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div>
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.email}</p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Gender</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.gender}
+                    {applicant.other_gender && ` (${applicant.other_gender})`}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Age</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.age || 'N/A'}</p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Marital Status</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.marital_status}
+                    {applicant.other_marital_status && ` (${applicant.other_marital_status})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Education</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.highest_education}
+                    {applicant.other_highest_education && ` (${applicant.other_highest_education})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Position Applying For</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.position}
+                    {applicant.other_position && ` (${applicant.other_position})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Desired Pay</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.desired_pay || 'N/A'}</p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Previously Employed at Vismotor</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.previously_employed || 'N/A'}</p>
+                </div>
               </div>
               
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Gender</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  {applicant.gender}
-                  {applicant.other_gender && ` (${applicant.other_gender})`}
-                </p>
-              </div>
-              
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Age</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.age || 'N/A'}</p>
-              </div>
-              
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Marital Status</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  {applicant.marital_status}
-                  {applicant.other_marital_status && ` (${applicant.other_marital_status})`}
-                </p>
-              </div>
+              {/* Right Column */}
+              <div>
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Branch/Department</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.branch_department}
+                    {applicant.other_branch_department && ` (${applicant.other_branch_department})`}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Date Availability</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.date_availability}
+                    {applicant.other_date_availability && ` (${applicant.other_date_availability})`}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Job Post Source</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.job_post_source}
+                    {applicant.other_job_source && ` (${applicant.other_job_source})`}
+                  </p>
+                </div>
 
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Education</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  {applicant.highest_education}
-                  {applicant.other_highest_education && ` (${applicant.other_highest_education})`}
-                </p>
-              </div>
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {[
+                      applicant.street_address,
+                      applicant.barangay,
+                      applicant.city,
+                      applicant.province,
+                      applicant.region
+                    ].filter(Boolean).join(', ')}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Application Date</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.applied_date ? applicant.applied_date.split('T')[0] : ''}
+                  </p>
+                </div>
 
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Position Applying For</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  {applicant.position}
-                  {applicant.other_position && ` (${applicant.other_position})`}
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Desired Pay</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.desired_pay || 'N/A'}</p>
-              </div>
-
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Previously Employed at Vismotor</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.previously_employed || 'N/A'}</p>
-              </div>
-            </div>
-            
-            {/* Right Column */}
-            <div>
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Branch/Department</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  {applicant.branch_department}
-                  {applicant.other_branch_department && ` (${applicant.other_branch_department})`}
-                </p>
-              </div>
-              
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Date Availability</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  {applicant.date_availability}
-                  {applicant.other_date_availability && ` (${applicant.other_date_availability})`}
-                </p>
-              </div>
-              
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Job Post Source</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  {applicant.job_post_source}
-                  {applicant.other_job_source && ` (${applicant.other_job_source})`}
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  {[
-                    applicant.street_address,
-                    applicant.barangay,
-                    applicant.city,
-                    applicant.province,
-                    applicant.region
-                  ].filter(Boolean).join(', ')}
-                </p>
-              </div>
-              
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Application Date</p>
-                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                  {applicant.applied_date ? applicant.applied_date.split('T')[0] : ''}
-                </p>
-              </div>
-
-              <div className="mb-6">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Files</p>
-                <div className="flex flex-col space-y-2 mt-2">
-                  {applicant.resume_filename && (
-                    <a 
-                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/applicants/download/${applicant.resume_filename}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className={`flex items-center ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
-                    >
-                      <FaPaperclip className="mr-2" /> 
-                      Resume/CV: {applicant.resume_originalname}
-                    </a>
-                  )}
-                  {applicant.house_sketch_filename && (
-                    <a 
-                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/applicants/download/${applicant.house_sketch_filename}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className={`flex items-center ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
-                    >
-                      <FaPaperclip className="mr-2" /> 
-                      House Sketch: {applicant.house_sketch_originalname}
-                    </a>
-                  )}
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Files</p>
+                  <div className="flex flex-col space-y-2 mt-2">
+                    {applicant.resume_filename && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/applicants/download/${applicant.resume_filename}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={`flex items-center ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                      >
+                        <FaPaperclip className="mr-2" /> 
+                        Resume/CV: {applicant.resume_originalname}
+                      </a>
+                    )}
+                    {applicant.house_sketch_filename && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/applicants/download/${applicant.house_sketch_filename}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={`flex items-center ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                      >
+                        <FaPaperclip className="mr-2" /> 
+                        House Sketch: {applicant.house_sketch_originalname}
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          {/* Note button - always available */}
-          <button
-            onClick={() => setFeedbackModalOpen(true)}
-            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <FaStickyNote className="mr-2" />
-            Add Note
-          </button>
-          
-          {/* Schedule Interview button - available when not hired, rejected, or already interviewed */}
-          {applicant.status !== "Accepted" && applicant.status !== "Rejected" && applicant.status !== "Interviewed" && (
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-4 mb-6">
+            {/* Note button - always available */}
             <button
-              onClick={() => setScheduleModalOpen(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={() => setFeedbackModalOpen(true)}
+              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              <FaCalendarAlt className="mr-2" />
-              Schedule Interview
+              <FaStickyNote className="mr-2" />
+              Add Note
             </button>
-          )}
-          
-          {/* Hire button - available when interviewed or reviewed */}
-          {(applicant.status === "Interviewed" || applicant.status === "Reviewed") && (
-            <button
-              onClick={handleOpenOnboardModal}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <FaUserPlus className="mr-2" />
-              Hire Applicant
-            </button>
-          )}
-          
-          {/* Reject button - available when not hired or rejected */}
-          {applicant.status !== "Accepted" && applicant.status !== "Rejected" && (
-            <button
-              onClick={handleRejectApplicant}
-              className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              <FaTimesCircle className="mr-2" />
-              Reject Applicant
-            </button>
-          )}
-        </div>
+            
+            {/* Schedule Interview button - available when not hired, rejected, or already interviewed */}
+            {applicant.status !== "Accepted" && applicant.status !== "Rejected" && applicant.status !== "Interviewed" && (
+              <button
+                onClick={() => setScheduleModalOpen(true)}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <FaCalendarAlt className="mr-2" />
+                Schedule Interview
+              </button>
+            )}
+            
+            {/* Hire button - available when interviewed or reviewed */}
+            {(applicant.status === "Interviewed" || applicant.status === "Reviewed") && (
+              <button
+                onClick={handleOpenOnboardModal}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <FaUserPlus className="mr-2" />
+                Hire Applicant
+              </button>
+            )}
+            
+            {/* Reject button - available when not hired or rejected */}
+            {applicant.status !== "Accepted" && applicant.status !== "Rejected" && (
+              <button
+                onClick={handleRejectApplicant}
+                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <FaTimesCircle className="mr-2" />
+                Reject Applicant
+              </button>
+            )}
+          </div>
 
-        {/* Interview History Section */}
-        <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-lg shadow-md p-6 mb-6`}>
-          <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Interview History</h2>
-          {applicant.interviews && applicant.interviews.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className={`min-w-full ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                <thead>
-                  <tr className={`${isDark ? 'border-gray-700' : 'border-gray-200'} border-b`}>
-                    <th className="py-3 px-4 text-left">Interviewer</th>
-                    <th className="py-3 px-4 text-left">Date & Time</th>
-                    <th className="py-3 px-4 text-left">Location</th>
-                    <th className="py-3 px-4 text-left">Status</th>
-                    <th className="py-3 px-4 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {applicant.interviews.map((interview) => (
-                    <tr 
-                      key={interview.id} 
-                      className={`${isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-200 hover:bg-gray-50'} border-b transition-colors`}
-                    >
-                      <td className="py-3 px-4">{interview.interviewer}</td>
-                      <td className="py-3 px-4">
-                        {interview.interview_date ? interview.interview_date.split('T')[0] : new Date(interview.interview_date).toLocaleDateString()} at {interview.interview_time}
-                      </td>
-                      <td className="py-3 px-4">{interview.location}</td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          interview.status === "Scheduled" 
-                            ? isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"
-                            : interview.status === "Completed" 
-                            ? isDark ? "bg-green-900 text-green-200" : "bg-green-100 text-green-800"
-                            : interview.status === "Cancelled" 
-                            ? isDark ? "bg-red-900 text-red-200" : "bg-red-100 text-red-800"
-                            : isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-800"
-                        }`}>
-                          {interview.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        {interview.status === "Scheduled" && (
-                          <button
-                            onClick={() => handleMarkInterviewCompleted(interview)}
-                            className={`text-xs font-medium px-3 py-1.5 rounded ${
-                              isDark ? "bg-blue-900 text-blue-200 hover:bg-blue-800" : "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                            }`}
-                          >
-                            <span className="flex items-center">
-                              <FaCalendarAlt className="mr-1" size={12} />
-                              Mark Completed
-                            </span>
-                          </button>
-                        )}
-                        {interview.status === "Completed" && applicant.status !== "Accepted" ? (
-                          <button
-                            onClick={() => handleHireFromInterview(interview)}
-                            className={`text-xs font-medium px-3 py-1.5 rounded ${
-                              isDark ? "bg-green-900 text-green-200 hover:bg-green-800" : "bg-green-100 text-green-800 hover:bg-green-200"
-                            }`}
-                          >
-                            <span className="flex items-center">
-                              <FaUserPlus className="mr-1" size={12} />
-                              Hire
-                            </span>
-                          </button>
-                        ) : interview.status === "Completed" && applicant.status === "Accepted" ? (
-                          <span className={`text-xs font-medium px-3 py-1.5 rounded opacity-50 cursor-not-allowed ${
-                            isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-500"
-                          }`}>
-                            <span className="flex items-center">
-                              <FaUserPlus className="mr-1" size={12} />
-                              Already Hired
-                            </span>
-                          </span>
-                        ) : null}
-                      </td>
+          {/* Interview History Section */}
+          <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-lg shadow-md p-6 mb-6`}>
+            <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>Interview History</h2>
+            {applicant.interviews && applicant.interviews.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className={`min-w-full ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                  <thead>
+                    <tr className={`${isDark ? 'border-gray-700' : 'border-gray-200'} border-b`}>
+                      <th className="py-3 px-4 text-left">Interviewer</th>
+                      <th className="py-3 px-4 text-left">Date & Time</th>
+                      <th className="py-3 px-4 text-left">Location</th>
+                      <th className="py-3 px-4 text-left">Status</th>
+                      <th className="py-3 px-4 text-left">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className={`text-center py-8 ${isDark ? 'bg-slate-800/50' : 'bg-gray-50'} rounded-lg border ${isDark ? 'border-slate-700' : 'border-gray-200'}`}>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No interviews scheduled yet.</p>
-              {applicant.status !== "Accepted" && applicant.status !== "Rejected" && (
-                <button
-                  onClick={() => setScheduleModalOpen(true)}
-                  className="mt-3 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
-                >
-                  <FaCalendarAlt className="mr-2" />
-                  Schedule Interview
-                </button>
-              )}
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {applicant.interviews.map((interview) => (
+                      <tr 
+                        key={interview.id} 
+                        className={`${isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-200 hover:bg-gray-50'} border-b transition-colors`}
+                      >
+                        <td className="py-3 px-4">{interview.interviewer}</td>
+                        <td className="py-3 px-4">
+                          {interview.interview_date ? interview.interview_date.split('T')[0] : new Date(interview.interview_date).toLocaleDateString()} at {interview.interview_time}
+                        </td>
+                        <td className="py-3 px-4">{interview.location}</td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            interview.status === "Scheduled" 
+                              ? isDark ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"
+                              : interview.status === "Completed" 
+                              ? isDark ? "bg-green-900 text-green-200" : "bg-green-100 text-green-800"
+                              : interview.status === "Cancelled" 
+                              ? isDark ? "bg-red-900 text-red-200" : "bg-red-100 text-red-800"
+                              : isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {interview.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          {interview.status === "Scheduled" && (
+                            <button
+                              onClick={() => handleMarkInterviewCompleted(interview)}
+                              className={`text-xs font-medium px-3 py-1.5 rounded ${
+                                isDark ? "bg-blue-900 text-blue-200 hover:bg-blue-800" : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                              }`}
+                            >
+                              <span className="flex items-center">
+                                <FaCalendarAlt className="mr-1" size={12} />
+                                Mark Completed
+                              </span>
+                            </button>
+                          )}
+                          {interview.status === "Completed" && applicant.status !== "Accepted" ? (
+                            <button
+                              onClick={() => handleHireFromInterview(interview)}
+                              className={`text-xs font-medium px-3 py-1.5 rounded ${
+                                isDark ? "bg-green-900 text-green-200 hover:bg-green-800" : "bg-green-100 text-green-800 hover:bg-green-200"
+                              }`}
+                            >
+                              <span className="flex items-center">
+                                <FaUserPlus className="mr-1" size={12} />
+                                Hire
+                              </span>
+                            </button>
+                          ) : interview.status === "Completed" && applicant.status === "Accepted" ? (
+                            <span className={`text-xs font-medium px-3 py-1.5 rounded opacity-50 cursor-not-allowed ${
+                              isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-500"
+                            }`}>
+                              <span className="flex items-center">
+                                <FaUserPlus className="mr-1" size={12} />
+                                Already Hired
+                              </span>
+                            </span>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className={`text-center py-8 ${isDark ? 'bg-slate-800/50' : 'bg-gray-50'} rounded-lg border ${isDark ? 'border-slate-700' : 'border-gray-200'}`}>
+                <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No interviews scheduled yet.</p>
+                {applicant.status !== "Accepted" && applicant.status !== "Rejected" && (
+                  <button
+                    onClick={() => setScheduleModalOpen(true)}
+                    className="mt-3 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
+                  >
+                    <FaCalendarAlt className="mr-2" />
+                    Schedule Interview
+                  </button>
+                )}
+              </div>
+            )}
         </div>
       </div>
 

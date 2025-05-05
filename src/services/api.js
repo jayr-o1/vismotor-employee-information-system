@@ -33,6 +33,7 @@ const apiService = {
     resetPassword: (resetData) => api.post('/api/reset-password', resetData),
     verifyEmail: (token) => api.get(`/api/verify-email?token=${token}`),
     resendVerification: (email) => api.post('/api/resend-verification', { email }),
+    createUser: (userData) => api.post('/api/admin/create-user', userData),
   },
   
   // Dashboard endpoints

@@ -10,7 +10,7 @@ import Layout from "./components/Layout";
 
 // Lazy loaded components
 const Login = lazy(() => import("./pages/auth/Login"));
-const Signup = lazy(() => import("./pages/auth/Signup"));
+// Signup route removed since admin will handle user creation
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const Home = lazy(() => import("./pages/Home"));
 const Employees = lazy(() => import("./pages/Employees"));
@@ -47,7 +47,7 @@ function App() {
           <Routes>
             {/* Public Auth Routes - Redirect to home if already logged in */}
             <Route path="/login" element={<AuthRoute element={<Login />} />} />
-            <Route path="/signup" element={<AuthRoute element={<Signup />} />} />
+            {/* Signup route removed */}
             <Route path="/verify-email" element={<AuthRoute element={<VerifyEmail />} />} />
             <Route path="/forgot-password" element={<AuthRoute element={<ForgotPassword />} />} />
             <Route path="/reset-password" element={<AuthRoute element={<ResetPassword />} />} />

@@ -263,10 +263,14 @@ const Login = () => {
 
               <button
                 type="submit"
-                className="w-full cursor-pointer bg-orange-500 hover:bg-[#538b30] text-white p-3 rounded-lg font-semibold transition duration-200"
+                className={`w-full py-3 text-white font-medium rounded-lg ${
+                  isLoading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-orange-500 hover:bg-orange-600"
+                }`}
                 disabled={isLoading}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "Signing in..." : "Sign In"}
               </button>
             </form>
 
@@ -274,14 +278,7 @@ const Login = () => {
 
             <div className="mt-4 text-sm text-center">
               <p>
-                Don't have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => navigate("/signup")}
-                  className="text-orange-500 font-semibold hover:underline"
-                >
-                  Sign up
-                </button>
+                Access is restricted to authorized personnel only.
               </p>
             </div>
           </div>
