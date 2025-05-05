@@ -117,6 +117,40 @@ tr.hover\:bg-gray-50:hover {
   color: #f9fafb !important;
 }
 
+/* Light Mode Override - Forces light mode regardless of theme */
+.light-mode {
+  background-color: white !important;
+  color: #333 !important;
+}
+
+.light-mode input,
+.light-mode select,
+.light-mode textarea {
+  background-color: white !important;
+  color: #333 !important;
+  border-color: #e5e7eb !important;
+}
+
+.light-mode ::placeholder {
+  color: #9ca3af !important;
+}
+
+.light-mode .form-label,
+.light-mode label {
+  color: #455a64 !important;
+}
+
+.light-mode .form-section,
+.light-mode .form-header {
+  background-color: white !important;
+  color: #333 !important;
+}
+
+.light-mode button.submit-button {
+  background-color: #FF5C00 !important;
+  color: white !important;
+}
+
 /* Application Form Specific Styles */
 .form-header {
   border-top: 8px solid #FF5C00;

@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { regions, provinces, cities, barangays } from '../utils/locations';
 import apiService from '../services/api';  // Import the API service
 
+// Shared placeholder style to ensure consistent appearance regardless of theme
+const placeholderStyle = {
+  color: '#9ca3af'  // Medium gray that works on both light and dark backgrounds
+};
+
 function ApplicationForm() {
   const [formData, setFormData] = useState({
     email: '',
@@ -727,6 +732,9 @@ function ApplicationForm() {
                 required
                 className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
                 placeholder="Your first name"
+                style={{
+                  '::placeholder': placeholderStyle
+                }}
               />
             </div>
             
@@ -743,6 +751,9 @@ function ApplicationForm() {
                 required
                 className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
                 placeholder="Your last name"
+                style={{
+                  '::placeholder': placeholderStyle
+                }}
               />
             </div>
           </div>

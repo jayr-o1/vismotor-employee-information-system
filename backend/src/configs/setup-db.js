@@ -141,6 +141,34 @@ CREATE TABLE IF NOT EXISTS employees (
   FOREIGN KEY (applicant_id) REFERENCES applicants(id) ON DELETE SET NULL
 )`;
 
+const CREATE_ONBOARDING_CHECKLISTS_TABLE = `
+CREATE TABLE IF NOT EXISTS onboarding_checklists (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  employee_id INT NOT NULL,
+  title VARCHAR(100) NOT NULL,
+  description TEXT,
+  is_completed BOOLEAN DEFAULT FALSE,
+  completed_date DATE DEFAULT NULL,
+  due_date DATE,
+  priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+)`;
+
+const CREATE_ONBOARDING_TEMPLATES_TABLE = `
+CREATE TABLE IF NOT EXISTS onboarding_templates (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(100) NOT NULL,
+  description TEXT,
+  priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
+  days_to_complete INT DEFAULT 7,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)`;
+
 async function setupDatabase() {
   let connection;
   
@@ -177,172 +205,35 @@ async function setupDatabase() {
     console.log('- Creating employees table...');
     await connection.query(CREATE_EMPLOYEES_TABLE);
     
-    // Create onboarding tables using the SQL file
-    console.log('- Creating onboarding tables from SQL file...');
-    try {
-      const onboardingTablesPath = path.join(__dirname, 'sql', 'onboarding_tables.sql');
-      const onboardingTablesSQL = await fs.readFile(onboardingTablesPath, 'utf8');
+    console.log('- Creating onboarding_checklists table...');
+    await connection.query(CREATE_ONBOARDING_CHECKLISTS_TABLE);
+    
+    console.log('- Creating onboarding_templates table...');
+    await connection.query(CREATE_ONBOARDING_TEMPLATES_TABLE);
+    
+    // Insert sample onboarding templates
+    console.log('- Checking if onboarding templates exist...');
+    const [templateCount] = await connection.query("SELECT COUNT(*) as count FROM onboarding_templates");
+    
+    if (templateCount[0].count === 0) {
+      console.log('- Inserting sample onboarding templates...');
       
-      // Split the SQL file into individual statements
-      const statements = onboardingTablesSQL.split(';')
-        .map(statement => statement.trim())
-        .filter(statement => statement.length > 0);
-      
-      // Execute each statement
-      for (const statement of statements) {
-        await connection.query(statement);
+      // Load and execute the SQL file
+      try {
+        const templatesPath = path.join(__dirname, 'sql', 'onboarding_checklist.sql');
+        const templatesSQL = await fs.readFile(templatesPath, 'utf8');
+        
+        // Extract just the INSERT statement from the SQL file
+        const insertStatement = templatesSQL.split('INSERT INTO onboarding_templates')[1];
+        if (insertStatement) {
+          await connection.query('INSERT INTO onboarding_templates ' + insertStatement);
+          console.log('  ✓ Sample templates inserted successfully!');
+        } else {
+          console.error('  ✗ Could not find INSERT statement in SQL file');
+        }
+      } catch (error) {
+        console.error('  ✗ Error inserting sample templates:', error.message);
       }
-      
-      console.log('  ✓ Onboarding tables created successfully!');
-    } catch (error) {
-      console.error('  ✗ Error creating onboarding tables:', error.message);
-      
-      // Fallback to inline SQL if file not found
-      console.log('  ⚠ Falling back to inline SQL for onboarding tables');
-      
-      console.log('  - Creating employee_equipment table...');
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS employee_equipment (
-          id INT PRIMARY KEY AUTO_INCREMENT,
-          employee_id INT NOT NULL,
-          equipment_type VARCHAR(100) NOT NULL,
-          description TEXT,
-          status ENUM('Requested', 'Ordered', 'Assigned', 'Cancelled') DEFAULT 'Requested',
-          request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          fulfillment_date DATE DEFAULT NULL,
-          notes TEXT,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
-        )
-      `);
-      
-      console.log('  - Creating employee_documents table...');
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS employee_documents (
-          id INT PRIMARY KEY AUTO_INCREMENT,
-          employee_id INT NOT NULL,
-          document_type VARCHAR(100) NOT NULL,
-          document_name VARCHAR(255) NOT NULL,
-          required BOOLEAN DEFAULT TRUE,
-          required_by_date DATE NOT NULL,
-          status ENUM('Pending', 'Submitted', 'Verified', 'Rejected') DEFAULT 'Pending',
-          submission_date DATE DEFAULT NULL,
-          notes TEXT,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
-        )
-      `);
-      
-      console.log('  - Creating employee_training table...');
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS employee_training (
-          id INT PRIMARY KEY AUTO_INCREMENT,
-          employee_id INT NOT NULL,
-          training_type VARCHAR(100) NOT NULL,
-          description TEXT,
-          trainer VARCHAR(100),
-          location VARCHAR(255),
-          scheduled_date DATE,
-          scheduled_time TIME,
-          duration_minutes INT DEFAULT 60,
-          status ENUM('Scheduled', 'Completed', 'Cancelled', 'Postponed') DEFAULT 'Scheduled',
-          completion_date DATE DEFAULT NULL,
-          notes TEXT,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
-        )
-      `);
-      
-      console.log('  - Creating equipment_types table...');
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS equipment_types (
-          id INT PRIMARY KEY AUTO_INCREMENT,
-          name VARCHAR(100) NOT NULL,
-          description TEXT,
-          is_active BOOLEAN DEFAULT TRUE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-      `);
-      
-      console.log('  - Creating document_types table...');
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS document_types (
-          id INT PRIMARY KEY AUTO_INCREMENT,
-          name VARCHAR(100) NOT NULL,
-          description TEXT,
-          required BOOLEAN DEFAULT TRUE,
-          days_to_submit INT DEFAULT 7,
-          is_active BOOLEAN DEFAULT TRUE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-      `);
-      
-      console.log('  - Creating training_types table...');
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS training_types (
-          id INT PRIMARY KEY AUTO_INCREMENT,
-          name VARCHAR(100) NOT NULL,
-          description TEXT,
-          duration_minutes INT DEFAULT 60,
-          is_active BOOLEAN DEFAULT TRUE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-      `);
-    }
-
-    // Check if reference tables have data, if not, add sample data
-    const [equipmentTypes] = await connection.query("SELECT COUNT(*) as count FROM equipment_types");
-    if (equipmentTypes[0].count === 0) {
-      console.log('- Inserting sample equipment types...');
-      await connection.query(`
-        INSERT INTO equipment_types (name, description) VALUES
-        ('Laptop', 'Standard company laptop with appropriate software'),
-        ('Monitor', '24-inch monitor for workstation'),
-        ('Mouse', 'Wireless ergonomic mouse'),
-        ('Keyboard', 'Ergonomic keyboard for desk use'),
-        ('Phone', 'Company mobile phone or desk phone'),
-        ('Headset', 'Noise-cancelling headset for calls'),
-        ('Office Chair', 'Ergonomic office chair'),
-        ('Standing Desk', 'Height-adjustable desk for ergonomic work')
-      `);
-    }
-    
-    const [documentTypes] = await connection.query("SELECT COUNT(*) as count FROM document_types");
-    if (documentTypes[0].count === 0) {
-      console.log('- Inserting sample document types...');
-      await connection.query(`
-        INSERT INTO document_types (name, description, required, days_to_submit) VALUES
-        ('ID Proof', 'Government-issued ID like passport or driver license', TRUE, 3),
-        ('Bank Details', 'Bank account information for salary payment', TRUE, 7),
-        ('Tax Forms', 'Required tax documentation', TRUE, 7),
-        ('Employment Contract', 'Signed employment contract', TRUE, 1),
-        ('Education Certificates', 'Proof of education qualifications', TRUE, 14),
-        ('Work Reference', 'References from previous employers', FALSE, 14),
-        ('Background Check Consent', 'Consent for background verification', TRUE, 3),
-        ('Health Insurance Form', 'Form for health insurance enrollment', TRUE, 7)
-      `);
-    }
-    
-    const [trainingTypes] = await connection.query("SELECT COUNT(*) as count FROM training_types");
-    if (trainingTypes[0].count === 0) {
-      console.log('- Inserting sample training types...');
-      await connection.query(`
-        INSERT INTO training_types (name, description, duration_minutes) VALUES
-        ('Company Orientation', 'Introduction to company culture, values, and history', 120),
-        ('Health & Safety', 'Workplace health and safety procedures', 60),
-        ('IT Systems', 'Introduction to IT systems and security protocols', 90),
-        ('HR Policies', 'Overview of HR policies and procedures', 60),
-        ('Department Introduction', 'Specific department onboarding and introductions', 120),
-        ('Role-specific Training', 'Specialized training for specific job role', 180),
-        ('Customer Service', 'Customer service standards and procedures', 90),
-        ('Product Knowledge', 'Detailed training on company products and services', 120)
-      `);
     }
 
     // List tables in database

@@ -53,7 +53,11 @@ function App() {
             
             {/* Truly Public Routes */}
             <Route path="/documentation" element={<Documentation />} />
-            <Route path="/apply" element={<ApplicationForm />} />
+            <Route path="/apply" element={
+              <div className="light-mode">
+                <ApplicationForm />
+              </div>
+            } />
             {/* QR Profile Public Route */}
             <Route path="/qr/applicant/:id" element={<ApplicantQRProfile />} />
             <Route path="/qr/employee/:id" element={<EmployeeQRProfile />} />

@@ -40,6 +40,16 @@ async function executeSql() {
     
     try {
       await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+      
+      // Drop the tables that were highlighted in the image
+      await connection.query('DROP TABLE IF EXISTS employee_documents');
+      await connection.query('DROP TABLE IF EXISTS employee_equipment');
+      await connection.query('DROP TABLE IF EXISTS employee_training');
+      await connection.query('DROP TABLE IF EXISTS document_types');
+      await connection.query('DROP TABLE IF EXISTS equipment_types');
+      await connection.query('DROP TABLE IF EXISTS training_types');
+      
+      // Keep other tables
       await connection.query('DROP TABLE IF EXISTS employees');
       await connection.query('DROP TABLE IF EXISTS interviews');
       await connection.query('DROP TABLE IF EXISTS feedback');

@@ -9,6 +9,7 @@ const authRoutes = require("./src/controllers/auth/routes/routes");
 const employeeRoutes = require("./src/controllers/employee/routes");
 const applicantRoutes = require("./src/controllers/applicant/routes");
 const userRoutes = require("./src/controllers/user/routes");
+const dashboardRoutes = require("./src/controllers/dashboard/routes");
 const applicationsRoutes = require("./src/routes/applications");
 const { validateToken, ensureVerified } = require("./src/utils/authMiddleware");
 
@@ -79,6 +80,7 @@ app.use(authRoutes);
 app.use(employeeRoutes);
 app.use(applicantRoutes);
 app.use(userRoutes);
+app.use(dashboardRoutes);
 app.use('/api/applications', applicationsRoutes);
 
 // Test database connection before starting server
