@@ -141,34 +141,6 @@ CREATE TABLE IF NOT EXISTS employees (
   FOREIGN KEY (applicant_id) REFERENCES applicants(id) ON DELETE SET NULL
 )`;
 
-const CREATE_ONBOARDING_CHECKLISTS_TABLE = `
-CREATE TABLE IF NOT EXISTS onboarding_checklists (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  employee_id INT NOT NULL,
-  title VARCHAR(100) NOT NULL,
-  description TEXT,
-  is_completed BOOLEAN DEFAULT FALSE,
-  completed_date DATE DEFAULT NULL,
-  due_date DATE,
-  priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
-)`;
-
-const CREATE_ONBOARDING_TEMPLATES_TABLE = `
-CREATE TABLE IF NOT EXISTS onboarding_templates (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  title VARCHAR(100) NOT NULL,
-  description TEXT,
-  priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
-  days_to_complete INT DEFAULT 7,
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)`;
-
 async function setupDatabase() {
   let connection;
   
@@ -205,37 +177,6 @@ async function setupDatabase() {
     console.log('- Creating employees table...');
     await connection.query(CREATE_EMPLOYEES_TABLE);
     
-    console.log('- Creating onboarding_checklists table...');
-    await connection.query(CREATE_ONBOARDING_CHECKLISTS_TABLE);
-    
-    console.log('- Creating onboarding_templates table...');
-    await connection.query(CREATE_ONBOARDING_TEMPLATES_TABLE);
-    
-    // Insert sample onboarding templates
-    console.log('- Checking if onboarding templates exist...');
-    const [templateCount] = await connection.query("SELECT COUNT(*) as count FROM onboarding_templates");
-    
-    if (templateCount[0].count === 0) {
-      console.log('- Inserting sample onboarding templates...');
-      
-      // Load and execute the SQL file
-      try {
-        const templatesPath = path.join(__dirname, 'sql', 'onboarding_checklist.sql');
-        const templatesSQL = await fs.readFile(templatesPath, 'utf8');
-        
-        // Extract just the INSERT statement from the SQL file
-        const insertStatement = templatesSQL.split('INSERT INTO onboarding_templates')[1];
-        if (insertStatement) {
-          await connection.query('INSERT INTO onboarding_templates ' + insertStatement);
-          console.log('  ✓ Sample templates inserted successfully!');
-        } else {
-          console.error('  ✗ Could not find INSERT statement in SQL file');
-        }
-      } catch (error) {
-        console.error('  ✗ Error inserting sample templates:', error.message);
-      }
-    }
-
     // List tables in database
     const [tables] = await connection.query(`SHOW TABLES FROM ${database}`);
     console.log('Tables in database:');

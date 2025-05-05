@@ -189,10 +189,10 @@ const Applicants = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
+    <>
       <ToastContainer position="top-right" autoClose={3000} />
       
-      <div className="p-6">
+      <div>
         {/* Header with search and add button */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold">Applicants</h1>
@@ -377,7 +377,7 @@ const Applicants = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

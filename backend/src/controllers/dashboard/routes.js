@@ -5,108 +5,45 @@ const db = require('../../configs/database');
 // Get dashboard statistics
 router.get("/api/dashboard", async (req, res) => {
   try {
+    // Get database connection
     const connection = await db.getConnection();
     
-    let totalApplicants = 0;
+    // Initialize counters
     let totalEmployees = 0;
-    let totalOnboarding = 0;
-    let recentApplicants = [];
+    let totalApplicants = 0;
+    let totalInterviews = 0;
+    let totalOnboarding = 0; // This will remain 0 since onboarding is removed
     
-    try {
-      // Get total applicants count
-      const [applicantsResult] = await connection.query(
-        "SELECT COUNT(*) as total FROM applicants"
-      );
-      totalApplicants = applicantsResult[0].total || 0;
-      console.log("Total applicants:", totalApplicants);
-      
-      // Get total employees count
-      const [employeesResult] = await connection.query(
-        "SELECT COUNT(*) as total FROM employees"
-      );
-      totalEmployees = employeesResult[0].total || 0;
-      console.log("Total employees:", totalEmployees);
-      
-      // Check if onboarding_checklists table exists
-      try {
-        const [checklistTableExists] = await connection.query(
-          "SHOW TABLES LIKE 'onboarding_checklists'"
-        );
-        
-        if (checklistTableExists.length > 0) {
-          // Get total onboarding count (employees with incomplete checklist items)
-          const [onboardingResult] = await connection.query(`
-            SELECT COUNT(DISTINCT employee_id) as total 
-            FROM onboarding_checklists 
-            WHERE is_completed = FALSE
-          `);
-          totalOnboarding = onboardingResult[0].total || 0;
-          console.log("Total onboarding:", totalOnboarding);
-        } else {
-          console.log("onboarding_checklists table does not exist");
-        }
-      } catch (err) {
-        console.error("Error checking onboarding:", err);
-      }
-      
-      // Get recent applicants (with field detection)
-      try {
-        // First check a single applicant to determine fields
-        const [sampleApplicant] = await connection.query("SELECT * FROM applicants LIMIT 1");
-        
-        if (sampleApplicant.length > 0) {
-          const applicant = sampleApplicant[0];
-          const fields = Object.keys(applicant);
-          console.log("Applicant fields:", fields);
-          
-          // Determine correct fields to use
-          const idField = fields.includes('id') ? 'id' : 'applicant_id';
-          const nameFields = [];
-          if (fields.includes('name')) nameFields.push('name');
-          else if (fields.includes('first_name') && fields.includes('last_name')) {
-            nameFields.push("CONCAT(first_name, ' ', last_name) AS name");
-          } else {
-            nameFields.push("'Unknown' AS name");
-          }
-          
-          const positionField = fields.includes('position') ? 'position' : "'Not specified' AS position";
-          const statusField = fields.includes('status') ? 'status' : "'Pending' AS status";
-          const dateField = fields.includes('applied_date') ? 'applied_date' : 
-                           (fields.includes('created_at') ? 'created_at' : 'NOW()');
-          
-          // Build query based on detected fields
-          const query = `
-            SELECT ${idField} AS id, ${nameFields.join(', ')}, ${positionField}, ${statusField}
-            FROM applicants
-            ORDER BY ${dateField} DESC
-            LIMIT 5
-          `;
-          
-          const [result] = await connection.query(query);
-          recentApplicants = result;
-          console.log("Recent applicants query:", query);
-          console.log("Recent applicants count:", recentApplicants.length);
-        }
-      } catch (err) {
-        console.error("Error getting recent applicants:", err);
-      }
-      
-    } catch (err) {
-      console.error("Error getting dashboard stats:", err);
-    }
+    // Get employee count
+    const [employeeResult] = await connection.query("SELECT COUNT(*) as total FROM employees");
+    totalEmployees = employeeResult[0].total || 0;
+    console.log("Total employees:", totalEmployees);
     
+    // Get applicant count
+    const [applicantResult] = await connection.query("SELECT COUNT(*) as total FROM applicants");
+    totalApplicants = applicantResult[0].total || 0;
+    console.log("Total applicants:", totalApplicants);
+    
+    // Get interview count
+    const [interviewResult] = await connection.query("SELECT COUNT(*) as total FROM interviews");
+    totalInterviews = interviewResult[0].total || 0;
+    console.log("Total interviews:", totalInterviews);
+    
+    // Onboarding count removed - set to 0
+    totalOnboarding = 0;
+    
+    // Release the connection
     connection.release();
     
-    // Return dashboard data
+    // Send response
     res.json({
-      totalApplicants,
       totalEmployees,
-      totalOnboarding,
-      recentApplicants
+      totalApplicants,
+      totalInterviews,
+      totalOnboarding
     });
-    
-  } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
+  } catch (err) {
+    console.error("Error fetching dashboard data:", err);
     res.status(500).json({ message: "Failed to fetch dashboard statistics" });
   }
 });

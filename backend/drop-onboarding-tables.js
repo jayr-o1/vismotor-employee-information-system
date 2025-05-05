@@ -1,49 +1,51 @@
 const mysql = require('mysql2/promise');
-const dbConfig = require('./src/configs/database');
+require('dotenv').config(); // Load environment variables
 
-async function dropTables() {
+// Parse command line arguments
+const args = process.argv.slice(2);
+const dbHost = args[0] || process.env.DB_HOST || 'localhost';
+const dbUser = args[1] || process.env.DB_USER || 'root';
+const dbPassword = args[2] || process.env.DB_PASSWORD || '';
+const dbName = args[3] || process.env.DB_NAME || 'vismotordb';
+
+console.log('Using the following database configuration:');
+console.log(`Host: ${dbHost}`);
+console.log(`User: ${dbUser}`);
+console.log(`Database: ${dbName}`);
+console.log('Password: [HIDDEN]');
+
+async function dropOnboardingTables() {
   let connection;
   
   try {
     console.log('Connecting to MySQL server...');
+    // Create connection using provided credentials
     connection = await mysql.createConnection({
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: 'vismotordb'
+      host: dbHost,
+      user: dbUser,
+      password: dbPassword,
+      database: dbName
     });
-    
     console.log('Connected to database successfully!');
+    
+    // Disable foreign key checks temporarily
     console.log('Disabling foreign key checks...');
     await connection.query('SET FOREIGN_KEY_CHECKS = 0');
     
-    // Drop the highlighted tables in the correct order to avoid dependency issues
-    console.log('Dropping tables...');
+    // Drop the onboarding tables
+    console.log('Dropping onboarding tables...');
     
-    // First drop tables that have foreign key references to other tables
-    console.log('- Dropping employee_documents table...');
-    await connection.query('DROP TABLE IF EXISTS employee_documents');
+    console.log('- Dropping onboarding_checklists table...');
+    await connection.query('DROP TABLE IF EXISTS onboarding_checklists');
     
-    console.log('- Dropping employee_equipment table...');
-    await connection.query('DROP TABLE IF EXISTS employee_equipment');
+    console.log('- Dropping onboarding_templates table...');
+    await connection.query('DROP TABLE IF EXISTS onboarding_templates');
     
-    console.log('- Dropping employee_training table...');
-    await connection.query('DROP TABLE IF EXISTS employee_training');
-    
-    // Then drop the reference tables
-    console.log('- Dropping document_types table...');
-    await connection.query('DROP TABLE IF EXISTS document_types');
-    
-    console.log('- Dropping equipment_types table...');
-    await connection.query('DROP TABLE IF EXISTS equipment_types');
-    
-    console.log('- Dropping training_types table...');
-    await connection.query('DROP TABLE IF EXISTS training_types');
-    
+    // Re-enable foreign key checks
     console.log('Re-enabling foreign key checks...');
     await connection.query('SET FOREIGN_KEY_CHECKS = 1');
     
-    // List remaining tables
+    // Show remaining tables
     console.log('\nRemaining tables in database:');
     const [tables] = await connection.query('SHOW TABLES');
     tables.forEach(table => {
@@ -51,10 +53,12 @@ async function dropTables() {
       console.log(`- ${tableName}`);
     });
     
-    console.log('\n✅ Tables dropped successfully!');
+    console.log('\n✅ Onboarding tables dropped successfully!');
     
   } catch (error) {
-    console.error('\n❌ Error dropping tables:', error);
+    console.error('\n❌ Error dropping onboarding tables:', error);
+    console.log('\nUsage: node drop-onboarding-tables.js [host] [user] [password] [database]');
+    console.log('Example: node drop-onboarding-tables.js localhost root mypassword vismotordb');
   } finally {
     if (connection) {
       console.log('Closing database connection...');
@@ -64,4 +68,4 @@ async function dropTables() {
 }
 
 // Execute the function
-dropTables(); 
+dropOnboardingTables(); 

@@ -8,8 +8,8 @@ const Layout = () => {
   const isDark = theme === 'dark';
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
-      <div className={`flex min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen ${isDark ? 'bg-[#1B2537]' : 'bg-gray-100'}`}>
+      <div className={`flex min-h-screen ${isDark ? 'bg-[#1B2537]' : 'bg-gray-100'}`}>
         {/* Fixed width sidebar - no longer collapsible */}
         <div className="sidebar-container fixed h-full z-50 w-64">
           {/* Pass fixed collapsed=false to Sidebar component */}
@@ -20,7 +20,7 @@ const Layout = () => {
         <div className="flex flex-col flex-1 ml-0 lg:ml-64 transition-all duration-300">
           {/* Main content area with adjusted padding */}
           <main className={`flex-1 p-4 sm:p-6 overflow-y-auto transition-colors duration-200 ${
-            isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'
+            isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-100 text-gray-800'
           }`}>
             <div className="container mx-auto px-0 sm:px-2">
               <Outlet />

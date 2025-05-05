@@ -94,26 +94,7 @@ const apiService = {
     updateStatus: (id, status) => api.put(`/api/employees/${id}`, { status }),
     delete: (id) => api.delete(`/api/employees/${id}`),
     
-    // Onboarding endpoints
-    getEquipmentTypes: () => api.get('/api/equipment-types'),
-    getDocumentTypes: () => api.get('/api/document-types'),
-    getTrainingTypes: () => api.get('/api/training-types'),
-    
-    // Employee onboarding data
-    getEquipment: (id) => api.get(`/api/employees/${id}/equipment`),
-    requestEquipment: (id, equipment) => api.post(`/api/employees/${id}/equipment`, { equipment }),
-    updateEquipment: (employeeId, equipmentId, data) => api.patch(`/api/employees/${employeeId}/equipment/${equipmentId}`, data),
-    
-    getDocuments: (id) => api.get(`/api/employees/${id}/documents`),
-    uploadDocuments: (id, documents) => api.post(`/api/employees/${id}/documents`, { documents }),
-    updateDocument: (employeeId, documentId, data) => api.patch(`/api/employees/${employeeId}/documents/${documentId}`, data),
-    
-    getTraining: (id) => api.get(`/api/employees/${id}/training`),
-    scheduleTraining: (id, training) => api.post(`/api/employees/${id}/training`, { training }),
-    updateTraining: (employeeId, trainingId, data) => api.patch(`/api/employees/${employeeId}/training/${trainingId}`, data),
-    
-    // Onboarding progress
-    getOnboardingProgress: (id) => api.get(`/api/employees/${id}/onboarding-progress`),
+    // Email functionality
     sendWelcomeEmail: (id) => api.post(`/api/employees/${id}/send-welcome-email`),
   },
   

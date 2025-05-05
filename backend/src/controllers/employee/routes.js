@@ -182,13 +182,12 @@ router.post("/api/employees", async (req, res) => {
       department,
       hire_date,
       salary,
-      mentor,
-      create_default_checklist
+      mentor
     } = req.body;
     
     // Validate required fields
     if (!applicant_id || !position || !department || !hire_date) {
-      return res.status(400).json({ message: "All required onboarding details must be provided" });
+      return res.status(400).json({ message: "All required employee details must be provided" });
     }
     
     const connection = await db.getConnection();
@@ -220,52 +219,6 @@ router.post("/api/employees", async (req, res) => {
       [applicant_id]
     );
     
-    // Create default onboarding checklist if requested
-    if (create_default_checklist !== false) {
-      try {
-        // Get active templates
-        const [templates] = await connection.query(
-          "SELECT * FROM onboarding_templates WHERE is_active = TRUE ORDER BY priority"
-        );
-        
-        // Calculate due dates and create checklist items
-        if (templates.length > 0) {
-          const hireDate = new Date(hire_date);
-          const values = [];
-          const placeholders = [];
-          
-          for (const template of templates) {
-            // Calculate due date based on hire date and days_to_complete
-            const dueDate = new Date(hireDate);
-            dueDate.setDate(dueDate.getDate() + template.days_to_complete);
-            
-            placeholders.push("(?, ?, ?, ?, ?)");
-            values.push(
-              employeeId,
-              template.title,
-              template.description,
-              dueDate.toISOString().split('T')[0],
-              template.priority
-            );
-          }
-          
-          if (placeholders.length > 0) {
-            const insertQuery = `
-              INSERT INTO onboarding_checklists 
-              (employee_id, title, description, due_date, priority)
-              VALUES ${placeholders.join(", ")}
-            `;
-            
-            await connection.query(insertQuery, values);
-            console.log(`Created ${placeholders.length} checklist items for employee ${employeeId}`);
-          }
-        }
-      } catch (checklistError) {
-        console.error("Error creating default checklist:", checklistError);
-        // Continue even if checklist creation fails
-      }
-    }
-    
     // Send welcome email to the newly hired employee
     try {
       const { sendWelcomeEmail } = require('../../services/emailService');
@@ -288,319 +241,11 @@ router.post("/api/employees", async (req, res) => {
     
     res.status(201).json({ 
       id: employeeId,
-      message: "Employee onboarded successfully" 
+      message: "Employee created successfully" 
     });
   } catch (error) {
-    console.error("Error onboarding employee:", error);
-    res.status(500).json({ message: "Failed to onboard employee" });
-  }
-});
-
-// Get all onboarding templates
-router.get("/api/onboarding/templates", async (req, res) => {
-  try {
-    const connection = await db.getConnection();
-    const [templates] = await connection.query(
-      "SELECT * FROM onboarding_templates WHERE is_active = TRUE ORDER BY category, priority"
-    );
-    connection.release();
-    
-    res.json(templates);
-  } catch (error) {
-    console.error("Error fetching onboarding templates:", error);
-    res.status(500).json({ message: "Failed to fetch onboarding templates" });
-  }
-});
-
-// Get onboarding checklist for employee
-router.get("/api/employees/:id/onboarding-checklist", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const connection = await db.getConnection();
-    
-    // Check if employee exists
-    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
-    
-    if (employees.length === 0) {
-      connection.release();
-      return res.status(404).json({ message: "Employee not found" });
-    }
-    
-    // Get checklist items
-    const [checklist] = await connection.query(
-      "SELECT * FROM onboarding_checklists WHERE employee_id = ? ORDER BY priority, due_date",
-      [id]
-    );
-    
-    // Calculate progress statistics
-    const totalItems = checklist.length;
-    const completedItems = checklist.filter(item => item.is_completed).length;
-    const progress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
-    
-    connection.release();
-    
-    res.json({
-      employee: employees[0],
-      checklist: checklist,
-      stats: {
-        totalItems,
-        completedItems,
-        progress
-      }
-    });
-  } catch (error) {
-    console.error("Error fetching onboarding checklist:", error);
-    res.status(500).json({ message: "Failed to fetch onboarding checklist" });
-  }
-});
-
-// Add checklist item to employee
-router.post("/api/employees/:id/onboarding-checklist", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { 
-      title,
-      description,
-      due_date,
-      priority,
-      notes
-    } = req.body;
-    
-    // Validate required fields
-    if (!title) {
-      return res.status(400).json({ message: "Title is required" });
-    }
-    
-    const connection = await db.getConnection();
-    
-    // Check if employee exists
-    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
-    
-    if (employees.length === 0) {
-      connection.release();
-      return res.status(404).json({ message: "Employee not found" });
-    }
-    
-    // Add checklist item
-    const [result] = await connection.query(`
-      INSERT INTO onboarding_checklists
-      (employee_id, title, description, due_date, priority, notes)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [
-      id,
-      title,
-      description || null,
-      due_date || null,
-      priority || 'Medium',
-      notes || null
-    ]);
-    
-    connection.release();
-    
-    res.status(201).json({ 
-      id: result.insertId,
-      message: "Checklist item added successfully" 
-    });
-  } catch (error) {
-    console.error("Error adding checklist item:", error);
-    res.status(500).json({ message: "Failed to add checklist item" });
-  }
-});
-
-// Update checklist item
-router.put("/api/onboarding-checklist/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { 
-      title,
-      description,
-      is_completed,
-      completed_date,
-      due_date,
-      category,
-      priority,
-      assigned_to,
-      notes
-    } = req.body;
-    
-    const connection = await db.getConnection();
-    
-    // Check if checklist item exists
-    const [items] = await connection.query("SELECT * FROM onboarding_checklists WHERE id = ?", [id]);
-    
-    if (items.length === 0) {
-      connection.release();
-      return res.status(404).json({ message: "Checklist item not found" });
-    }
-    
-    const existingItem = items[0];
-    
-    // Auto-fill completed_date if item is being marked as completed
-    let completedDateValue = completed_date;
-    if (is_completed && !completed_date && !existingItem.is_completed) {
-      completedDateValue = new Date().toISOString().split('T')[0]; // Today's date
-    }
-    
-    // Update checklist item
-    await connection.query(`
-      UPDATE onboarding_checklists SET
-        title = ?,
-        description = ?,
-        is_completed = ?,
-        completed_date = ?,
-        due_date = ?,
-        category = ?,
-        priority = ?,
-        assigned_to = ?,
-        notes = ?
-      WHERE id = ?
-    `, [
-      title || existingItem.title,
-      description !== undefined ? description : existingItem.description,
-      is_completed !== undefined ? is_completed : existingItem.is_completed,
-      completedDateValue !== undefined ? completedDateValue : existingItem.completed_date,
-      due_date !== undefined ? due_date : existingItem.due_date,
-      category || existingItem.category,
-      priority || existingItem.priority,
-      assigned_to !== undefined ? assigned_to : existingItem.assigned_to,
-      notes !== undefined ? notes : existingItem.notes,
-      id
-    ]);
-    
-    connection.release();
-    
-    res.json({ message: "Checklist item updated successfully" });
-  } catch (error) {
-    console.error("Error updating checklist item:", error);
-    res.status(500).json({ message: "Failed to update checklist item" });
-  }
-});
-
-// Mark checklist item as completed
-router.patch("/api/onboarding-checklist/:id/complete", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { notes } = req.body;
-    
-    const connection = await db.getConnection();
-    
-    // Check if checklist item exists
-    const [items] = await connection.query("SELECT * FROM onboarding_checklists WHERE id = ?", [id]);
-    
-    if (items.length === 0) {
-      connection.release();
-      return res.status(404).json({ message: "Checklist item not found" });
-    }
-    
-    // Update completion status and date
-    const today = new Date().toISOString().split('T')[0];
-    const query = notes 
-      ? "UPDATE onboarding_checklists SET is_completed = TRUE, completed_date = ?, notes = ? WHERE id = ?"
-      : "UPDATE onboarding_checklists SET is_completed = TRUE, completed_date = ? WHERE id = ?";
-    
-    const params = notes 
-      ? [today, notes, id]
-      : [today, id];
-    
-    await connection.query(query, params);
-    
-    connection.release();
-    
-    res.json({ message: "Checklist item marked as completed" });
-  } catch (error) {
-    console.error("Error completing checklist item:", error);
-    res.status(500).json({ message: "Failed to complete checklist item" });
-  }
-});
-
-// Delete checklist item
-router.delete("/api/onboarding-checklist/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const connection = await db.getConnection();
-    
-    // Check if checklist item exists
-    const [items] = await connection.query("SELECT * FROM onboarding_checklists WHERE id = ?", [id]);
-    
-    if (items.length === 0) {
-      connection.release();
-      return res.status(404).json({ message: "Checklist item not found" });
-    }
-    
-    // Delete checklist item
-    await connection.query("DELETE FROM onboarding_checklists WHERE id = ?", [id]);
-    
-    connection.release();
-    
-    res.json({ message: "Checklist item deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting checklist item:", error);
-    res.status(500).json({ message: "Failed to delete checklist item" });
-  }
-});
-
-// Get onboarding progress summary
-router.get("/api/employees/:id/onboarding-progress", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const connection = await db.getConnection();
-    
-    // Check if employee exists
-    const [employees] = await connection.query("SELECT * FROM employees WHERE id = ?", [id]);
-    
-    if (employees.length === 0) {
-      connection.release();
-      return res.status(404).json({ message: "Employee not found" });
-    }
-    
-    // Get checklist stats
-    const [stats] = await connection.query(`
-      SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN is_completed = TRUE THEN 1 ELSE 0 END) as completed,
-        SUM(CASE WHEN due_date < CURRENT_DATE() AND is_completed = FALSE THEN 1 ELSE 0 END) as overdue
-      FROM onboarding_checklists
-      WHERE employee_id = ?
-    `, [id]);
-    
-    const data = stats[0];
-    
-    // Get recently completed items
-    const [recentCompletions] = await connection.query(`
-      SELECT * FROM onboarding_checklists
-      WHERE employee_id = ? AND is_completed = TRUE
-      ORDER BY completed_date DESC, updated_at DESC
-      LIMIT 5
-    `, [id]);
-    
-    // Get upcoming items
-    const [upcomingItems] = await connection.query(`
-      SELECT * FROM onboarding_checklists
-      WHERE employee_id = ? AND is_completed = FALSE
-      ORDER BY due_date ASC
-      LIMIT 5
-    `, [id]);
-    
-    connection.release();
-    
-    const totalItems = data.total || 0;
-    const completedItems = data.completed || 0;
-    const progress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
-    
-    res.json({
-      stats: {
-        totalItems,
-        completedItems,
-        progress,
-        overdue: data.overdue || 0
-      },
-      recentCompletions,
-      upcomingItems
-    });
-  } catch (error) {
-    console.error("Error fetching onboarding progress:", error);
-    res.status(500).json({ message: "Failed to fetch onboarding progress" });
+    console.error("Error creating employee:", error);
+    res.status(500).json({ message: "Failed to create employee" });
   }
 });
 
@@ -636,19 +281,12 @@ router.get("/api/employees/:id/export", async (req, res) => {
       }
     }
     
-    // Get onboarding checklist
-    const [checklist] = await connection.query(
-      "SELECT * FROM onboarding_checklists WHERE employee_id = ? ORDER BY category, due_date", 
-      [id]
-    );
-    
     connection.release();
     
     // Prepare the export data
     const exportData = {
       employee: employee,
       applicant: applicant,
-      onboarding_checklist: checklist,
       generated_at: new Date().toISOString()
     };
     

@@ -26,6 +26,7 @@ const NotFound = lazy(() => import("./components/NotFound"));
 const ApplicantQRProfile = lazy(() => import("./pages/ApplicantQRProfile"));
 const EmployeeQRProfile = lazy(() => import("./pages/EmployeeQRProfile"));
 const ApplicationForm = lazy(() => import("./forms/ApplicationForm"));
+const OnboardingDetails = lazy(() => import("./pages/OnboardingDetails"));
 
 function App() {
   const { isDarkMode } = useContext(ThemeContext);

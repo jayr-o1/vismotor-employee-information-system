@@ -1,9 +1,9 @@
 import React, { useContext } from "react";
 import { NavLink } from "react-router-dom";
-import logo from "../../assets/vismotor-corporation.png";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../../ThemeContext";
+import sidebarBanner from "../../assets/images.png";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -37,22 +37,17 @@ const Sidebar = () => {
     <div className={`flex flex-col min-h-screen border-r-2 fixed z-50 w-64 ${
       isDark ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-200 bg-gray-50 text-black'
     } transition-colors duration-200`}>
-      {/* Profile Picture */}
-      <div className="flex flex-col items-center pt-6 pb-4 space-y-3 px-3">
-        <img
-          className="rounded-full shadow-lg w-24 h-24"
-          src={logo}
-          alt="Profile"
+      {/* Banner Image */}
+      <div className="w-full">
+        <img 
+          src={sidebarBanner} 
+          alt="Vismotor" 
+          className="w-full object-cover"
         />
-        <span className={`text-lg font-semibold px-3 py-1 rounded-md ${
-          isDark ? 'bg-gray-700' : 'bg-gray-50'
-        }`}>
-          HR Department
-        </span>
       </div>
-
+      
       {/* Navigation */}
-      <nav className={`flex-1 px-4 mt-3 overflow-y-auto ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      <nav className={`flex-1 px-4 mt-4 overflow-y-auto ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <ul className="w-full flex flex-col">
           {/* Home */}
           <li className="my-1">
