@@ -82,6 +82,12 @@ const EmployeeDetails = () => {
     }
   };
 
+  // Function to get profile picture URL
+  const getProfilePictureUrl = (filename) => {
+    if (!filename) return defaultAvatar;
+    return `http://10.10.1.71:5000/uploads/profile-pictures/${filename}`;
+  };
+
   return (
     <div className={`min-h-screen ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'} p-4`}>
       <ToastContainer position="top-right" autoClose={3000} />
@@ -147,9 +153,13 @@ const EmployeeDetails = () => {
                     {/* Profile Picture */}
                     <div className="w-32 h-32 mb-4 sm:mb-0 sm:mr-6 flex-shrink-0">
                       <img 
-                        src={employee.profilePicture || defaultAvatar} 
+                        src={getProfilePictureUrl(employee.profile_picture)} 
                         alt={employee.name} 
                         className="w-full h-full object-cover rounded-full border-4 border-green-500"
+                        onError={(e) => {
+                          console.log("Image failed to load, using default avatar");
+                          e.target.src = defaultAvatar;
+                        }}
                       />
                     </div>
                     

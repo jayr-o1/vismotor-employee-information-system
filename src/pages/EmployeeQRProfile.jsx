@@ -9,6 +9,12 @@ const EmployeeQRProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Function to get profile picture URL
+  const getProfilePictureUrl = (filename) => {
+    if (!filename) return defaultAvatar;
+    return `http://10.10.1.71:5000/uploads/profile-pictures/${filename}`;
+  };
+
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
@@ -62,9 +68,13 @@ const EmployeeQRProfile = () => {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-100 to-green-300">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border-t-8 border-green-600">
         <img
-          src={employee.avatar || defaultAvatar}
-          alt="Employee Avatar"
+          src={getProfilePictureUrl(employee.profile_picture)}
+          alt={employee.name}
           className="w-32 h-32 rounded-full mx-auto shadow-lg border-4 border-green-200 object-cover mb-4"
+          onError={(e) => {
+            console.log("Image failed to load in QR profile, using default avatar");
+            e.target.src = defaultAvatar;
+          }}
         />
         <h1 className="text-3xl font-bold text-green-800 mb-1">{employee.name}</h1>
         <p className="text-lg text-gray-600 mb-2">{employee.position}</p>

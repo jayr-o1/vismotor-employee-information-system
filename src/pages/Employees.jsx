@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
 
 const Employees = () => {
   const { theme } = useContext(ThemeContext);
@@ -21,6 +22,8 @@ const Employees = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
   const [error, setError] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     department: "",
@@ -121,21 +124,123 @@ const Employees = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handle file selection for profile picture
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      console.log("Selected file:", file.name, "type:", file.type, "size:", file.size);
+      setSelectedFile(file);
+    }
+  };
+
   // Update employee
-  const handleUpdateEmployee = async () => {
+  const handleUpdateEmployee = async (e) => {
+    e.preventDefault();
+    setUploading(true);
+    setError("");
+
     try {
-      await apiService.employees.update(currentEmployee.id, formData);
+      const userId = currentEmployee.id;
+
+      if (!userId) {
+        throw new Error('Employee ID is required');
+      }
+
+      // Create employee data object with only necessary fields
+      const updatedEmployee = {
+        id: userId,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || '',
+        position: formData.position,
+        department: formData.department,
+        status: formData.status
+      };
+
+      // Only include these fields if they exist in the current employee
+      if (currentEmployee.hire_date) {
+        // Format the date as YYYY-MM-DD for MySQL
+        if (typeof currentEmployee.hire_date === 'string' && currentEmployee.hire_date.includes('T')) {
+          // If it's an ISO string, extract just the date part
+          updatedEmployee.hire_date = currentEmployee.hire_date.split('T')[0];
+        } else {
+          updatedEmployee.hire_date = currentEmployee.hire_date;
+        }
+      }
       
-      // Update the local state
-      setEmployees(employees.map(emp => 
-        emp.id === currentEmployee.id ? { ...emp, ...formData } : emp
-      ));
+      if (currentEmployee.salary) {
+        updatedEmployee.salary = currentEmployee.salary;
+      }
+
+      // Keep existing profile picture if no new one is selected
+      if (currentEmployee.profile_picture) {
+        updatedEmployee.profile_picture = currentEmployee.profile_picture;
+      }
+
+      // Split the process: first update employee data
+      console.log("Sending update with data:", JSON.stringify(updatedEmployee));
       
+      // Use direct axios call to better handle the error
+      const updateResponse = await axios.put(
+        `http://10.10.1.71:5000/api/employees/${userId}`,
+        updatedEmployee,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      console.log("Employee update successful, response:", updateResponse.data);
+
+      // Then, upload profile picture if selected (as a separate operation)
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('profilePicture', selectedFile);
+        
+        // Log form data contents for debugging
+        console.log("Uploading file:", selectedFile.name, "type:", selectedFile.type, "size:", selectedFile.size);
+        
+        try {
+          console.log("Starting profile picture upload for employee ID:", userId);
+          const uploadResponse = await axios.post(
+            `http://10.10.1.71:5000/api/employees/${userId}/profile-picture`,
+            formData,
+            { 
+              headers: { 
+                'Content-Type': 'multipart/form-data'
+              }
+            }
+          );
+          console.log("Upload response:", uploadResponse.data);
+          
+          // Update the employee object with the new profile picture URL
+          updatedEmployee.profile_picture = uploadResponse.data.profile_picture;
+          
+          // Force a refresh of the employee in the state
+          setEmployees(prev => prev.map(emp => 
+            emp.id === userId 
+              ? {...emp, profile_picture: uploadResponse.data.profile_picture} 
+              : emp
+          ));
+          
+          toast.success('Profile picture uploaded successfully');
+        } catch (uploadError) {
+          console.error('Error uploading profile picture:', uploadError);
+          console.error('Error details:', uploadError.response?.data || uploadError.message);
+          toast.error(`Failed to upload profile picture: ${uploadError.response?.data?.message || uploadError.message}`);
+          // Continue even if profile picture upload fails
+        }
+      }
+
+      // Update employees state with the updated data
+      setEmployees(employees.map(emp => emp.id === userId ? {...emp, ...updatedEmployee} : emp));
       setEditModalOpen(false);
-      toast.success("Employee updated successfully!");
-    } catch (error) {
-      console.error("Error updating employee:", error);
-      toast.error(error.response?.data?.message || error.message || "Failed to update employee. Please try again.");
+      setSelectedFile(null);
+      toast.success('Employee updated successfully');
+    } catch (err) {
+      console.error('Error updating employee:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to update employee';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -431,6 +536,27 @@ const Employees = () => {
                   <option value="Inactive">Inactive</option>
                   <option value="On Leave">On Leave</option>
                 </select>
+              </div>
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  Attach profile image (optional)
+                </label>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="w-full text-sm"
+                />
+                {selectedFile && (
+                  <p className={`mt-1 text-xs ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                    Selected file: {selectedFile.name}
+                  </p>
+                )}
+                {uploading && (
+                  <p className={`mt-1 text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                    Uploading...
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex justify-end space-x-2 mt-6">

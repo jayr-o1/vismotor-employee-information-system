@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(100) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  role ENUM('admin', 'manager', 'user') DEFAULT 'user',
+  role ENUM('it_admin', 'hr_admin', 'hr_staff') DEFAULT 'hr_staff',
   is_verified BOOLEAN DEFAULT FALSE,
   verification_token VARCHAR(100),
   reset_token VARCHAR(100),

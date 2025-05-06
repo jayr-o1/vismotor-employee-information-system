@@ -24,6 +24,16 @@ if (!fs.existsSync(uploadsDir)) {
   console.log('Created uploads directory at:', uploadsDir);
 }
 
+// Create profile-pictures directory
+const profilePicsDir = path.join(uploadsDir, 'profile-pictures');
+if (!fs.existsSync(profilePicsDir)) {
+  fs.mkdirSync(profilePicsDir, { recursive: true });
+  console.log('Created profile-pictures directory at:', profilePicsDir);
+}
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Allow requests from the frontend and network
 app.use(cors({
   origin: [
@@ -38,7 +48,11 @@ app.use(express.json());
 
 // Authentication middleware that excludes auth endpoints
 app.use((req, res, next) => {
-  // Skip auth for public endpoints
+  // Skip auth for public endpoints and static file requests
+  if (req.path.startsWith('/uploads')) {
+    return next();
+  }
+  
   const publicPaths = [
     '/api/login',
     '/api/signup',
@@ -50,6 +64,7 @@ app.use((req, res, next) => {
     '/api/applications/upload',
     '/api/applications/submit',
     '/api/applicants/download',
+    '/api/profile-pictures',
     '/api/employees', // This will match /api/employees/:id/public-profile
     '/api/applicants', // This will match /api/applicants/:id/public-profile
   ];

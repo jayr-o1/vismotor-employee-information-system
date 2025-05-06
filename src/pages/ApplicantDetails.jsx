@@ -107,53 +107,37 @@ const ApplicantDetails = () => {
 
   const handleSubmitFeedback = async () => {
     if (!feedbackData.text.trim()) {
-      toast.error("Please enter feedback text");
-      return;
-    }
-
-    if (feedbackData.rating === 0) {
-      toast.error("Please provide a rating");
+      toast.error("Please enter note text");
       return;
     }
 
     try {
       const feedbackPayload = {
-        applicant_id: applicant.id,
-        ...feedbackData,
+        feedback_text: feedbackData.text,
         created_by: "Current User" // This should come from auth context
       };
 
-      await apiService.applicants.addNote(feedbackPayload);
+      await apiService.applicants.addFeedback(applicant.id, feedbackPayload);
       
-      // Update applicant status based on recommendation
-      if (feedbackData.recommendation === "Hire") {
-        await apiService.applicants.updateStatus(applicant.id, "Reviewed");
+      // Refresh notes
+      try {
+        const notesResponse = await apiService.applicants.getFeedback(applicant.id);
+        setNotes(notesResponse.data || []);
+      } catch (notesError) {
+        console.error("Error refreshing notes:", notesError);
       }
       
-      // Refresh notes and applicant data
-      const [notesResponse, applicantResponse] = await Promise.all([
-        apiService.applicants.getNotes(applicant.id),
-        apiService.applicants.getById(applicant.id)
-      ]);
+      toast.success("Note added successfully!");
       
-      setNotes(notesResponse.data || []);
-      setApplicant(applicantResponse.data);
-      
-      toast.success("Feedback submitted successfully!");
-      
+      // Reset feedback data and close modal
       setFeedbackData({
-        text: "",
-        rating: 0,
-        category: "Technical",
-        strengths: "",
-        areas_for_improvement: "",
-        recommendation: "Hire"
+        text: ""
       });
       setFeedbackModalOpen(false);
       
     } catch (error) {
       console.error("Error submitting feedback:", error);
-      toast.error(error.response?.data?.message || "Failed to submit feedback");
+      toast.error(error.response?.data?.message || "Failed to submit note");
     }
   };
 
@@ -182,22 +166,69 @@ const ApplicantDetails = () => {
       return;
     }
     
-    // Mark the applicant as "Accepted"
+    // Create the employee record
     try {
       setLoading(true);
       
-      // Update applicant status
-      await apiService.applicants.updateStatus(applicant.id, "Accepted");
+      // Initialize onboardData with the applicant's information
+      const position = applicant.position || "";
+      const department = applicant.branch_department || "";
+      const salary = applicant.desired_pay || "0";
+      const startDate = new Date().toISOString().split('T')[0]; // Today's date
       
-      // Update local state
-      setApplicant(prev => ({ ...prev, status: "Accepted" }));
+      // Format the employee data - no validation needed since we're providing default values
+      const employeeData = {
+        applicant_id: applicant.id,
+        position: position,
+        department: department,
+        hire_date: startDate,
+        salary: salary,
+        mentor: ""
+      };
       
-      // Redirect to the onboarding page with the applicant ID
-      navigate(`/onboarding?applicant_id=${applicant.id}`);
+      // Create the employee
+      const response = await apiService.employees.create(employeeData);
       
+      // If successful, save the equipment, documents, and training data
+      if (response.data && response.data.id) {
+        const employeeId = response.data.id;
+        
+        // Save equipment if any
+        if (onboardData.equipment.length > 0) {
+          try {
+            await apiService.employees.saveEquipment(employeeId, onboardData.equipment);
+          } catch (equipmentError) {
+            console.error("Error saving equipment:", equipmentError);
+          }
+        }
+        
+        // Save documents if any
+        if (onboardData.documents.length > 0) {
+          try {
+            await apiService.employees.saveDocuments(employeeId, onboardData.documents);
+          } catch (documentsError) {
+            console.error("Error saving documents:", documentsError);
+          }
+        }
+        
+        // Save training schedule if any
+        if (onboardData.trainingSchedule.length > 0) {
+          try {
+            await apiService.employees.saveTraining(employeeId, onboardData.trainingSchedule);
+          } catch (trainingError) {
+            console.error("Error saving training schedule:", trainingError);
+          }
+        }
+        
+        // Show success message
+        toast.success("Applicant successfully onboarded as an employee");
+        
+        // Navigate to the new employee's onboarding detail page
+        navigate(`/onboarding/${employeeId}`);
+      }
     } catch (error) {
-      console.error("Error updating applicant status:", error);
-      toast.error(error.response?.data?.message || "Failed to update applicant status");
+      console.error("Error onboarding applicant:", error);
+      toast.error(error.response?.data?.message || "Failed to onboard applicant");
     } finally {
       setLoading(false);
     }
@@ -207,12 +238,45 @@ const ApplicantDetails = () => {
     if (!applicant) return;
     
     try {
+      // Get user confirmation before rejecting
+      const result = await Swal.fire({
+        title: 'Reject Applicant',
+        html: `Are you sure you want to reject <strong>${applicant.first_name} ${applicant.last_name}</strong>?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, Reject',
+        cancelButtonText: 'Cancel'
+      });
+      
+      if (!result.isConfirmed) {
+        return;
+      }
+    
+      // Use the PATCH method to update status
       await apiService.applicants.updateStatus(applicant.id, "Rejected");
+      
+      // Try to add a note about the rejection
+      try {
+        const feedbackPayload = {
+          feedback_text: `Applicant was rejected on ${new Date().toLocaleDateString()}.`,
+          created_by: "Current User"
+        };
+        
+        await apiService.applicants.addFeedback(applicant.id, feedbackPayload);
+      } catch (error) {
+        console.log("Could not add rejection note", error);
+        // Non-critical error, we can continue
+      }
       
       toast.success("Applicant marked as rejected");
       
       // Update local state
       setApplicant(prev => ({ ...prev, status: "Rejected" }));
+      
+      // Refresh the applicant data
+      fetchApplicantDetails();
       
     } catch (error) {
       console.error("Error rejecting applicant:", error);
@@ -221,26 +285,23 @@ const ApplicantDetails = () => {
   };
 
   // Handle hiring directly from interview history
-  const handleHireFromInterview = (interview) => {
+  const handleHireFromInterview = async (interview) => {
     if (!applicant) return;
     
-    // Mark the applicant as interviewed if not already
-    if (applicant.status !== "Interviewed" && applicant.status !== "Reviewed") {
-      apiService.applicants.updateStatus(applicant.id, "Interviewed")
-        .then(() => {
-          // Update local state
-          setApplicant(prev => ({ ...prev, status: "Interviewed" }));
-          
-          // Directly call handleOnboardApplicant
-          handleOnboardApplicant();
-        })
-        .catch(error => {
-          console.error("Error updating applicant status:", error);
-          toast.error(error.response?.data?.message || "Failed to update applicant status");
-        });
-    } else {
-      // Directly call handleOnboardApplicant
+    try {
+      // Mark the applicant as interviewed if not already
+      if (applicant.status !== "Interviewed" && applicant.status !== "Reviewed") {
+        await apiService.applicants.updateStatus(applicant.id, "Interviewed");
+        
+        // Update local state
+        setApplicant(prev => ({ ...prev, status: "Interviewed" }));
+      }
+      
+      // Now proceed with the onboarding process
       handleOnboardApplicant();
+    } catch (error) {
+      console.error("Error updating applicant status:", error);
+      toast.error(error.response?.data?.message || "Failed to update applicant status");
     }
   };
 
@@ -260,15 +321,30 @@ const ApplicantDetails = () => {
       setApplicant(prev => ({ 
         ...prev, 
         interviews: updatedInterviews,
-        status: "Interviewed"
+        status: "Interviewed" // The backend updates this automatically
       }));
+      
+      // Refresh the applicant data to ensure it's consistent with the database
+      try {
+        const applicantResponse = await apiService.applicants.getById(applicant.id);
+        if (applicantResponse.data) {
+          setApplicant(prev => ({
+            ...prev,
+            ...applicantResponse.data,
+            interviews: updatedInterviews // Keep our updated interviews
+          }));
+        }
+      } catch (refreshError) {
+        console.log("Could not refresh applicant data", refreshError);
+        // Non-critical error, we can continue
+      }
       
       toast.success("Interview marked as completed");
       
       // Ask if the user wants to proceed with hiring
       const result = await Swal.fire({
         title: 'Interview Completed',
-        html: `The interview with <strong>${applicant.name}</strong> is now marked as completed. Would you like to proceed with the hiring process?`,
+        html: `The interview with <strong>${applicant.first_name} ${applicant.last_name}</strong> is now marked as completed. Would you like to proceed with the hiring process?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#10B981',
@@ -295,21 +371,22 @@ const ApplicantDetails = () => {
     }
     
     try {
-      // Schedule the interview using the correct endpoint
-      await apiService.interviews.schedule(applicant.id, {
+      // Schedule the interview using the correct endpoint (directly using applicants endpoint)
+      await apiService.applicants.scheduleInterview(applicant.id, {
         interview_date: interviewData.date,
         interview_time: interviewData.time,
         location: interviewData.location,
         interviewer: interviewData.interviewer
       });
       
-      // Update applicant status
-      await apiService.applicants.updateStatus(applicant.id, "Interview Scheduled");
+      // The backend automatically updates the status when scheduling an interview,
+      // so we don't need this call anymore:
+      // await apiService.applicants.updateStatus(applicant.id, "Interview Scheduled");
       
       // Update local state
       setApplicant(prev => ({ 
         ...prev, 
-        status: "Interview Scheduled", 
+        status: "Scheduled", // Match the backend status value
         interview_scheduled: true 
       }));
       
@@ -334,6 +411,17 @@ const ApplicantDetails = () => {
         // Non-critical error, we can continue
       }
       
+      // Refresh interviews list
+      try {
+        const interviewsResponse = await apiService.applicants.getInterviews(applicant.id);
+        setApplicant(prev => ({
+          ...prev,
+          interviews: interviewsResponse.data || []
+        }));
+      } catch (error) {
+        console.log("Could not refresh interviews", error);
+      }
+      
       // Reset interview data
       setInterviewData({
         date: "",
@@ -346,7 +434,7 @@ const ApplicantDetails = () => {
       toast.success("Interview scheduled successfully");
     } catch (error) {
       console.error("Error scheduling interview:", error);
-      toast.error(error.message || "Failed to schedule interview. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to schedule interview. Please try again.");
     }
   };
 

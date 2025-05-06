@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../../../configs/database');
+const bcrypt = require('bcryptjs');
 
 // Import controllers
 const signup = require('../signupController');
@@ -63,6 +64,55 @@ router.post('/api/resend-verification', async (req, res) => {
   } catch (error) {
     console.error('Error resending verification email:', error);
     return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Admin route to create users (new endpoint)
+router.post('/api/admin/create-user', async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    
+    // Validate required fields
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: 'Name, email, password, and role are required' });
+    }
+    
+    // Validate role is one of the allowed values
+    const allowedRoles = ['it_admin', 'hr_admin', 'hr_staff'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ message: 'Invalid role specified' });
+    }
+    
+    const connection = await db.getConnection();
+    
+    try {
+      // Check if email already exists
+      const [existingUsers] = await connection.query('SELECT * FROM users WHERE email = ?', [email]);
+      
+      if (existingUsers.length > 0) {
+        return res.status(400).json({ message: 'Email already registered' });
+      }
+      
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      
+      // Insert new user - already verified since created by admin
+      const [result] = await connection.query(
+        'INSERT INTO users (name, email, password, role, is_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+        [name, email, hashedPassword, role, true]
+      );
+      
+      res.status(201).json({
+        message: 'User created successfully',
+        userId: result.insertId
+      });
+    } finally {
+      if (connection) connection.release();
+    }
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ message: 'Failed to create user' });
   }
 });
 

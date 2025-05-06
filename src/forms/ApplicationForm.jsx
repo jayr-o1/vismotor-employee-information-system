@@ -268,16 +268,22 @@ function ApplicationForm() {
         formDataFiles.append('houseSketchFile', formData.houseSketchFile);
       }
       
-      // Use apiService to upload files instead of direct fetch
-      const fileUploadResponse = await apiService.applicants.uploadFiles(formDataFiles);
-      const uploadResult = fileUploadResponse.data;
-      console.log('Files uploaded:', uploadResult);
+      // Use apiService to upload files with better error handling
+      let uploadResult = {};
+      try {
+        const fileUploadResponse = await apiService.applicants.uploadFiles(formDataFiles);
+        uploadResult = fileUploadResponse.data;
+        console.log('Files uploaded:', uploadResult);
+      } catch (uploadError) {
+        console.error("Error uploading files:", uploadError);
+        throw new Error(uploadError.response?.data?.message || "Failed to upload files. Please try again.");
+      }
       
       // Prepare data for submission with file references
       const applicationData = {
         ...formData,
-        resumeFile: uploadResult.files.resumeFile || null,
-        houseSketchFile: uploadResult.files.houseSketchFile || null
+        resumeFile: uploadResult.files?.resumeFile || null,
+        houseSketchFile: uploadResult.files?.houseSketchFile || null
       };
       
       // Use API_URL from environment to construct the full URL for the API call

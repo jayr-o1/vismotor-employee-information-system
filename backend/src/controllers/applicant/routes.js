@@ -3,6 +3,59 @@ const router = express.Router();
 const db = require("../../configs/database");
 const path = require("path");
 const fs = require("fs");
+const multer = require("multer");
+
+// Configure file storage for uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    try {
+      const uploadDir = path.join(__dirname, "../../../uploads");
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    } catch (error) {
+      console.error("Error setting upload destination:", error);
+      cb(error);
+    }
+  },
+  filename: function (req, file, cb) {
+    try {
+      // Generate unique filename
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+    } catch (error) {
+      console.error("Error generating filename:", error);
+      cb(error);
+    }
+  },
+});
+
+// Configure multer for file uploads
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    // Check allowed file types
+    const allowedMimeTypes = [
+      'application/pdf', 
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/png'
+    ];
+    
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type not allowed. Allowed types: PDF, DOC, DOCX, JPG, PNG. Received: ${file.mimetype}`));
+    }
+  }
+}).fields([
+  { name: "resumeFile", maxCount: 1 },
+  { name: "houseSketchFile", maxCount: 1 }
+]);
 
 // APPLICANTS ENDPOINTS
 
@@ -650,6 +703,61 @@ router.get("/api/applicants/:id/public-profile", async (req, res) => {
     console.error("Error fetching applicant public profile:", error);
     res.status(500).json({ message: "Failed to fetch applicant profile" });
   }
+});
+
+// Handle file uploads endpoint
+router.post("/api/applicants/upload-files", (req, res) => {
+  upload(req, res, function(err) {
+    if (err instanceof multer.MulterError) {
+      // A Multer error occurred (e.g., file too large)
+      console.error("Multer error:", err);
+      return res.status(400).json({
+        message: "File upload failed",
+        error: err.message,
+        field: err.field
+      });
+    } else if (err) {
+      // Some other error occurred
+      console.error("Upload error:", err);
+      return res.status(500).json({
+        message: "File upload failed",
+        error: err.message
+      });
+    }
+    
+    try {
+      const files = {};
+      
+      if (req.files) {
+        if (req.files.resumeFile) {
+          files.resumeFile = {
+            filename: req.files.resumeFile[0].filename,
+            originalname: req.files.resumeFile[0].originalname,
+            path: req.files.resumeFile[0].path
+          };
+        }
+        
+        if (req.files.houseSketchFile) {
+          files.houseSketchFile = {
+            filename: req.files.houseSketchFile[0].filename,
+            originalname: req.files.houseSketchFile[0].originalname,
+            path: req.files.houseSketchFile[0].path
+          };
+        }
+      }
+      
+      return res.status(200).json({
+        success: true,
+        files: files
+      });
+    } catch (error) {
+      console.error("Error processing uploaded files:", error);
+      return res.status(500).json({
+        message: "Error processing uploaded files",
+        error: error.message
+      });
+    }
+  });
 });
 
 module.exports = router; 

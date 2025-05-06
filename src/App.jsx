@@ -18,6 +18,8 @@ const EmployeeDetails = lazy(() => import("./pages/EmployeeDetails"));
 const Applicants = lazy(() => import("./pages/Applicants"));
 const ApplicantDetails = lazy(() => import("./pages/ApplicantDetails"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
+const OnboardingDetail = lazy(() => import("./pages/OnboardingDetail"));
+const StaffDirectory = lazy(() => import("./pages/StaffDirectory"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
@@ -71,7 +73,9 @@ function App() {
               <Route path="/applicants" element={<Applicants />} />
               <Route path="/applicants/:id" element={<ApplicantDetails />} />
               <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/onboarding/:id" element={<OnboardingDetail />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/staff-directory" element={<StaffDirectory />} />
             </Route>
             
             {/* Redirect root to login */}

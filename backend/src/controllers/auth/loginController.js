@@ -10,6 +10,8 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('Login attempt:', { email, passwordProvided: !!password });
+
     // Input validation
     if (!email || !password) {
       const validationError = new Error('Please provide email and password');
@@ -22,11 +24,19 @@ const login = async (req, res) => {
     const connection = await db.getConnection();
     
     try {
+      // Debug: Log all users for debugging
+      const [allUsers] = await connection.query('SELECT id, name, email, role, is_verified FROM users');
+      console.log('All users in the database:');
+      allUsers.forEach(u => console.log(`User: ${u.id}, ${u.name}, ${u.email}, ${u.role}, verified: ${u.is_verified}`));
+      
       // Find user by email
+      console.log(`Looking for user with email: "${email}"`);
       const [users] = await connection.query(
         'SELECT * FROM users WHERE email = ?',
         [email]
       );
+
+      console.log(`Found ${users.length} users matching email`);
 
       if (users.length === 0) {
         const authError = new Error('Invalid credentials');
@@ -36,6 +46,7 @@ const login = async (req, res) => {
       }
 
       const user = users[0];
+      console.log(`Found user: ID=${user.id}, Name=${user.name}, Email=${user.email}, Role=${user.role}`);
 
       // Check if user is verified - handle different types that might be returned
       const isVerified = user.is_verified === 1 || 
@@ -56,8 +67,19 @@ const login = async (req, res) => {
       }
 
       // Compare password
+      console.log('Comparing provided password with stored hash');
+      console.log('Stored password hash:', user.password);
+      
       const isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log('Password validation result:', isPasswordValid);
+      
       if (!isPasswordValid) {
+        // For debugging, create a new hash for comparison
+        console.log('Generating new hash for the provided password:');
+        const salt = await bcrypt.genSalt(10);
+        const newHash = await bcrypt.hash(password, salt);
+        console.log('New hash for same password:', newHash);
+        
         const authError = new Error('Invalid credentials');
         authError.code = 'AUTHENTICATION_FAILED';
         authError.statusCode = 401;
@@ -80,6 +102,8 @@ const login = async (req, res) => {
         JWT_SECRET,
         { expiresIn: '24h' }
       );
+
+      console.log('Login successful, token generated');
 
       res.status(200).json({
         success: true,
