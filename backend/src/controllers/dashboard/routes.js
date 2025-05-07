@@ -12,7 +12,7 @@ router.get("/api/dashboard", async (req, res) => {
     let totalEmployees = 0;
     let totalApplicants = 0;
     let totalInterviews = 0;
-    let totalOnboarding = 0; // This will remain 0 since onboarding is removed
+    let totalOnboarding = 0;
     
     // Get employee count
     const [employeeResult] = await connection.query("SELECT COUNT(*) as total FROM employees");
@@ -29,8 +29,14 @@ router.get("/api/dashboard", async (req, res) => {
     totalInterviews = interviewResult[0].total || 0;
     console.log("Total interviews:", totalInterviews);
     
-    // Onboarding count removed - set to 0
-    totalOnboarding = 0;
+    // Count employees in onboarding (hired in the last 90 days)
+    const [onboardingResult] = await connection.query(`
+      SELECT COUNT(*) as total 
+      FROM employees 
+      WHERE hire_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+    `);
+    totalOnboarding = onboardingResult[0].total || 0;
+    console.log("Total onboarding:", totalOnboarding);
     
     // Release the connection
     connection.release();

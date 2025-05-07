@@ -458,37 +458,37 @@ const Home = () => {
           
           <div className="flex flex-col gap-6 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <DashboardCard
-                    value={stats.employees}
-                title="Total Employees"
-                    icon="fas fa-users"
-                color="blue"
-                trend={{
-                  value: 3.6,
-                  isUpward: true,
-                }}
-              />
-                  <DashboardCard
-                value={stats.onboarding}
-                    title="Onboarding"
-                    icon="fas fa-clipboard-check"
-                color="yellow"
-                trend={{
-                  value: 3.6,
-                  isUpward: true,
-                }}
-              />
-              <DashboardCard
-                value={stats.applicants}
-                title="Total Applicants"
-                icon="fas fa-user-tie"
-                color="red"
-                trend={{
-                  value: 3.6,
-                  isUpward: true,
-                }}
-                  />
-                </div>
+              <Link to="/employees" style={{ textDecoration: 'none' }}>
+                <DashboardCard
+                  value={stats.employees}
+                  title="Total Employees"
+                  icon="fas fa-users"
+                  color="blue"
+                  trend={{ value: 3.6, isUpward: true }}
+                  description="From Staff Directory"
+                />
+              </Link>
+              <Link to="/onboarding" style={{ textDecoration: 'none' }}>
+                <DashboardCard
+                  value={stats.onboarding}
+                  title="Onboarding"
+                  icon="fas fa-clipboard-check"
+                  color="yellow"
+                  trend={{ value: 3.6, isUpward: true }}
+                  description="From Onboarding Page (hired in last 90 days)"
+                />
+              </Link>
+              <Link to="/applicants" style={{ textDecoration: 'none' }}>
+                <DashboardCard
+                  value={stats.applicants}
+                  title="Total Applicants"
+                  icon="fas fa-user-tie"
+                  color="red"
+                  trend={{ value: 3.6, isUpward: true }}
+                  description="From Applicants Page"
+                />
+              </Link>
+            </div>
 
             {/* Link Click Analytics Section */}
             <div className={`rounded-xl shadow-md overflow-hidden transition-all duration-300 ease-in-out border ${

@@ -403,6 +403,9 @@ router.post("/api/applicants/:id/interviews", async (req, res) => {
       }
       
       const applicant = applicants[0];
+      
+      // Make sure we have the applicant name for the email
+      applicant.name = `${applicant.first_name} ${applicant.last_name}`;
 
       // Insert interview record
       const [result] = await connection.query(
@@ -514,6 +517,9 @@ router.patch("/api/interviews/:id/status", async (req, res) => {
     }
     
     const applicant = applicants[0];
+    
+    // Make sure we construct the applicant name properly for the email
+    applicant.name = `${applicant.first_name} ${applicant.last_name}`;
     
     // Update interview status
     const [result] = await connection.query(
