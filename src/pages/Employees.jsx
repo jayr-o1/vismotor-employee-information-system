@@ -7,6 +7,9 @@ import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+// Import with ES module named imports style for Vite compatibility
+import XLSX from 'xlsx/dist/xlsx.full.min.js';
+import { saveAs } from 'file-saver/dist/FileSaver.min.js';
 
 const Employees = () => {
   const { theme } = useContext(ThemeContext);
@@ -260,28 +263,72 @@ const Employees = () => {
     }
   };
 
+  const exportEmployeesByDeptAndBranch = (employees) => {
+    // Helper to group and flatten employees by a key
+    const groupAndFlatten = (arr, key) => {
+      const grouped = arr.reduce((acc, emp) => {
+        const group = emp[key] || "Unassigned";
+        if (!acc[group]) acc[group] = [];
+        acc[group].push(emp);
+        return acc;
+      }, {});
+      // Flatten for Excel: add a header row for each group
+      let flat = [];
+      Object.entries(grouped).forEach(([group, emps]) => {
+        flat.push({ [key.toUpperCase()]: group }); // Group header row
+        flat = flat.concat(emps);
+      });
+      return flat;
+    };
+
+    // Prepare data for each sheet
+    const byDepartment = groupAndFlatten(employees, "department");
+    const byBranch = groupAndFlatten(employees, "branch");
+
+    // Create workbook and sheets
+    const wb = XLSX.utils.book_new();
+    const wsDept = XLSX.utils.json_to_sheet(byDepartment, { skipHeader: false });
+    const wsBranch = XLSX.utils.json_to_sheet(byBranch, { skipHeader: false });
+
+    XLSX.utils.book_append_sheet(wb, wsDept, "By Department");
+    XLSX.utils.book_append_sheet(wb, wsBranch, "By Branch");
+
+    // Download
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([wbout], { type: "application/octet-stream" }), "StaffDirectory.xlsx");
+  };
+
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
       
       <div className="max-w-7xl mx-auto">
-        {/* Header with search */}
+        {/* Header with search and export */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold">Employees</h1>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search employees..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className={`pl-10 pr-4 py-2 rounded-lg border ${
-                isDark 
-                  ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
-              } focus:outline-none focus:ring-2 focus:ring-green-500`}
-            />
-            <div className="absolute left-3 top-2.5">
-              <i className={`fas fa-search ${isDark ? 'text-gray-400' : 'text-gray-500'}`}></i>
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={() => exportEmployeesByDeptAndBranch(employees)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <i className="fas fa-file-excel mr-2"></i>
+              Export to Excel (Dept & Branch)
+            </button>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search employees..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className={`pl-10 pr-4 py-2 rounded-lg border ${
+                  isDark 
+                    ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
+                } focus:outline-none focus:ring-2 focus:ring-green-500`}
+              />
+              <div className="absolute left-3 top-2.5">
+                <i className={`fas fa-search ${isDark ? 'text-gray-400' : 'text-gray-500'}`}></i>
+              </div>
             </div>
           </div>
         </div>
