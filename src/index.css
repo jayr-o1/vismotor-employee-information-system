@@ -519,4 +519,57 @@ input:focus, select:focus, textarea:focus, button:focus {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* File upload styling */
+.file-upload-label {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.file-upload-label:hover {
+  border-color: #FF5C00;
+  background-color: rgba(255, 92, 0, 0.05);
+}
+
+.file-upload-label:active {
+  transform: scale(0.99);
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 640px) {
+  .file-upload-label {
+    padding: 8px 12px;
+  }
+  
+  .file-upload-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .file-upload-text {
+    font-size: 13px;
+  }
+}
+
+/* Add xs breakpoint for extra small screens */
+@media (min-width: 400px) {
+  .xs\:inline {
+    display: inline;
+  }
+  
+  .xs\:hidden {
+    display: none;
+  }
+}
+
 

@@ -39,12 +39,12 @@ const BranchSelector = ({ onBranchSelect, selectedBranch }) => {
   };
   
   return (
-    <div className="space-y-4">
-      <div className="relative">
+    <div className="space-y-3">
+      <div className="relative w-full">
         <select
           id="region"
           name="region"
-          className={`w-full px-4 py-3 border ${error ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none`}
+          className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border ${error ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none text-sm sm:text-base`}
           value={selectedRegion}
           onChange={handleRegionChange}
           onBlur={validateOnBlur}
@@ -67,11 +67,11 @@ const BranchSelector = ({ onBranchSelect, selectedBranch }) => {
       {error && <p className="text-red-500 text-xs mt-1">Please select a region</p>}
       
       {selectedRegion && (
-        <div className="relative mt-4">
+        <div className="relative w-full mt-2 sm:mt-3">
           <select
             id="branch"
             name="branch"
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
+            className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none text-sm sm:text-base"
             value={selectedBranch}
             onChange={handleBranchChange}
             required

@@ -304,12 +304,12 @@ function ApplicationForm() {
 
   // Add the document upload section render
   const renderDocumentSection = () => (
-    <div className={`form-section bg-white p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection !== 4 ? 'hidden' : ''}`}>
-      <div className="flex items-center mb-6">
-        <span className="w-10 h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-xl mr-3">4</span>
-        <h2 className="text-xl font-bold text-gray-800">Documents Upload</h2>
+    <div className={`form-section bg-white p-4 sm:p-6 md:p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection !== 4 ? 'hidden' : ''}`}>
+      <div className="flex items-center mb-4 sm:mb-6">
+        <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-lg sm:text-xl mr-2 sm:mr-3">4</span>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800">Documents Upload</h2>
       </div>
-      <div className="h-px w-full bg-gray-100 mb-8"></div>
+      <div className="h-px w-full bg-gray-100 mb-6 sm:mb-8"></div>
       
       <div className="mb-5">
         <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="resumeFile">
@@ -321,11 +321,26 @@ function ApplicationForm() {
             id="resumeFile"
             name="resumeFile"
             onChange={handleFileChange}
-            className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg p-2 cursor-pointer bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#FF5C00] file:text-white hover:file:bg-[#E65100]"
+            className="hidden"
             accept=".pdf,.doc,.docx"
           />
+          <label 
+            htmlFor="resumeFile" 
+            className="file-upload-label flex items-center justify-center w-full px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            <div className="file-upload-icon flex-shrink-0 bg-[#FF5C00] rounded-md flex items-center justify-center text-white p-2 mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div className="text-left flex-grow">
+              <span className="file-upload-text font-medium text-sm sm:text-base block truncate">
+                {formData.resumeFile ? formData.resumeFile.name : 'Choose file'}
+              </span>
+              <span className="text-xs text-gray-500">Upload your resume (PDF, DOC, DOCX)</span>
+            </div>
+          </label>
         </div>
-        <p className="mt-1 text-xs text-gray-500">Upload your resume (PDF, DOC, DOCX)</p>
       </div>
       
       <div className="mb-5">
@@ -338,17 +353,32 @@ function ApplicationForm() {
             id="houseSketchFile"
             name="houseSketchFile"
             onChange={handleFileChange}
-            className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg p-2 cursor-pointer bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#FF5C00] file:text-white hover:file:bg-[#E65100]"
+            className="hidden" 
             accept=".jpg,.jpeg,.png,.pdf"
           />
+          <label 
+            htmlFor="houseSketchFile" 
+            className="file-upload-label flex items-center justify-center w-full px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            <div className="file-upload-icon flex-shrink-0 bg-[#FF5C00] rounded-md flex items-center justify-center text-white p-2 mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="text-left flex-grow">
+              <span className="file-upload-text font-medium text-sm sm:text-base block truncate">
+                {formData.houseSketchFile ? formData.houseSketchFile.name : 'Choose file'}
+              </span>
+              <span className="text-xs text-gray-500">Upload a sketch of your house location (JPG, JPEG, PNG, PDF) - Optional</span>
+            </div>
+          </label>
         </div>
-        <p className="mt-1 text-xs text-gray-500">Upload a sketch of your house location (JPG, JPEG, PNG, PDF) - Optional</p>
       </div>
       
-      <div className="mt-8 flex justify-between">
+      <div className="mt-8 flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
         <button 
           type="button"
-          className="back-button px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none transition-colors mr-4 shadow-sm flex items-center"
+          className="back-button px-4 sm:px-6 py-2.5 sm:py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none transition-colors mr-0 sm:mr-4 shadow-sm flex items-center justify-center sm:justify-start w-full sm:w-auto"
           onClick={() => setActiveSection(3)}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -358,7 +388,7 @@ function ApplicationForm() {
         </button>
         <button 
           type="submit"
-          className="submit-button px-8 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors shadow-md flex items-center"
+          className="submit-button px-4 sm:px-8 py-2.5 sm:py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors shadow-md flex items-center justify-center sm:justify-start w-full sm:w-auto"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Submitting...' : 'Submit Application'}
@@ -371,16 +401,16 @@ function ApplicationForm() {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-4">
         <div className="w-full max-w-2xl bg-white rounded-lg shadow-sm p-0 overflow-hidden">
-          <div className="form-header bg-white p-6 text-center">
-            <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-[#34A853]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="form-header bg-white p-4 sm:p-6 text-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 sm:h-12 sm:w-12 text-[#34A853]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-normal text-[#202124] mt-4">Application Submitted!</h2>
-            <p className="text-[#5f6368] mt-2 mb-6">Thank you for your application. We will be in touch soon.</p>
+            <h2 className="text-xl sm:text-2xl font-normal text-[#202124] mt-4">Application Submitted!</h2>
+            <p className="text-sm sm:text-base text-[#5f6368] mt-2 mb-6">Thank you for your application. We will be in touch soon.</p>
             <button 
-              className="submit-button px-6 py-2 text-white rounded-md transition"
+              className="submit-button px-4 sm:px-6 py-2 sm:py-2.5 text-white rounded-md transition"
               onClick={() => setSubmitSuccess(false)}
             >
               Submit Another Response
@@ -394,13 +424,13 @@ function ApplicationForm() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-gray-100 px-4 py-6">
       {/* Form Header */}
-      <div className="form-header bg-white p-8 rounded-t-xl max-w-6xl mx-auto shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full -mr-20 -mt-20 opacity-40"></div>
+      <div className="form-header bg-white p-4 sm:p-6 md:p-8 rounded-t-xl max-w-6xl mx-auto shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 sm:w-64 h-40 sm:h-64 bg-orange-50 rounded-full -mr-10 sm:-mr-20 -mt-10 sm:-mt-20 opacity-40"></div>
         <div className="relative z-10">
-          <h1 className="text-[#202124] text-3xl font-bold">JOIN OUR TEAM</h1>
-          <p className="text-[#5f6368] mt-3 text-lg">We're excited about your interest in applying to VISMOTOR. Tell us about yourself below.</p>
+          <h1 className="text-[#202124] text-xl sm:text-2xl md:text-3xl font-bold">JOIN OUR TEAM</h1>
+          <p className="text-[#5f6368] mt-2 sm:mt-3 text-sm sm:text-base md:text-lg">We're excited about your interest in applying to VISMOTOR. Tell us about yourself below.</p>
         </div>
-        <div className="mt-6 h-1 bg-gradient-to-r from-[#FF5C00] to-orange-300 rounded-full"></div>
+        <div className="mt-4 sm:mt-6 h-1 bg-gradient-to-r from-[#FF5C00] to-orange-300 rounded-full"></div>
       </div>
       
       {submitError && (
@@ -417,48 +447,52 @@ function ApplicationForm() {
       
       <form onSubmit={handleSubmit} className="mt-4 max-w-6xl mx-auto" noValidate>
         {/* Section Tabs */}
-        <div className="bg-white px-6 py-5 flex overflow-x-auto tab-buttons-container rounded-t-xl shadow-sm mb-1">
+        <div className="bg-white px-3 sm:px-6 py-3 sm:py-5 flex overflow-x-auto tab-buttons-container rounded-t-xl shadow-sm mb-1 no-scrollbar">
           <button 
             type="button"
-            className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 1 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+            className={`tab-button flex items-center px-2 sm:px-5 py-2 sm:py-3 mr-2 sm:mr-4 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeSection === 1 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
             onClick={() => setActiveSection(1)}
           >
-            <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">1</span>
-            Personal Information
+            <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-1 sm:mr-2 font-bold text-xs sm:text-sm">1</span>
+            <span className="hidden xs:inline">Personal</span>
+            <span className="xs:hidden">Per.</span>
           </button>
           <button 
             type="button"
-            className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 2 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+            className={`tab-button flex items-center px-2 sm:px-5 py-2 sm:py-3 mr-2 sm:mr-4 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeSection === 2 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
             onClick={() => setActiveSection(2)}
           >
-            <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">2</span>
-            Address Information
+            <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-1 sm:mr-2 font-bold text-xs sm:text-sm">2</span>
+            <span className="hidden xs:inline">Address</span>
+            <span className="xs:hidden">Addr.</span>
           </button>
           <button 
             type="button"
-            className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 3 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+            className={`tab-button flex items-center px-2 sm:px-5 py-2 sm:py-3 mr-2 sm:mr-4 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeSection === 3 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
             onClick={() => setActiveSection(3)}
           >
-            <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">3</span>
-            Employment Information
+            <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-1 sm:mr-2 font-bold text-xs sm:text-sm">3</span>
+            <span className="hidden xs:inline">Employment</span>
+            <span className="xs:hidden">Emp.</span>
           </button>
           <button 
             type="button"
-            className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 4 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+            className={`tab-button flex items-center px-2 sm:px-5 py-2 sm:py-3 mr-2 sm:mr-4 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeSection === 4 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
             onClick={() => setActiveSection(4)}
           >
-            <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">4</span>
-            Documents Upload
+            <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-1 sm:mr-2 font-bold text-xs sm:text-sm">4</span>
+            <span className="hidden xs:inline">Documents</span>
+            <span className="xs:hidden">Docs</span>
           </button>
         </div>
         
         {/* Basic Information Section */}
-        <div className={`form-section bg-white p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection === 1 ? 'block' : 'hidden'}`}>
-          <div className="flex items-center mb-6">
-            <span className="w-10 h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-xl mr-3">1</span>
-            <h2 className="text-xl font-bold text-gray-800">Personal Information</h2>
+        <div className={`form-section bg-white p-4 sm:p-6 md:p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection === 1 ? 'block' : 'hidden'}`}>
+          <div className="flex items-center mb-4 sm:mb-6">
+            <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-lg sm:text-xl mr-2 sm:mr-3">1</span>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">Personal Information</h2>
           </div>
-          <div className="h-px w-full bg-gray-100 mb-8"></div>
+          <div className="h-px w-full bg-gray-100 mb-6 sm:mb-8"></div>
           
           <div className="input-container mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="email">
@@ -475,8 +509,8 @@ function ApplicationForm() {
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-            <div className="input-container">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5">
+            <div className="input-container mb-0">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="firstName">
                 First Name <span className="text-red-500 text-sm">*</span>
               </label>
@@ -494,7 +528,7 @@ function ApplicationForm() {
               />
             </div>
             
-            <div className="input-container">
+            <div className="input-container mb-0">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="lastName">
                 Last Name <span className="text-red-500 text-sm">*</span>
               </label>
@@ -513,7 +547,7 @@ function ApplicationForm() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5">
             <div className="mb-0">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="gender">
                 Gender <span className="text-red-500 text-sm">*</span>
@@ -540,23 +574,6 @@ function ApplicationForm() {
               </div>
             </div>
             
-            {formData.gender === "OTHER" && (
-              <div className="mb-5">
-                <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="otherGender">
-                  Specify Gender <span className="text-red-500 text-sm">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="otherGender"
-                  name="otherGender"
-                  value={formData.otherGender || ''}
-                  onChange={handleChange}
-                  className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
-                  placeholder="Please specify"
-                />
-              </div>
-            )}
-            
             <div className="mb-0">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="age">
                 Age <span className="text-red-500 text-sm">*</span>
@@ -574,6 +591,23 @@ function ApplicationForm() {
               />
             </div>
           </div>
+          
+          {formData.gender === "OTHER" && (
+            <div className="mb-5 -mt-2 sm:mt-0 sm:ml-0 sm:w-1/2">
+              <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="otherGender">
+                Specify Gender <span className="text-red-500 text-sm">*</span>
+              </label>
+              <input
+                type="text"
+                id="otherGender"
+                name="otherGender"
+                value={formData.otherGender || ''}
+                onChange={handleChange}
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
+                placeholder="Please specify"
+              />
+            </div>
+          )}
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="maritalStatus">
@@ -669,7 +703,7 @@ function ApplicationForm() {
           <div className="mt-8 flex justify-end">
             <button
               type="button"
-              className="submit-button px-6 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center"
+              className="submit-button px-4 sm:px-6 py-2.5 sm:py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center w-full sm:w-auto justify-center"
               onClick={() => setActiveSection(2)}
             >
               Next
@@ -686,12 +720,12 @@ function ApplicationForm() {
         </div>
         
         {/* Address Section */}
-        <div className={`form-section bg-white p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection === 2 ? 'block' : 'hidden'}`}>
-          <div className="flex items-center mb-6">
-            <span className="w-10 h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-xl mr-3">2</span>
-            <h2 className="text-xl font-bold text-gray-800">Address Information</h2>
+        <div className={`form-section bg-white p-4 sm:p-6 md:p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection === 2 ? 'block' : 'hidden'}`}>
+          <div className="flex items-center mb-4 sm:mb-6">
+            <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-lg sm:text-xl mr-2 sm:mr-3">2</span>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">Address Information</h2>
           </div>
-          <div className="h-px w-full bg-gray-100 mb-8"></div>
+          <div className="h-px w-full bg-gray-100 mb-6 sm:mb-8"></div>
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="completeAddress">
@@ -708,10 +742,10 @@ function ApplicationForm() {
             />
           </div>
           
-          <div className="mt-8 flex justify-between">
+          <div className="mt-8 flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
             <button
               type="button"
-              className="back-button px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none transition-colors mr-4 shadow-sm flex items-center"
+              className="back-button px-4 sm:px-6 py-2.5 sm:py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none transition-colors mr-0 sm:mr-4 shadow-sm flex items-center justify-center sm:justify-start w-full sm:w-auto"
               onClick={() => setActiveSection(1)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -721,7 +755,7 @@ function ApplicationForm() {
             </button>
             <button
               type="button"
-              className="submit-button px-6 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center"
+              className="submit-button px-4 sm:px-6 py-2.5 sm:py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center justify-center sm:justify-start w-full sm:w-auto"
               onClick={() => setActiveSection(3)}
             >
               Next
@@ -738,12 +772,12 @@ function ApplicationForm() {
         </div>
         
         {/* Employment Details Section */}
-        <div className={`form-section bg-white p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection === 3 ? 'block' : 'hidden'}`}>
-          <div className="flex items-center mb-6">
-            <span className="w-10 h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-xl mr-3">3</span>
-            <h2 className="text-xl font-bold text-gray-800">Employment Information</h2>
+        <div className={`form-section bg-white p-4 sm:p-6 md:p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection === 3 ? 'block' : 'hidden'}`}>
+          <div className="flex items-center mb-4 sm:mb-6">
+            <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-lg sm:text-xl mr-2 sm:mr-3">3</span>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">Employment Information</h2>
           </div>
-          <div className="h-px w-full bg-gray-100 mb-8"></div>
+          <div className="h-px w-full bg-gray-100 mb-6 sm:mb-8"></div>
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="positionApplyingFor">
@@ -953,10 +987,10 @@ function ApplicationForm() {
             </div>
           )}
           
-          <div className="mt-8 flex justify-between">
+          <div className="mt-8 flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
             <button
               type="button"
-              className="back-button px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none transition-colors mr-4 shadow-sm flex items-center"
+              className="back-button px-4 sm:px-6 py-2.5 sm:py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none transition-colors mr-0 sm:mr-4 shadow-sm flex items-center justify-center sm:justify-start w-full sm:w-auto"
               onClick={() => setActiveSection(2)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -966,7 +1000,7 @@ function ApplicationForm() {
             </button>
             <button
               type="button"
-              className="submit-button px-6 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center"
+              className="submit-button px-4 sm:px-6 py-2.5 sm:py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center justify-center sm:justify-start w-full sm:w-auto"
               onClick={() => setActiveSection(4)}
             >
               Next
