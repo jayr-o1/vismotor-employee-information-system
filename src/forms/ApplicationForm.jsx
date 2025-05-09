@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { regions, provinces, cities, barangays } from '../utils/locations';
 import apiService from '../services/api';  // Import the API service
 
 // Shared placeholder style to ensure consistent appearance regardless of theme
@@ -19,11 +18,7 @@ function ApplicationForm() {
     otherMaritalStatus: '',
     highestEducation: '',
     otherHighestEducation: '',
-    region: '',
-    province: '',
-    city: '',
-    barangay: '',
-    streetAddress: '',
+    completeAddress: '', // New field for complete address
     positionApplyingFor: '',
     otherPosition: '',
     branchDepartment: '',
@@ -38,138 +33,6 @@ function ApplicationForm() {
     houseSketchFile: null
   });
   
-  // State for filtered location options
-  const [availableProvinces, setAvailableProvinces] = useState([]);
-  const [availableCities, setAvailableCities] = useState([]);
-  const [availableBarangays, setAvailableBarangays] = useState([]);
-  
-  // Update available provinces when region changes
-  useEffect(() => {
-    if (formData.region) {
-      console.log("Region selected:", formData.region);
-      
-      // Filter provinces by the selected region using the regCode property
-      const filteredProvinces = provinces.filter(
-        province => province.regCode === formData.region
-      );
-      
-      console.log("Filtered provinces for region", formData.region, ":", filteredProvinces);
-      
-      setAvailableProvinces(filteredProvinces);
-      
-      // Reset province, city and barangay when region changes
-      if (formData.province) {
-        const provinceExists = filteredProvinces.some(p => p.code === formData.province);
-        if (!provinceExists) {
-          setFormData(prev => ({
-            ...prev,
-            province: '',
-            city: '',
-            barangay: ''
-          }));
-          setAvailableCities([]);
-          setAvailableBarangays([]);
-        }
-      }
-    } else {
-      setAvailableProvinces([]);
-      setAvailableCities([]);
-      setAvailableBarangays([]);
-    }
-  }, [formData.region]);
-  
-  // Update available cities when province changes
-  useEffect(() => {
-    if (formData.province) {
-      console.log("Province selected:", formData.province);
-      
-      // Filter cities by the selected province using the provCode property
-      const filteredCities = cities.filter(
-        city => city.provCode === formData.province
-      );
-      
-      console.log("Filtered cities for province", formData.province, ":", filteredCities);
-      
-      setAvailableCities(filteredCities);
-      
-      // Reset city and barangay when province changes
-      if (formData.city) {
-        const cityExists = filteredCities.some(c => c.code === formData.city);
-        if (!cityExists) {
-          setFormData(prev => ({
-            ...prev,
-            city: '',
-            barangay: ''
-          }));
-          setAvailableBarangays([]);
-        }
-      }
-    } else {
-      setAvailableCities([]);
-      setAvailableBarangays([]);
-    }
-  }, [formData.province]);
-  
-  // Update available barangays when city changes
-  useEffect(() => {
-    if (formData.city) {
-      console.log("City selected:", formData.city);
-      
-      // Add more detailed debugging 
-      console.log("Selected city details:", cities.find(c => c.code === formData.city));
-      
-      // Filter barangays by the selected city using the cityCode property - exact match only
-      let filteredBarangays = barangays.filter(
-        barangay => barangay.cityCode === formData.city
-      );
-      
-      // Handle problematic barangays - these are the barangays that belong specifically to Talisay City (Cebu)
-      // We'll explicitly exclude them from showing up for any city except Talisay City in Cebu
-      const talisayBarangayNames = [
-        "Biasong", "Bulacao", "Cansojong", "Dumlog", "Jaclupan", "Lagtang", 
-        "Lawaan I", "Lawaan II", "Lawaan III", "Linao", "Maghaway", "Manipis", 
-        "Mohon", "Poblacion", "Pooc", "San Isidro", "San Roque", "Tabunok", 
-        "Tangke", "Tapul"
-      ];
-      
-      // Special handling if this is a city other than Talisay City
-      const talisayCityCebu = cities.find(c => c.name === "City of Talisay" && c.provCode === "0722");
-      
-      // If we're NOT in Talisay City, filter out Talisay barangays that might be showing up
-      if (talisayCityCebu && formData.city !== talisayCityCebu.code) {
-        filteredBarangays = filteredBarangays.filter(b => !talisayBarangayNames.includes(b.name));
-        console.log("Filtered out Talisay barangays for non-Talisay city");
-      }
-      
-      // Same for Cebu City - ensure the specific barangays don't show up 
-      const cebuCity = cities.find(c => c.name === "City of Cebu");
-      if (cebuCity && formData.city !== cebuCity.code) {
-        // Filter out any potential barangays that should only belong to Cebu City
-        // This is a general safeguard
-        const cebuCitySpecificBarangays = ["Hilantagaan"]; // Add more if needed
-        filteredBarangays = filteredBarangays.filter(b => !cebuCitySpecificBarangays.includes(b.name));
-      }
-      
-      console.log("Final filtered barangays for city", formData.city, ":", filteredBarangays);
-      
-      // Only set the available barangays - no fallbacks to avoid showing incorrect barangays
-      setAvailableBarangays(filteredBarangays);
-      
-      // Reset barangay when city changes
-      if (formData.barangay) {
-        const barangayExists = filteredBarangays.some(b => b.code === formData.barangay);
-        if (!barangayExists) {
-          setFormData(prev => ({
-            ...prev,
-            barangay: ''
-          }));
-        }
-      }
-    } else {
-      setAvailableBarangays([]);
-    }
-  }, [formData.city]);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -317,11 +180,7 @@ function ApplicationForm() {
         otherMaritalStatus: '',
         highestEducation: '',
         otherHighestEducation: '',
-        region: '',
-        province: '',
-        city: '',
-        barangay: '',
-        streetAddress: '',
+        completeAddress: '',
         positionApplyingFor: '',
         otherPosition: '',
         branchDepartment: '',
@@ -365,8 +224,8 @@ function ApplicationForm() {
     // Only skip validation if disabled
     if (!validationEnabled) return true;
     
-    // Only check for street address
-    if (!formData.streetAddress) {
+    // Only check for complete address
+    if (!formData.completeAddress) {
       return false;
     }
     
@@ -957,138 +816,18 @@ function ApplicationForm() {
           <div className="section-divider"></div>
           
           <div className="mb-5">
-            <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="region">
-              Region
-            </label>
-            <div className="relative">
-              <select
-                id="region"
-                name="region"
-                value={formData.region}
-                onChange={handleChange}
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none"
-              >
-                <option value="">Select Region</option>
-                {regions.map(region => (
-                  <option key={region.code} value={region.code}>
-                    {region.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mb-5">
-            <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="province">
-              Province
-            </label>
-            <div className="relative">
-              <select
-                id="province"
-                name="province"
-                value={formData.province}
-                onChange={handleChange}
-                disabled={!formData.region}
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">Select Province</option>
-                {availableProvinces.map(province => (
-                  <option key={province.code} value={province.code}>
-                    {province.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mb-5">
-            <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="city">
-              City/Municipality
-            </label>
-            <div className="relative">
-              <select
-                id="city"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                disabled={!formData.province}
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">Select City/Municipality</option>
-                {availableCities.map(city => (
-                  <option key={city.code} value={city.code}>
-                    {city.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mb-5">
-            <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="barangay">
-              Barangay
-            </label>
-            <div className="relative">
-              <select
-                id="barangay"
-                name="barangay"
-                value={formData.barangay}
-                onChange={handleChange}
-                disabled={!formData.city || availableBarangays.length === 0}
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">Select Barangay</option>
-                {formData.city && availableBarangays.length === 0 ? (
-                  <option value="NO_BARANGAY_DATA">No barangay data available for this city/municipality</option>
-                ) : (
-                  availableBarangays.map(barangay => (
-                    <option key={barangay.code} value={barangay.code}>
-                      {barangay.name}
-                    </option>
-                  ))
-                )}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-            {formData.city && availableBarangays.length === 0 && (
-              <p className="text-sm text-amber-600 mt-1">
-                No barangay data available for this city/municipality. Please enter your Barangay in the street address.
-              </p>
-            )}
-          </div>
-          
-          <div className="input-container mb-5">
-            <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="streetAddress">
-              Street Address / House No. <span className="required-star text-red-500">*</span>
+            <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="completeAddress">
+              Complete Address <span className="required-star text-red-500">*</span>
             </label>
             <input
               type="text"
-              id="streetAddress"
-              name="streetAddress"
-              value={formData.streetAddress}
+              id="completeAddress"
+              name="completeAddress"
+              value={formData.completeAddress}
               onChange={handleChange}
               required
               className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
-              placeholder="e.g. 123 Main Street, Block 1 Lot 2"
+              placeholder="e.g. House No., Street, Barangay, City/Municipality, Province, Region"
             />
           </div>
           
