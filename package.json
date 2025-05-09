@@ -21,6 +21,7 @@
     "dotenv": "^16.5.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.4.7",
+    "googleapis": "^148.0.0",
     "html5-qrcode": "^2.3.8",
     "mysql2": "^3.14.1",
     "ph-locations": "^1.1.3",

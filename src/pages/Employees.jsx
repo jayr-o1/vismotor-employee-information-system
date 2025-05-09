@@ -251,6 +251,8 @@ const Employees = () => {
   const handleDeleteEmployee = async () => {
     try {
       await apiService.employees.delete(currentEmployee.id);
+
+      
       
       // Remove the employee from the local state
       setEmployees(employees.filter(emp => emp.id !== currentEmployee.id));
@@ -263,39 +265,71 @@ const Employees = () => {
     }
   };
 
-  const exportEmployeesByDeptAndBranch = (employees) => {
-    // Helper to group and flatten employees by a key
-    const groupAndFlatten = (arr, key) => {
-      const grouped = arr.reduce((acc, emp) => {
-        const group = emp[key] || "Unassigned";
-        if (!acc[group]) acc[group] = [];
-        acc[group].push(emp);
+  // Export employees to Excel format grouped by department
+  const exportEmployeesByDept = (employees) => {
+    try {
+      // Group employees by department
+      const byDepartment = employees.reduce((acc, emp) => {
+        const dept = emp.department || "Unassigned";
+        if (!acc[dept]) acc[dept] = [];
+        acc[dept].push(emp);
         return acc;
       }, {});
-      // Flatten for Excel: add a header row for each group
-      let flat = [];
-      Object.entries(grouped).forEach(([group, emps]) => {
-        flat.push({ [key.toUpperCase()]: group }); // Group header row
-        flat = flat.concat(emps);
+
+      // Create column headers (without profile_picture)
+      const headers = [
+        "DEPARTMENT", "id", "applicant_id", "name", "email", 
+        "phone", "position", "department", "hire_date", "salary", "status"
+      ];
+      
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const wsData = [];
+      
+      // Add headers to worksheet data
+      wsData.push(headers);
+      
+      // Add each department and its employees
+      Object.entries(byDepartment).forEach(([dept, emps]) => {
+        // Add department as a row
+        const deptRow = [dept, "", "", "", "", "", "", "", "", "", ""];
+        wsData.push(deptRow);
+        
+        // Add employee rows
+        emps.forEach(emp => {
+          const row = [
+            "", // Empty first column
+            emp.id || "",
+            emp.applicant_id || "",
+            emp.name || "",
+            emp.email || "",
+            emp.phone || "",
+            emp.position || "",
+            emp.department || "",
+            emp.hire_date || "",
+            emp.salary || "",
+            emp.status || ""
+          ];
+          wsData.push(row);
+        });
       });
-      return flat;
-    };
-
-    // Prepare data for each sheet
-    const byDepartment = groupAndFlatten(employees, "department");
-    const byBranch = groupAndFlatten(employees, "branch");
-
-    // Create workbook and sheets
-    const wb = XLSX.utils.book_new();
-    const wsDept = XLSX.utils.json_to_sheet(byDepartment, { skipHeader: false });
-    const wsBranch = XLSX.utils.json_to_sheet(byBranch, { skipHeader: false });
-
-    XLSX.utils.book_append_sheet(wb, wsDept, "By Department");
-    XLSX.utils.book_append_sheet(wb, wsBranch, "By Branch");
-
-    // Download
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([wbout], { type: "application/octet-stream" }), "StaffDirectory.xlsx");
+      
+      // Create worksheet from data
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Employees");
+      
+      // Generate Excel file and trigger download
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), "EmployeeExport.xlsx");
+      
+      // Inform the user
+      toast.success("Employee data exported successfully to Excel");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export data: " + error.message);
+    }
   };
 
   return (
@@ -308,11 +342,11 @@ const Employees = () => {
           <h1 className="text-2xl font-semibold">Employees</h1>
           <div className="flex gap-2 items-center">
             <button
-              onClick={() => exportEmployeesByDeptAndBranch(employees)}
+              onClick={() => exportEmployeesByDept(employees)}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              <i className="fas fa-file-excel mr-2"></i>
-              Export to Excel (Dept & Branch)
+              <i className="fas fa-file-csv mr-2"></i>
+              Export Employee Data
             </button>
             <div className="relative">
               <input

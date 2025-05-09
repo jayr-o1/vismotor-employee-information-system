@@ -354,6 +354,26 @@ router.post("/api/employees", async (req, res) => {
       [applicant_id]
     );
     
+    // Update Google Sheet with the new employee data
+    try {
+      await updateGoogleSheetWithEmployee({
+        id: employeeId,
+        applicant_id: applicant_id,
+        name: fullName,
+        email: applicant.email,
+        phone: applicant.phone || "",
+        position,
+        department,
+        hire_date,
+        branch: applicant.branch || "",
+        status: "Active"
+      });
+      console.log("Google Sheet updated with new employee data");
+    } catch (sheetError) {
+      console.error("Failed to update Google Sheet:", sheetError);
+      // Continue even if Google Sheet update fails
+    }
+    
     // Send welcome email to the newly hired employee
     try {
       const { sendWelcomeEmail } = require('../../services/emailService');
@@ -383,6 +403,76 @@ router.post("/api/employees", async (req, res) => {
     res.status(500).json({ message: "Failed to create employee" });
   }
 });
+
+/**
+ * Updates a Google Sheet with new employee data
+ * @param {Object} employee - The employee data to add to the sheet
+ */
+async function updateGoogleSheetWithEmployee(employee) {
+  try {
+    // Check if Google Sheet ID is configured
+    if (!process.env.GOOGLE_SHEET_ID) {
+      console.log("Google Sheet integration not configured - skipping update");
+      return { success: false, message: "Google Sheet ID not configured" };
+    }
+
+    // Using the googleapis package
+    const { google } = require('googleapis');
+    const sheets = google.sheets('v4');
+    
+    // Configure auth - this would use your stored credentials
+    const auth = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+    
+    // Set credentials
+    auth.setCredentials({
+      access_token: process.env.GOOGLE_ACCESS_TOKEN,
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+    });
+    
+    // Prepare the values to append to the sheet
+    const values = [
+      [
+        employee.id, 
+        employee.applicant_id,
+        employee.name,
+        employee.email,
+        employee.phone,
+        employee.position,
+        employee.department,
+        employee.branch || "",
+        employee.hire_date,
+        employee.status
+      ]
+    ];
+    
+    console.log(`Updating Google Sheet ${process.env.GOOGLE_SHEET_ID} with employee data...`);
+    
+    // Append the values to the sheet
+    const response = await sheets.spreadsheets.values.append({
+      auth,
+      spreadsheetId: process.env.GOOGLE_SHEET_ID,
+      range: 'Employees!A:J', // Adjust range as needed
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      resource: {
+        values
+      }
+    });
+    
+    console.log(`Google Sheet updated successfully at ${response.data.updates.updatedRange}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating Google Sheet:', error.message);
+    console.error(error.stack);
+    
+    // Don't throw error, just return failed status so the process can continue
+    return { success: false, error: error.message };
+  }
+}
 
 // Get equipment types
 router.get("/api/equipment-types", async (req, res) => {
