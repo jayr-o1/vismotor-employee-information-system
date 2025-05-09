@@ -39,11 +39,7 @@ function ApplicationForm() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [activeSection, setActiveSection] = useState(1);
-
   const [validationError, setValidationError] = useState("");
-  
-  // Toggle for validation during development
-  const [validationEnabled, setValidationEnabled] = useState(true);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,55 +65,71 @@ function ApplicationForm() {
     }
   };
 
-  // Toggle validation function
-  const toggleValidation = () => {
-    const newValidationState = !validationEnabled;
-    setValidationEnabled(newValidationState);
-    setValidationError('');
-    
-    // If turning validation off, allow navigation to any section
-    if (!newValidationState) {
-      // Clear any validation errors when disabling validation
-      setValidationError('');
-    } else {
-      // When turning validation back on, verify current section
-      switch(activeSection) {
-        case 2:
-          if (!validatePersonalSection()) {
-            setActiveSection(1);
-            setValidationError("Please complete Personal Information section first.");
-          }
-          break;
-        case 3:
-          if (!validatePersonalSection() || !validateAddressSection()) {
-            if (!validatePersonalSection()) {
-              setActiveSection(1);
-            } else {
-              setActiveSection(2);
-            }
-            setValidationError("Please complete all previous sections first.");
-          }
-          break;
-        case 4:
-          if (!validatePersonalSection() || !validateAddressSection() || !validateEmploymentSection()) {
-            if (!validatePersonalSection()) {
-              setActiveSection(1);
-            } else if (!validateAddressSection()) {
-              setActiveSection(2);
-            } else {
-              setActiveSection(3);
-            }
-            setValidationError("Please complete all previous sections first.");
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate all fields before submission
+    const missingFields = validateAllFields();
+    if (missingFields.length > 0) {
+      // Group missing fields by section for better user feedback
+      const missingFieldsBySection = {
+        1: [],
+        2: [],
+        3: [],
+        4: []
+      };
+      
+      missingFields.forEach(field => {
+        switch(field.section) {
+          case 1:
+            missingFieldsBySection[1].push(field.name);
+            break;
+          case 2:
+            missingFieldsBySection[2].push(field.name);
+            break;
+          case 3:
+            missingFieldsBySection[3].push(field.name);
+            break;
+          case 4:
+            missingFieldsBySection[4].push(field.name);
+            break;
+          default:
+            break;
+        }
+      });
+      
+      // Build error message
+      let errorMessage = "Please fill in all required fields:\n\n";
+      
+      if (missingFieldsBySection[1].length > 0) {
+        errorMessage += "Personal Information Section:\n- " + missingFieldsBySection[1].join("\n- ") + "\n\n";
+      }
+      
+      if (missingFieldsBySection[2].length > 0) {
+        errorMessage += "Address Information Section:\n- " + missingFieldsBySection[2].join("\n- ") + "\n\n";
+      }
+      
+      if (missingFieldsBySection[3].length > 0) {
+        errorMessage += "Employment Information Section:\n- " + missingFieldsBySection[3].join("\n- ") + "\n\n";
+      }
+      
+      if (missingFieldsBySection[4].length > 0) {
+        errorMessage += "Documents Upload Section:\n- " + missingFieldsBySection[4].join("\n- ") + "\n\n";
+      }
+      
+      setValidationError(errorMessage);
+      
+      // Go to the first section with errors
+      for (let i = 1; i <= 4; i++) {
+        if (missingFieldsBySection[i].length > 0) {
+          setActiveSection(i);
+          break;
+        }
+      }
+      
+      return;
+    }
+    
     setIsSubmitting(true);
     setSubmitError('');
     
@@ -204,11 +216,45 @@ function ApplicationForm() {
     }
   };
 
+  // Add validation function that checks all required fields
+  const validateAllFields = () => {
+    const missingFields = [];
+    
+    // Section 1: Personal Information
+    if (!formData.email) missingFields.push({ section: 1, name: "Email Address" });
+    if (!formData.firstName) missingFields.push({ section: 1, name: "First Name" });
+    if (!formData.lastName) missingFields.push({ section: 1, name: "Last Name" });
+    if (!formData.gender) missingFields.push({ section: 1, name: "Gender" });
+    if (formData.gender === "OTHER" && !formData.otherGender) missingFields.push({ section: 1, name: "Specify Gender" });
+    if (!formData.age) missingFields.push({ section: 1, name: "Age" });
+    if (!formData.maritalStatus) missingFields.push({ section: 1, name: "Marital Status" });
+    if (formData.maritalStatus === "OTHER" && !formData.otherMaritalStatus) missingFields.push({ section: 1, name: "Specify Marital Status" });
+    if (!formData.highestEducation) missingFields.push({ section: 1, name: "Highest Educational Attainment" });
+    if (formData.highestEducation === "OTHER" && !formData.otherHighestEducation) missingFields.push({ section: 1, name: "Specify Educational Attainment" });
+    
+    // Section 2: Address Information
+    if (!formData.completeAddress) missingFields.push({ section: 2, name: "Complete Address" });
+    
+    // Section 3: Employment Information
+    if (!formData.positionApplyingFor) missingFields.push({ section: 3, name: "Position Applying For" });
+    if (formData.positionApplyingFor === "OTHER" && !formData.otherPosition) missingFields.push({ section: 3, name: "Specify Other Position" });
+    if (!formData.branchDepartment) missingFields.push({ section: 3, name: "Branch or Department" });
+    if (formData.branchDepartment === "Other" && !formData.otherBranchDepartment) missingFields.push({ section: 3, name: "Specify Other Branch/Department" });
+    if (!formData.previouslyEmployed) missingFields.push({ section: 3, name: "Previous Employment Status" });
+    if (!formData.dateAvailability) missingFields.push({ section: 3, name: "Date Availability" });
+    if (formData.dateAvailability === "OTHER" && !formData.otherDateAvailability) missingFields.push({ section: 3, name: "Specify Availability" });
+    if (!formData.desiredPay) missingFields.push({ section: 3, name: "Desired Pay" });
+    if (!formData.jobPostSource) missingFields.push({ section: 3, name: "Job Posting Source" });
+    if (formData.jobPostSource === "Other" && !formData.otherJobSource) missingFields.push({ section: 3, name: "Specify Other Source" });
+    
+    // Section 4: Documents Upload
+    if (!formData.resumeFile) missingFields.push({ section: 4, name: "Resume/CV" });
+    
+    return missingFields;
+  };
+
   // Add validation functions for each section
   const validatePersonalSection = () => {
-    // Only skip validation if disabled
-    if (!validationEnabled) return true;
-    
     // Check all required fields
     if (!formData.email || !formData.firstName || !formData.lastName || 
         !formData.gender || 
@@ -223,9 +269,6 @@ function ApplicationForm() {
   };
 
   const validateAddressSection = () => {
-    // Only skip validation if disabled
-    if (!validationEnabled) return true;
-    
     // Only check for complete address
     if (!formData.completeAddress) {
       return false;
@@ -235,9 +278,6 @@ function ApplicationForm() {
   };
 
   const validateEmploymentSection = () => {
-    // Only skip validation if disabled
-    if (!validationEnabled) return true;
-    
     // Check all required fields
     if (!formData.positionApplyingFor || 
         (formData.positionApplyingFor === "OTHER" && !formData.otherPosition) || 
@@ -254,9 +294,6 @@ function ApplicationForm() {
   };
 
   const validateDocumentsSection = () => {
-    // Only skip validation if disabled
-    if (!validationEnabled) return true;
-    
     // Check only required fields - house sketch is now optional
     if (!formData.resumeFile) {
       return false;
@@ -285,7 +322,6 @@ function ApplicationForm() {
             onChange={handleFileChange}
             className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg p-2 cursor-pointer bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#FF5C00] file:text-white hover:file:bg-[#E65100]"
             accept=".pdf,.doc,.docx"
-            required
           />
         </div>
         <p className="mt-1 text-xs text-gray-500">Upload your resume (PDF, DOC, DOCX)</p>
@@ -330,107 +366,6 @@ function ApplicationForm() {
     </div>
   );
 
-  // Add a test function to debug regions and provinces
-  const testPhLocation = () => {
-    console.log("Testing ph-locations data:");
-    console.log("Regions:", regions);
-    console.log("Provinces:", provinces);
-    
-    // Try to directly access and test a relationship between a region and its provinces
-    if (regions.length > 0) {
-      const firstRegion = regions[0];
-      console.log("First region:", firstRegion);
-      
-      // Try to find provinces for this region using different possible property names
-      const regCodeProvinces = provinces.filter(p => p.regCode === firstRegion.code);
-      const regionCodeProvinces = provinces.filter(p => p.regionCode === firstRegion.code);
-      const regProvinces = provinces.filter(p => p.reg === firstRegion.code);
-      
-      console.log("Provinces with regCode match:", regCodeProvinces.length);
-      console.log("Provinces with regionCode match:", regionCodeProvinces.length);
-      console.log("Provinces with reg match:", regProvinces.length);
-    }
-  };
-  
-  // Debug function for Talisay cities
-  const debugTalisayCities = () => {
-    console.log("=== TALISAY CITIES DEBUG ===");
-    
-    // Find Talisay in Negros Occidental
-    const talisayNegros = cities.find(c => c.code === "060503");
-    const negrosProvince = provinces.find(p => p.code === talisayNegros.provCode);
-    console.log(`Talisay in ${negrosProvince.name}:`, talisayNegros);
-    
-    // Find barangays for Talisay in Negros Occidental
-    const talisayNegrosBarangays = barangays.filter(b => b.cityCode === talisayNegros.code);
-    console.log(`Found ${talisayNegrosBarangays.length} barangays for Talisay in Negros Occidental`);
-    
-    // Find Talisay in Cebu
-    const talisayCebu = cities.find(c => c.code === "070204");
-    const cebuProvince = provinces.find(p => p.code === talisayCebu.provCode);
-    console.log(`Talisay in ${cebuProvince.name}:`, talisayCebu);
-    
-    // Find barangays for Talisay in Cebu
-    const talisayCebuBarangays = barangays.filter(b => b.cityCode === talisayCebu.code);
-    console.log(`Found ${talisayCebuBarangays.length} barangays for Talisay in Cebu`);
-    
-    // Check for any barangays still using old cityCode formats
-    const oldFormatBarangays = barangays.filter(b => 
-      b.cityCode.includes("454") || b.cityCode.includes("222")
-    );
-    
-    console.log("Barangays still using old city codes:", oldFormatBarangays);
-  };
-
-  // New debug function to identify problematic barangays
-  const debugProblematicBarangays = () => {
-    console.log("=== PROBLEMATIC BARANGAYS DEBUG ===");
-    
-    // Check for the specific barangays mentioned
-    const problematicNames = [
-      "Biasong", "Bulacao", "Cansojong", "Dumlog", "Jaclupan", "Lagtang", 
-      "Lawaan I", "Lawaan II", "Lawaan III", "Linao", "Maghaway", "Manipis", 
-      "Mohon", "Poblacion", "Pooc", "San Isidro", "San Roque", "Tabunok", 
-      "Tangke", "Tapul"
-    ];
-    
-    // Find these barangays in the data
-    const foundBarangays = problematicNames.map(name => {
-      const matches = barangays.filter(b => b.name === name);
-      return {
-        name,
-        count: matches.length,
-        matches: matches.map(m => ({
-          code: m.code,
-          cityCode: m.cityCode,
-          cityName: cities.find(c => c.code === m.cityCode)?.name || "Unknown City"
-        }))
-      };
-    });
-    
-    console.log("Found problematic barangays:", foundBarangays);
-    
-    // Check for all Cebu City barangays
-    const cebuCity = cities.find(c => c.name === "City of Cebu");
-    console.log("Cebu City code:", cebuCity?.code);
-    
-    if (cebuCity) {
-      const cebuBarangays = barangays.filter(b => b.cityCode === cebuCity.code);
-      console.log(`Found ${cebuBarangays.length} barangays for Cebu City`);
-      console.log("Sample Cebu City barangays:", cebuBarangays.slice(0, 5));
-    }
-    
-    // Check for Talisay City barangays
-    const talisayCity = cities.find(c => c.name === "City of Talisay" && c.provCode === "0722");
-    console.log("Talisay City code:", talisayCity?.code);
-    
-    if (talisayCity) {
-      const talisayBarangays = barangays.filter(b => b.cityCode === talisayCity.code);
-      console.log(`Found ${talisayBarangays.length} barangays for Talisay City`);
-      console.log("Talisay City barangays:", talisayBarangays);
-    }
-  };
-
   if (submitSuccess) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-4">
@@ -457,48 +392,6 @@ function ApplicationForm() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-gray-100 px-4 py-6">
-      {/* Dev Mode Toggle */}
-      <div className="bg-white p-3 mb-6 rounded-lg flex items-center justify-between max-w-6xl mx-auto shadow-sm">
-        <div className="flex items-center">
-          <span className="text-gray-700 text-sm font-medium">
-            {validationEnabled ? "Development Mode: OFF" : "Development Mode: ON"}
-          </span>
-          <button 
-            type="button" 
-            onClick={testPhLocation}
-            className="ml-4 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs py-1 px-2 rounded transition-colors"
-          >
-            Test Location Data
-          </button>
-          <button 
-            type="button" 
-            onClick={debugTalisayCities}
-            className="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs py-1 px-2 rounded transition-colors"
-          >
-            Debug Talisay Cities
-          </button>
-          <button 
-            type="button" 
-            onClick={debugProblematicBarangays}
-            className="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs py-1 px-2 rounded transition-colors"
-          >
-            Debug Barangays
-          </button>
-        </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            className="sr-only peer"
-            checked={!validationEnabled}
-            onChange={toggleValidation}
-          />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          <span className="ml-3 text-sm font-medium text-gray-700">
-            Skip Validation
-          </span>
-        </label>
-      </div>
-
       {/* Form Header */}
       <div className="form-header bg-white p-8 rounded-t-xl max-w-6xl mx-auto shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full -mr-20 -mt-20 opacity-40"></div>
@@ -516,12 +409,12 @@ function ApplicationForm() {
       )}
       
       {validationError && (
-        <div className="mx-auto bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4 max-w-6xl">
+        <div className="mx-auto bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4 max-w-6xl whitespace-pre-line">
           {validationError}
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="mt-4 max-w-6xl mx-auto">
+      <form onSubmit={handleSubmit} className="mt-4 max-w-6xl mx-auto" noValidate>
         {/* Section Tabs */}
         <div className="bg-white px-6 py-5 flex overflow-x-auto tab-buttons-container rounded-t-xl shadow-sm mb-1">
           <button 
@@ -535,14 +428,7 @@ function ApplicationForm() {
           <button 
             type="button"
             className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 2 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
-            onClick={() => {
-              if (validatePersonalSection()) {
-                setValidationError("");
-                setActiveSection(2);
-              } else {
-                setValidationError("Please complete Personal Information section first.");
-              }
-            }}
+            onClick={() => setActiveSection(2)}
           >
             <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">2</span>
             Address Information
@@ -550,14 +436,7 @@ function ApplicationForm() {
           <button 
             type="button"
             className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 3 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
-            onClick={() => {
-              if (validatePersonalSection() && validateAddressSection()) {
-                setValidationError("");
-                setActiveSection(3);
-              } else {
-                setValidationError("Please complete all previous sections first.");
-              }
-            }}
+            onClick={() => setActiveSection(3)}
           >
             <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">3</span>
             Employment Information
@@ -565,14 +444,7 @@ function ApplicationForm() {
           <button 
             type="button"
             className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 4 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
-            onClick={() => {
-              if (validatePersonalSection() && validateAddressSection() && validateEmploymentSection()) {
-                setValidationError("");
-                setActiveSection(4);
-              } else {
-                setValidationError("Please complete all previous sections first.");
-              }
-            }}
+            onClick={() => setActiveSection(4)}
           >
             <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">4</span>
             Documents Upload
@@ -597,7 +469,6 @@ function ApplicationForm() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              required
               className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
               placeholder="Your email address"
             />
@@ -614,7 +485,6 @@ function ApplicationForm() {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                required
                 className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Your first name"
                 style={{
@@ -633,7 +503,6 @@ function ApplicationForm() {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                required
                 className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Your last name"
                 style={{
@@ -654,7 +523,6 @@ function ApplicationForm() {
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  required
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
                 >
                   <option value="">Select Gender</option>
@@ -682,7 +550,6 @@ function ApplicationForm() {
                   name="otherGender"
                   value={formData.otherGender || ''}
                   onChange={handleChange}
-                  required={formData.gender === "OTHER"}
                   className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                   placeholder="Please specify"
                 />
@@ -701,7 +568,6 @@ function ApplicationForm() {
                 max="100"
                 value={formData.age}
                 onChange={handleChange}
-                required
                 className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Your age"
               />
@@ -718,7 +584,6 @@ function ApplicationForm() {
                 name="maritalStatus"
                 value={formData.maritalStatus}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Marital Status</option>
@@ -750,7 +615,6 @@ function ApplicationForm() {
                 name="otherMaritalStatus"
                 value={formData.otherMaritalStatus || ''}
                 onChange={handleChange}
-                required={formData.maritalStatus === "OTHER"}
                 className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Please specify"
               />
@@ -767,7 +631,6 @@ function ApplicationForm() {
                 name="highestEducation"
                 value={formData.highestEducation}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Education Level</option>
@@ -796,7 +659,6 @@ function ApplicationForm() {
                 name="otherHighestEducation"
                 value={formData.otherHighestEducation || ''}
                 onChange={handleChange}
-                required={formData.highestEducation === "OTHER"}
                 className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Please specify"
               />
@@ -807,14 +669,7 @@ function ApplicationForm() {
             <button
               type="button"
               className="submit-button px-6 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center"
-              onClick={() => {
-                if (validatePersonalSection()) {
-                  setValidationError("");
-                  setActiveSection(2);
-                } else {
-                  setValidationError("Please fill in all required fields before proceeding.");
-                }
-              }}
+              onClick={() => setActiveSection(2)}
             >
               Next
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
@@ -847,7 +702,6 @@ function ApplicationForm() {
               name="completeAddress"
               value={formData.completeAddress}
               onChange={handleChange}
-              required
               className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
               placeholder="e.g. House No., Street, Barangay, City/Municipality, Province, Region"
             />
@@ -867,14 +721,7 @@ function ApplicationForm() {
             <button
               type="button"
               className="submit-button px-6 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center"
-              onClick={() => {
-                if (validateAddressSection()) {
-                  setValidationError("");
-                  setActiveSection(3);
-                } else {
-                  setValidationError("Please fill in all required fields before proceeding.");
-                }
-              }}
+              onClick={() => setActiveSection(3)}
             >
               Next
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
@@ -907,7 +754,6 @@ function ApplicationForm() {
                 name="positionApplyingFor"
                 value={formData.positionApplyingFor}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Position</option>
@@ -936,7 +782,6 @@ function ApplicationForm() {
                 name="otherPosition"
                 value={formData.otherPosition}
                 onChange={handleChange}
-                required={formData.positionApplyingFor === "OTHER"}
                 className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Specify the position you're applying for"
               />
@@ -953,7 +798,6 @@ function ApplicationForm() {
                 name="branchDepartment"
                 value={formData.branchDepartment}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Branch/Department</option>
@@ -982,7 +826,6 @@ function ApplicationForm() {
                 name="otherBranchDepartment"
                 value={formData.otherBranchDepartment || ''}
                 onChange={handleChange}
-                required={formData.branchDepartment === "Other"}
                 className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Specify the branch or department"
               />
@@ -999,7 +842,6 @@ function ApplicationForm() {
                 name="previouslyEmployed"
                 value={formData.previouslyEmployed}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select</option>
@@ -1024,7 +866,6 @@ function ApplicationForm() {
                 name="dateAvailability"
                 value={formData.dateAvailability}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Availability</option>
@@ -1053,7 +894,6 @@ function ApplicationForm() {
                 name="otherDateAvailability"
                 value={formData.otherDateAvailability || ''}
                 onChange={handleChange}
-                required={formData.dateAvailability === "OTHER"}
                 className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Please specify your availability"
               />
@@ -1070,9 +910,8 @@ function ApplicationForm() {
               name="desiredPay"
               value={formData.desiredPay}
               onChange={handleChange}
-              required
-              placeholder="e.g. ₱15,000 - ₱20,000"
               className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
+              placeholder="e.g. ₱15,000 - ₱20,000"
             />
           </div>
           
@@ -1086,7 +925,6 @@ function ApplicationForm() {
                 name="jobPostSource"
                 value={formData.jobPostSource}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Source</option>
@@ -1120,7 +958,6 @@ function ApplicationForm() {
                 name="otherJobSource"
                 value={formData.otherJobSource}
                 onChange={handleChange}
-                required={formData.jobPostSource === "Other"}
                 className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Enter the source"
               />
@@ -1141,14 +978,7 @@ function ApplicationForm() {
             <button
               type="button"
               className="submit-button px-6 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center"
-              onClick={() => {
-                if (validateEmploymentSection()) {
-                  setValidationError("");
-                  setActiveSection(4);
-                } else {
-                  setValidationError("Please fill in all required fields before proceeding.");
-                }
-              }}
+              onClick={() => setActiveSection(4)}
             >
               Next
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
