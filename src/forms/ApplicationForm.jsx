@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import apiService from '../services/api';  // Import the API service
+import { validPositions, validBranches, validEducation } from "../data/formOptions";
+import "../styles/applicationForm.css";
 
 // Shared placeholder style to ensure consistent appearance regardless of theme
 const placeholderStyle = {
@@ -266,8 +268,8 @@ function ApplicationForm() {
   const renderDocumentSection = () => (
     <div className={`bg-white p-6 sm:p-8 rounded-b-lg mt-px shadow-sm ${activeSection !== 4 ? 'hidden' : ''} max-w-6xl mx-auto`}>
       <div className="mb-5">
-        <label className="block mb-2 font-medium text-gray-700" htmlFor="resumeFile">
-          Resume/CV <span className="text-red-500">*</span>
+        <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="resumeFile">
+          Resume/CV <span className="text-red-500 text-sm">*</span>
         </label>
         <div className="relative">
           <input 
@@ -284,7 +286,7 @@ function ApplicationForm() {
       </div>
       
       <div className="mb-5">
-        <label className="block mb-2 font-medium text-gray-700" htmlFor="houseSketchFile">
+        <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="houseSketchFile">
           House Sketch
         </label>
         <div className="relative">
@@ -303,14 +305,17 @@ function ApplicationForm() {
       <div className="mt-8 flex justify-between">
         <button 
           type="button"
-          className="back-button px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition"
+          className="back-button px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none transition-colors mr-4 shadow-sm flex items-center"
           onClick={() => setActiveSection(3)}
         >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
           Back
         </button>
         <button 
           type="submit"
-          className="submit-button px-6 py-2 bg-[#FF5C00] text-white rounded-md hover:bg-[#e05400] transition disabled:opacity-50"
+          className="submit-button px-8 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors shadow-md flex items-center"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Submitting...' : 'Submit Application'}
@@ -445,9 +450,9 @@ function ApplicationForm() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 px-4 py-6">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 to-gray-100 px-4 py-6">
       {/* Dev Mode Toggle */}
-      <div className="bg-gray-100 p-3 mb-4 rounded-lg flex items-center justify-between max-w-6xl mx-auto">
+      <div className="bg-white p-3 mb-6 rounded-lg flex items-center justify-between max-w-6xl mx-auto shadow-sm">
         <div className="flex items-center">
           <span className="text-gray-700 text-sm font-medium">
             {validationEnabled ? "Development Mode: OFF" : "Development Mode: ON"}
@@ -489,10 +494,13 @@ function ApplicationForm() {
       </div>
 
       {/* Form Header */}
-      <div className="form-header bg-white p-6 rounded-t-lg max-w-6xl mx-auto">
-        <h1 className="text-[#202124] text-3xl font-normal">CANDIDATE INFORMATION DATA</h1>
-        <p className="text-[#5f6368] mt-2">Join our growing team. Here at VISMOTOR, we value your interest in applying to our company.</p>
-        <div className="mt-4 h-0.5 bg-[#dadce0]"></div>
+      <div className="form-header bg-white p-8 rounded-t-xl max-w-6xl mx-auto shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full -mr-20 -mt-20 opacity-40"></div>
+        <div className="relative z-10">
+          <h1 className="text-[#202124] text-3xl font-bold">JOIN OUR TEAM</h1>
+          <p className="text-[#5f6368] mt-3 text-lg">We're excited about your interest in applying to VISMOTOR. Tell us about yourself below.</p>
+        </div>
+        <div className="mt-6 h-1 bg-gradient-to-r from-[#FF5C00] to-orange-300 rounded-full"></div>
       </div>
       
       {submitError && (
@@ -509,17 +517,18 @@ function ApplicationForm() {
       
       <form onSubmit={handleSubmit} className="mt-4 max-w-6xl mx-auto">
         {/* Section Tabs */}
-        <div className="bg-white px-6 py-4 flex overflow-x-auto tab-buttons-container rounded-t-lg shadow-sm mb-1">
+        <div className="bg-white px-6 py-5 flex overflow-x-auto tab-buttons-container rounded-t-xl shadow-sm mb-1">
           <button 
             type="button"
-            className={`tab-button px-4 py-2 mr-3 rounded-full text-sm font-medium transition-colors ${activeSection === 1 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 1 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
             onClick={() => setActiveSection(1)}
           >
-            1. Personal Information
+            <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">1</span>
+            Personal Information
           </button>
           <button 
             type="button"
-            className={`tab-button px-4 py-2 mr-3 rounded-full text-sm font-medium transition-colors ${activeSection === 2 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 2 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
             onClick={() => {
               if (validatePersonalSection()) {
                 setValidationError("");
@@ -529,11 +538,12 @@ function ApplicationForm() {
               }
             }}
           >
-            2. Address Information
+            <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">2</span>
+            Address Information
           </button>
           <button 
             type="button"
-            className={`tab-button px-4 py-2 mr-3 rounded-full text-sm font-medium transition-colors ${activeSection === 3 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 3 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
             onClick={() => {
               if (validatePersonalSection() && validateAddressSection()) {
                 setValidationError("");
@@ -543,11 +553,12 @@ function ApplicationForm() {
               }
             }}
           >
-            3. Employment Information
+            <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">3</span>
+            Employment Information
           </button>
           <button 
             type="button"
-            className={`tab-button px-4 py-2 mr-3 rounded-full text-sm font-medium transition-colors ${activeSection === 4 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tab-button flex items-center px-5 py-3 mr-4 rounded-lg text-sm font-medium transition-all ${activeSection === 4 ? 'bg-orange-50 text-[#FF5C00] border-l-4 border-[#FF5C00]' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
             onClick={() => {
               if (validatePersonalSection() && validateAddressSection() && validateEmploymentSection()) {
                 setValidationError("");
@@ -557,21 +568,22 @@ function ApplicationForm() {
               }
             }}
           >
-            4. Documents Upload
+            <span className="w-7 h-7 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center mr-2 font-bold">4</span>
+            Documents Upload
           </button>
         </div>
         
         {/* Basic Information Section */}
-        <div className={`form-section bg-white p-6 sm:p-8 mb-4 max-w-6xl mx-auto shadow-sm ${activeSection === 1 ? 'block' : 'hidden'}`}>
-          <div className="flex items-center mb-4">
-            <div className="section-number">1</div>
-            <h2 className="section-title text-xl font-normal text-[#202124]">Personal Information</h2>
+        <div className={`form-section bg-white p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection === 1 ? 'block' : 'hidden'}`}>
+          <div className="flex items-center mb-6">
+            <span className="w-10 h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-xl mr-3">1</span>
+            <h2 className="text-xl font-bold text-gray-800">Personal Information</h2>
           </div>
-          <div className="section-divider"></div>
+          <div className="h-px w-full bg-gray-100 mb-8"></div>
           
           <div className="input-container mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="email">
-              Email <span className="required-star text-red-500">*</span>
+              Email Address <span className="text-red-500 text-sm">*</span>
             </label>
             <input
               type="email"
@@ -580,7 +592,7 @@ function ApplicationForm() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+              className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
               placeholder="Your email address"
             />
           </div>
@@ -588,7 +600,7 @@ function ApplicationForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <div className="input-container">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="firstName">
-                First Name <span className="required-star text-red-500">*</span>
+                First Name <span className="text-red-500 text-sm">*</span>
               </label>
               <input
                 type="text"
@@ -597,7 +609,7 @@ function ApplicationForm() {
                 value={formData.firstName}
                 onChange={handleChange}
                 required
-                className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Your first name"
                 style={{
                   '::placeholder': placeholderStyle
@@ -607,7 +619,7 @@ function ApplicationForm() {
             
             <div className="input-container">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="lastName">
-                Last Name <span className="required-star text-red-500">*</span>
+                Last Name <span className="text-red-500 text-sm">*</span>
               </label>
               <input
                 type="text"
@@ -616,7 +628,7 @@ function ApplicationForm() {
                 value={formData.lastName}
                 onChange={handleChange}
                 required
-                className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Your last name"
                 style={{
                   '::placeholder': placeholderStyle
@@ -628,7 +640,7 @@ function ApplicationForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <div className="mb-0">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="gender">
-                Gender <span className="required-star text-red-500">*</span>
+                Gender <span className="text-red-500 text-sm">*</span>
               </label>
               <div className="relative">
                 <select
@@ -637,7 +649,7 @@ function ApplicationForm() {
                   value={formData.gender}
                   onChange={handleChange}
                   required
-                  className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
                 >
                   <option value="">Select Gender</option>
                   <option value="MALE">Male</option>
@@ -656,7 +668,7 @@ function ApplicationForm() {
             {formData.gender === "OTHER" && (
               <div className="mb-5">
                 <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="otherGender">
-                  Specify Gender <span className="required-star text-red-500">*</span>
+                  Specify Gender <span className="text-red-500 text-sm">*</span>
                 </label>
                 <input
                   type="text"
@@ -665,7 +677,7 @@ function ApplicationForm() {
                   value={formData.otherGender || ''}
                   onChange={handleChange}
                   required={formData.gender === "OTHER"}
-                  className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+                  className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                   placeholder="Please specify"
                 />
               </div>
@@ -673,7 +685,7 @@ function ApplicationForm() {
             
             <div className="mb-0">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="age">
-                Age <span className="required-star text-red-500">*</span>
+                Age <span className="text-red-500 text-sm">*</span>
               </label>
               <input
                 type="number"
@@ -684,7 +696,7 @@ function ApplicationForm() {
                 value={formData.age}
                 onChange={handleChange}
                 required
-                className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white focus:outline-none"
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Your age"
               />
             </div>
@@ -692,7 +704,7 @@ function ApplicationForm() {
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="maritalStatus">
-              Marital Status <span className="required-star text-red-500">*</span>
+              Marital Status <span className="text-red-500 text-sm">*</span>
             </label>
             <div className="relative">
               <select
@@ -701,7 +713,7 @@ function ApplicationForm() {
                 value={formData.maritalStatus}
                 onChange={handleChange}
                 required
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Marital Status</option>
                 <option value="SINGLE">Single</option>
@@ -724,7 +736,7 @@ function ApplicationForm() {
           {formData.maritalStatus === "OTHER" && (
             <div className="mb-5">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="otherMaritalStatus">
-                Specify Marital Status <span className="required-star text-red-500">*</span>
+                Specify Marital Status <span className="text-red-500 text-sm">*</span>
               </label>
               <input
                 type="text"
@@ -733,7 +745,7 @@ function ApplicationForm() {
                 value={formData.otherMaritalStatus || ''}
                 onChange={handleChange}
                 required={formData.maritalStatus === "OTHER"}
-                className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Please specify"
               />
             </div>
@@ -741,7 +753,7 @@ function ApplicationForm() {
           
           <div className="input-container mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="highestEducation">
-              Highest Educational Attainment <span className="required-star text-red-500">*</span>
+              Highest Educational Attainment <span className="text-red-500 text-sm">*</span>
             </label>
             <div className="relative">
               <select
@@ -750,15 +762,14 @@ function ApplicationForm() {
                 value={formData.highestEducation}
                 onChange={handleChange}
                 required
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Education Level</option>
-                <option value="HIGH SCHOOL">High School</option>
-                <option value="VOCATIONAL">Vocational</option>
-                <option value="BACHELOR'S DEGREE">Bachelor's Degree</option>
-                <option value="MASTER'S DEGREE">Master's Degree</option>
-                <option value="DOCTORATE">Doctorate</option>
-                <option value="OTHER">Other</option>
+                {validEducation.map((education) => (
+                  <option key={education} value={education}>
+                    {education}
+                  </option>
+                ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -771,7 +782,7 @@ function ApplicationForm() {
           {formData.highestEducation === "OTHER" && (
             <div className="mb-5">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="otherHighestEducation">
-                Specify Educational Attainment <span className="required-star text-red-500">*</span>
+                Specify Educational Attainment <span className="text-red-500 text-sm">*</span>
               </label>
               <input
                 type="text"
@@ -780,7 +791,7 @@ function ApplicationForm() {
                 value={formData.otherHighestEducation || ''}
                 onChange={handleChange}
                 required={formData.highestEducation === "OTHER"}
-                className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Please specify"
               />
             </div>
@@ -789,7 +800,7 @@ function ApplicationForm() {
           <div className="mt-8 flex justify-end">
             <button
               type="button"
-              className="submit-button px-6 py-2 text-white rounded-md hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70"
+              className="submit-button px-6 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center"
               onClick={() => {
                 if (validatePersonalSection()) {
                   setValidationError("");
@@ -800,6 +811,9 @@ function ApplicationForm() {
               }}
             >
               Next
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
             </button>
           </div>
           {activeSection === 1 && validationError && (
@@ -810,16 +824,16 @@ function ApplicationForm() {
         </div>
         
         {/* Address Section */}
-        <div className={`form-section bg-white p-6 sm:p-8 mb-4 max-w-6xl mx-auto shadow-sm ${activeSection === 2 ? 'block' : 'hidden'}`}>
-          <div className="flex items-center mb-4">
-            <div className="section-number">2</div>
-            <h2 className="section-title text-xl font-normal text-[#202124]">Address Information</h2>
+        <div className={`form-section bg-white p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection === 2 ? 'block' : 'hidden'}`}>
+          <div className="flex items-center mb-6">
+            <span className="w-10 h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-xl mr-3">2</span>
+            <h2 className="text-xl font-bold text-gray-800">Address Information</h2>
           </div>
-          <div className="section-divider"></div>
+          <div className="h-px w-full bg-gray-100 mb-8"></div>
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="completeAddress">
-              Complete Address <span className="required-star text-red-500">*</span>
+              Complete Address <span className="text-red-500 text-sm">*</span>
             </label>
             <input
               type="text"
@@ -828,7 +842,7 @@ function ApplicationForm() {
               value={formData.completeAddress}
               onChange={handleChange}
               required
-              className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+              className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
               placeholder="e.g. House No., Street, Barangay, City/Municipality, Province, Region"
             />
           </div>
@@ -836,14 +850,17 @@ function ApplicationForm() {
           <div className="mt-8 flex justify-between">
             <button
               type="button"
-              className="px-6 py-2 border border-[#FF5C00] text-[#FF5C00] rounded-md hover:bg-orange-50 transition focus:outline-none"
+              className="back-button px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none transition-colors mr-4 shadow-sm flex items-center"
               onClick={() => setActiveSection(1)}
             >
-              Previous
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Back
             </button>
             <button
               type="button"
-              className="submit-button px-6 py-2 text-white rounded-md hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70"
+              className="submit-button px-6 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center"
               onClick={() => {
                 if (validateAddressSection()) {
                   setValidationError("");
@@ -854,6 +871,9 @@ function ApplicationForm() {
               }}
             >
               Next
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
             </button>
           </div>
           {activeSection === 2 && validationError && (
@@ -864,16 +884,16 @@ function ApplicationForm() {
         </div>
         
         {/* Employment Details Section */}
-        <div className={`form-section bg-white p-6 sm:p-8 mb-4 max-w-6xl mx-auto shadow-sm ${activeSection === 3 ? 'block' : 'hidden'}`}>
-          <div className="flex items-center mb-4">
-            <div className="section-number">3</div>
-            <h2 className="section-title text-xl font-normal text-[#202124]">Employment Details</h2>
+        <div className={`form-section bg-white p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection === 3 ? 'block' : 'hidden'}`}>
+          <div className="flex items-center mb-6">
+            <span className="w-10 h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-xl mr-3">3</span>
+            <h2 className="text-xl font-bold text-gray-800">Employment Information</h2>
           </div>
-          <div className="section-divider"></div>
+          <div className="h-px w-full bg-gray-100 mb-8"></div>
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="positionApplyingFor">
-              Position Applying For <span className="required-star text-red-500">*</span>
+              Position Applying For <span className="text-red-500 text-sm">*</span>
             </label>
             <div className="relative">
               <select
@@ -882,37 +902,14 @@ function ApplicationForm() {
                 value={formData.positionApplyingFor}
                 onChange={handleChange}
                 required
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Position</option>
-                <option value="ACCOUNTING STAFF">Accounting Staff</option>
-                <option value="AREA COLLECTION OFFICER">Area Collection Officer</option>
-                <option value="BRANCH AUDITOR">Branch Auditor</option>
-                <option value="BUSINESS PROCESS ANALYST">Business Process Analyst</option>
-                <option value="BUSINESS PROCESS AND APPLICATION">Business Process and Application</option>
-                <option value="CASHIER">Cashier</option>
-                <option value="CLUSTER HEAD CREDIT AND COLLECTION">Cluster Head Credit and Collection</option>
-                <option value="CLUSTER HEAD SALES">Cluster Head Sales</option>
-                <option value="CREDIT AND COLLECTION ADVISOR (CCA / CI / COLLECTOR)">Credit and Collection Advisor (CCA / CI / Collector)</option>
-                <option value="DIGITAL MARKETING AND SEO OFFICER">Digital Marketing and SEO Officer</option>
-                <option value="FINANCE AUDIT">Finance Audit</option>
-                <option value="FINANCE MANAGER">Finance Manager</option>
-                <option value="GENERAL ACCOUNTANT">General Accountant</option>
-                <option value="GRAPHIC ARTIST">Graphic Artist</option>
-                <option value="LIAISON ADMIN / STAFF">Liaison Admin / Staff</option>
-                <option value="LIAISON MANAGER">Liaison Manager</option>
-                <option value="LIAISON OFFICER">Liaison Officer</option>
-                <option value="MANAGEMENT ACCOUNTANT">Management Accountant</option>
-                <option value="MARKETING ASSISTANT">Marketing Assistant</option>
-                <option value="MARKETING MANAGER">Marketing Manager</option>
-                <option value="MECHANIC">Mechanic</option>
-                <option value="MERCHANDISING">Merchandising</option>
-                <option value="PARTS CUSTODIAN">Parts Custodian</option>
-                <option value="SALES ADMIN (FEMALE)">Sales Admin (Female)</option>
-                <option value="SALES ADVISOR (MALE)">Sales Advisor (Male)</option>
-                <option value="SALES AND OPERATION MANAGER">Sales and Operation Manager</option>
-                <option value="SUPERVISOR - BRANCH OPERATIONS/ BRANCH MANAGER">Supervisor - Branch Operations/ Branch Manager</option>
-                <option value="OTHER">Other</option>
+                {validPositions.map((position) => (
+                  <option key={position} value={position}>
+                    {position}
+                  </option>
+                ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -925,7 +922,7 @@ function ApplicationForm() {
           {formData.positionApplyingFor === "OTHER" && (
             <div className="input-container mb-5">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="otherPosition">
-                Specify Other Position <span className="required-star text-red-500">*</span>
+                Specify Other Position <span className="text-red-500 text-sm">*</span>
               </label>
               <input
                 type="text"
@@ -934,7 +931,7 @@ function ApplicationForm() {
                 value={formData.otherPosition}
                 onChange={handleChange}
                 required={formData.positionApplyingFor === "OTHER"}
-                className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Specify the position you're applying for"
               />
             </div>
@@ -942,7 +939,7 @@ function ApplicationForm() {
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="branchDepartment">
-              Branch or Department Applying For <span className="required-star text-red-500">*</span>
+              Branch or Department Applying For <span className="text-red-500 text-sm">*</span>
             </label>
             <div className="relative">
               <select
@@ -951,85 +948,14 @@ function ApplicationForm() {
                 value={formData.branchDepartment}
                 onChange={handleChange}
                 required
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Branch/Department</option>
-                <optgroup label="CEBU AREAS">
-                  <option value="Basak">Basak</option>
-                  <option value="Bogo">Bogo</option>
-                  <option value="Daanbantayan">Daanbantayan</option>
-                  <option value="Liloan">Liloan</option>
-                  <option value="Mandaue">Mandaue</option>
-                  <option value="Medellin">Medellin</option>
-                  <option value="Pajo">Pajo</option>
-                  <option value="San Remigio">San Remigio</option>
-                  <option value="Talamban">Talamban</option>
-                  <option value="Colon">Colon</option>
-                  <option value="Balamban">Balamban</option>
-                  <option value="Danao">Danao</option>
-                  <option value="Babag">Babag</option>
-                  <option value="Badian">Badian</option>
-                  <option value="Dumanjug">Dumanjug</option>
-                  <option value="Sibonga">Sibonga</option>
-                  <option value="Pinamungahan">Pinamungahan</option>
-                  <option value="San Fernando">San Fernando</option>
-                  <option value="Madridejos">Madridejos</option>
-                  <option value="Camotes">Camotes</option>
-                  <option value="Tayud">Tayud</option>
-                  <option value="Barili">Barili</option>
-                  <option value="Labogon">Labogon</option>
-                  <option value="Casuntingan">Casuntingan</option>
-                  <option value="Bantayan">Bantayan</option>
-                </optgroup>
-                <optgroup label="NEGROS AREAS">
-                  <option value="Bayawan">Bayawan</option>
-                  <option value="Dumaguete">Dumaguete</option>
-                  <option value="Tanjay">Tanjay</option>
-                  <option value="San Carlos">San Carlos</option>
-                  <option value="Sta Catalina">Sta Catalina</option>
-                </optgroup>
-                <optgroup label="LEYTE AREAS">
-                  <option value="Bato">Bato</option>
-                  <option value="Baybay">Baybay</option>
-                  <option value="Cabalian">Cabalian</option>
-                  <option value="Hilongos">Hilongos</option>
-                  <option value="HInunangan">HInunangan</option>
-                  <option value="Kananga">Kananga</option>
-                  <option value="Liloan-Leyte">Liloan-Leyte</option>
-                  <option value="Maasin">Maasin</option>
-                  <option value="Sogod">Sogod</option>
-                  <option value="Burauen">Burauen</option>
-                  <option value="Naval">Naval</option>
-                  <option value="Villaba">Villaba</option>
-                  <option value="Capoocan">Capoocan</option>
-                  <option value="Alang-Alang">Alang-Alang</option>
-                  <option value="Palompon">Palompon</option>
-                  <option value="Abuyog">Abuyog</option>
-                  <option value="Tanauan">Tanauan</option>
-                  <option value="Dulag">Dulag</option>
-                  <option value="Palo Leyte">Palo Leyte</option>
-                  <option value="Marasbaras">Marasbaras</option>
-                  <option value="Isabel">Isabel</option>
-                  <option value="Nula-Tula">Nula-Tula</option>
-                </optgroup>
-                <optgroup label="SAMAR AREAS">
-                  <option value="Balangiga">Balangiga</option>
-                  <option value="Borongan">Borongan</option>
-                  <option value="Calbayog">Calbayog</option>
-                  <option value="Catarman">Catarman</option>
-                  <option value="Dolores">Dolores</option>
-                  <option value="Guiuan">Guiuan</option>
-                  <option value="Rawis">Rawis</option>
-                  <option value="Basey">Basey</option>
-                  <option value="Gamay">Gamay</option>
-                  <option value="Dolores MB">Dolores MB</option>
-                  <option value="Gandara">Gandara</option>
-                  <option value="Catbalogan">Catbalogan</option>
-                  <option value="Mondragon">Mondragon</option>
-                </optgroup>
-                <optgroup label="OTHER">
-                  <option value="Other">Other (please specify)</option>
-                </optgroup>
+                {validBranches.map((branch) => (
+                  <option key={branch} value={branch}>
+                    {branch}
+                  </option>
+                ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -1042,7 +968,7 @@ function ApplicationForm() {
           {formData.branchDepartment === "Other" && (
             <div className="input-container mb-5">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="otherBranchDepartment">
-                Specify Other Branch/Department <span className="required-star text-red-500">*</span>
+                Specify Other Branch/Department <span className="text-red-500 text-sm">*</span>
               </label>
               <input
                 type="text"
@@ -1051,7 +977,7 @@ function ApplicationForm() {
                 value={formData.otherBranchDepartment || ''}
                 onChange={handleChange}
                 required={formData.branchDepartment === "Other"}
-                className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Specify the branch or department"
               />
             </div>
@@ -1059,7 +985,7 @@ function ApplicationForm() {
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="previouslyEmployed">
-              Have you been employed to Vismotor Corporation before? <span className="required-star text-red-500">*</span>
+              Have you been employed to Vismotor Corporation before? <span className="text-red-500 text-sm">*</span>
             </label>
             <div className="relative">
               <select
@@ -1068,7 +994,7 @@ function ApplicationForm() {
                 value={formData.previouslyEmployed}
                 onChange={handleChange}
                 required
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select</option>
                 <option value="YES">YES</option>
@@ -1084,7 +1010,7 @@ function ApplicationForm() {
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="dateAvailability">
-              Date Availability to Start <span className="required-star text-red-500">*</span>
+              Date Availability to Start <span className="text-red-500 text-sm">*</span>
             </label>
             <div className="relative">
               <select
@@ -1093,7 +1019,7 @@ function ApplicationForm() {
                 value={formData.dateAvailability}
                 onChange={handleChange}
                 required
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Availability</option>
                 <option value="ASAP">ASAP</option>
@@ -1113,7 +1039,7 @@ function ApplicationForm() {
           {formData.dateAvailability === "OTHER" && (
             <div className="mb-5">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="otherDateAvailability">
-                Specify Availability <span className="required-star text-red-500">*</span>
+                Specify Availability <span className="text-red-500 text-sm">*</span>
               </label>
               <input
                 type="text"
@@ -1122,7 +1048,7 @@ function ApplicationForm() {
                 value={formData.otherDateAvailability || ''}
                 onChange={handleChange}
                 required={formData.dateAvailability === "OTHER"}
-                className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Please specify your availability"
               />
             </div>
@@ -1130,7 +1056,7 @@ function ApplicationForm() {
           
           <div className="input-container mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="desiredPay">
-              Desired Pay <span className="required-star text-red-500">*</span>
+              Desired Pay <span className="text-red-500 text-sm">*</span>
             </label>
             <input
               type="text"
@@ -1140,13 +1066,13 @@ function ApplicationForm() {
               onChange={handleChange}
               required
               placeholder="e.g. ₱15,000 - ₱20,000"
-              className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+              className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
             />
           </div>
           
           <div className="mb-5">
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="jobPostSource">
-              Where did you see our job posting or hiring? <span className="required-star text-red-500">*</span>
+              Where did you see our job posting or hiring? <span className="text-red-500 text-sm">*</span>
             </label>
             <div className="relative">
               <select
@@ -1155,7 +1081,7 @@ function ApplicationForm() {
                 value={formData.jobPostSource}
                 onChange={handleChange}
                 required
-                className="form-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] bg-white appearance-none focus:outline-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
               >
                 <option value="">Select Source</option>
                 <option value="Facebook">Facebook</option>
@@ -1180,7 +1106,7 @@ function ApplicationForm() {
           {formData.jobPostSource === "Other" && (
             <div className="input-container mb-5">
               <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="otherJobSource">
-                Specify Other Source <span className="required-star text-red-500">*</span>
+                Specify Other Source <span className="text-red-500 text-sm">*</span>
               </label>
               <input
                 type="text"
@@ -1189,7 +1115,7 @@ function ApplicationForm() {
                 value={formData.otherJobSource}
                 onChange={handleChange}
                 required={formData.jobPostSource === "Other"}
-                className="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00]"
+                className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
                 placeholder="Enter the source"
               />
             </div>
@@ -1198,14 +1124,17 @@ function ApplicationForm() {
           <div className="mt-8 flex justify-between">
             <button
               type="button"
-              className="px-6 py-2 border border-[#FF5C00] text-[#FF5C00] rounded-md hover:bg-orange-50 transition focus:outline-none"
+              className="back-button px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none transition-colors mr-4 shadow-sm flex items-center"
               onClick={() => setActiveSection(2)}
             >
-              Previous
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Back
             </button>
             <button
               type="button"
-              className="submit-button px-6 py-2 text-white rounded-md hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70"
+              className="submit-button px-6 py-3 text-white bg-[#FF5C00] rounded-lg hover:bg-[#E65100] focus:outline-none transition-colors disabled:opacity-70 shadow-md flex items-center"
               onClick={() => {
                 if (validateEmploymentSection()) {
                   setValidationError("");
@@ -1216,6 +1145,9 @@ function ApplicationForm() {
               }}
             >
               Next
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
             </button>
           </div>
           {activeSection === 3 && validationError && (
@@ -1230,7 +1162,7 @@ function ApplicationForm() {
       </form>
       
       <div className="text-sm text-[#5f6368] p-4 flex items-center max-w-6xl mx-auto mb-8">
-        <span className="required-star text-red-500 mr-1">*</span> Required fields
+        <span className="text-red-500 text-sm mr-1">*</span> Required fields
       </div>
     </div>
   );
