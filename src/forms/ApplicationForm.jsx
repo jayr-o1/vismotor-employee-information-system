@@ -264,7 +264,7 @@ function ApplicationForm() {
 
   // Add the document upload section render
   const renderDocumentSection = () => (
-    <div className={`bg-white p-6 rounded-b-lg mt-px ${activeSection !== 4 ? 'hidden' : ''}`}>
+    <div className={`bg-white p-6 sm:p-8 rounded-b-lg mt-px shadow-sm ${activeSection !== 4 ? 'hidden' : ''} max-w-6xl mx-auto`}>
       <div className="mb-5">
         <label className="block mb-2 font-medium text-gray-700" htmlFor="resumeFile">
           Resume/CV <span className="text-red-500">*</span>
@@ -422,30 +422,32 @@ function ApplicationForm() {
 
   if (submitSuccess) {
     return (
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-0 overflow-hidden">
-        <div className="form-header bg-white p-6 text-center">
-          <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-[#34A853]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-4">
+        <div className="w-full max-w-2xl bg-white rounded-lg shadow-sm p-0 overflow-hidden">
+          <div className="form-header bg-white p-6 text-center">
+            <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-[#34A853]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-normal text-[#202124] mt-4">Application Submitted!</h2>
+            <p className="text-[#5f6368] mt-2 mb-6">Thank you for your application. We will be in touch soon.</p>
+            <button 
+              className="submit-button px-6 py-2 text-white rounded-md transition"
+              onClick={() => setSubmitSuccess(false)}
+            >
+              Submit Another Response
+            </button>
           </div>
-          <h2 className="text-2xl font-normal text-[#202124] mt-4">Application Submitted!</h2>
-          <p className="text-[#5f6368] mt-2 mb-6">Thank you for your application. We will be in touch soon.</p>
-          <button 
-            className="submit-button px-6 py-2 text-white rounded-md transition"
-            onClick={() => setSubmitSuccess(false)}
-          >
-            Submit Another Response
-          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen w-full bg-gray-50 px-4 py-6">
       {/* Dev Mode Toggle */}
-      <div className="bg-gray-100 p-3 mb-4 rounded-lg flex items-center justify-between">
+      <div className="bg-gray-100 p-3 mb-4 rounded-lg flex items-center justify-between max-w-6xl mx-auto">
         <div className="flex items-center">
           <span className="text-gray-700 text-sm font-medium">
             {validationEnabled ? "Development Mode: OFF" : "Development Mode: ON"}
@@ -487,37 +489,37 @@ function ApplicationForm() {
       </div>
 
       {/* Form Header */}
-      <div className="form-header bg-white p-6 rounded-t-lg">
+      <div className="form-header bg-white p-6 rounded-t-lg max-w-6xl mx-auto">
         <h1 className="text-[#202124] text-3xl font-normal">CANDIDATE INFORMATION DATA</h1>
         <p className="text-[#5f6368] mt-2">Join our growing team. Here at VISMOTOR, we value your interest in applying to our company.</p>
         <div className="mt-4 h-0.5 bg-[#dadce0]"></div>
       </div>
       
       {submitError && (
-        <div className="mx-auto bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="mx-auto bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 max-w-6xl">
           {submitError}
         </div>
       )}
       
       {validationError && (
-        <div className="mx-auto bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+        <div className="mx-auto bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4 max-w-6xl">
           {validationError}
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="mt-4">
+      <form onSubmit={handleSubmit} className="mt-4 max-w-6xl mx-auto">
         {/* Section Tabs */}
-        <div className="bg-white px-6 py-3 flex overflow-x-auto tab-buttons-container">
+        <div className="bg-white px-6 py-4 flex overflow-x-auto tab-buttons-container rounded-t-lg shadow-sm mb-1">
           <button 
             type="button"
-            className={`tab-button px-4 py-2 mr-2 rounded-full text-sm font-medium transition-colors ${activeSection === 1 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tab-button px-4 py-2 mr-3 rounded-full text-sm font-medium transition-colors ${activeSection === 1 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             onClick={() => setActiveSection(1)}
           >
             1. Personal Information
           </button>
           <button 
             type="button"
-            className={`tab-button px-4 py-2 mr-2 rounded-full text-sm font-medium transition-colors ${activeSection === 2 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tab-button px-4 py-2 mr-3 rounded-full text-sm font-medium transition-colors ${activeSection === 2 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             onClick={() => {
               if (validatePersonalSection()) {
                 setValidationError("");
@@ -531,7 +533,7 @@ function ApplicationForm() {
           </button>
           <button 
             type="button"
-            className={`tab-button px-4 py-2 mr-2 rounded-full text-sm font-medium transition-colors ${activeSection === 3 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tab-button px-4 py-2 mr-3 rounded-full text-sm font-medium transition-colors ${activeSection === 3 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             onClick={() => {
               if (validatePersonalSection() && validateAddressSection()) {
                 setValidationError("");
@@ -545,7 +547,7 @@ function ApplicationForm() {
           </button>
           <button 
             type="button"
-            className={`tab-button px-4 py-2 mr-2 rounded-full text-sm font-medium transition-colors ${activeSection === 4 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`tab-button px-4 py-2 mr-3 rounded-full text-sm font-medium transition-colors ${activeSection === 4 ? 'bg-[#FF5C00] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             onClick={() => {
               if (validatePersonalSection() && validateAddressSection() && validateEmploymentSection()) {
                 setValidationError("");
@@ -560,7 +562,7 @@ function ApplicationForm() {
         </div>
         
         {/* Basic Information Section */}
-        <div className={`form-section bg-white p-6 mb-4 ${activeSection === 1 ? 'block' : 'hidden'}`}>
+        <div className={`form-section bg-white p-6 sm:p-8 mb-4 max-w-6xl mx-auto shadow-sm ${activeSection === 1 ? 'block' : 'hidden'}`}>
           <div className="flex items-center mb-4">
             <div className="section-number">1</div>
             <h2 className="section-title text-xl font-normal text-[#202124]">Personal Information</h2>
@@ -808,7 +810,7 @@ function ApplicationForm() {
         </div>
         
         {/* Address Section */}
-        <div className={`form-section bg-white p-6 mb-4 ${activeSection === 2 ? 'block' : 'hidden'}`}>
+        <div className={`form-section bg-white p-6 sm:p-8 mb-4 max-w-6xl mx-auto shadow-sm ${activeSection === 2 ? 'block' : 'hidden'}`}>
           <div className="flex items-center mb-4">
             <div className="section-number">2</div>
             <h2 className="section-title text-xl font-normal text-[#202124]">Address Information</h2>
@@ -862,7 +864,7 @@ function ApplicationForm() {
         </div>
         
         {/* Employment Details Section */}
-        <div className={`form-section bg-white p-6 mb-4 ${activeSection === 3 ? 'block' : 'hidden'}`}>
+        <div className={`form-section bg-white p-6 sm:p-8 mb-4 max-w-6xl mx-auto shadow-sm ${activeSection === 3 ? 'block' : 'hidden'}`}>
           <div className="flex items-center mb-4">
             <div className="section-number">3</div>
             <h2 className="section-title text-xl font-normal text-[#202124]">Employment Details</h2>
@@ -1227,7 +1229,7 @@ function ApplicationForm() {
         {renderDocumentSection()}
       </form>
       
-      <div className="text-sm text-[#5f6368] p-4 flex items-center">
+      <div className="text-sm text-[#5f6368] p-4 flex items-center max-w-6xl mx-auto mb-8">
         <span className="required-star text-red-500 mr-1">*</span> Required fields
       </div>
     </div>
