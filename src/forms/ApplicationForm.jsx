@@ -266,7 +266,13 @@ function ApplicationForm() {
 
   // Add the document upload section render
   const renderDocumentSection = () => (
-    <div className={`bg-white p-6 sm:p-8 rounded-b-lg mt-px shadow-sm ${activeSection !== 4 ? 'hidden' : ''} max-w-6xl mx-auto`}>
+    <div className={`form-section bg-white p-8 mb-6 max-w-6xl mx-auto shadow-sm rounded-b-xl ${activeSection !== 4 ? 'hidden' : ''}`}>
+      <div className="flex items-center mb-6">
+        <span className="w-10 h-10 rounded-full bg-orange-100 text-[#FF5C00] flex items-center justify-center font-bold text-xl mr-3">4</span>
+        <h2 className="text-xl font-bold text-gray-800">Documents Upload</h2>
+      </div>
+      <div className="h-px w-full bg-gray-100 mb-8"></div>
+      
       <div className="mb-5">
         <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="resumeFile">
           Resume/CV <span className="text-red-500 text-sm">*</span>
