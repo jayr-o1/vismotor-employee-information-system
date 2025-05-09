@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import apiService from '../services/api';  // Import the API service
 import { validPositions, validBranches, validEducation } from "../data/formOptions";
 import "../styles/applicationForm.css";
+import BranchSelector from "../components/BranchSelector";
 
 // Shared placeholder style to ensure consistent appearance regardless of theme
 const placeholderStyle = {
@@ -792,27 +793,15 @@ function ApplicationForm() {
             <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="branchDepartment">
               Branch or Department Applying For <span className="text-red-500 text-sm">*</span>
             </label>
-            <div className="relative">
-              <select
-                id="branchDepartment"
-                name="branchDepartment"
-                value={formData.branchDepartment}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm appearance-none"
-              >
-                <option value="">Select Branch/Department</option>
-                {validBranches.map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
+            <BranchSelector 
+              onBranchSelect={(branch) => {
+                setFormData({
+                  ...formData,
+                  branchDepartment: branch
+                });
+              }} 
+              selectedBranch={formData.branchDepartment}
+            />
           </div>
           
           {formData.branchDepartment === "Other" && (

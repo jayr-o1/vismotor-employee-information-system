@@ -1,4 +1,5 @@
 // Form options data for the application form
+import { allBranches } from './branchOptions';
 
 export const validPositions = [
   "Software Developer",
@@ -22,26 +23,7 @@ export const validPositions = [
   "OTHER"
 ];
 
-export const validBranches = [
-  "Head Office - Quezon City",
-  "Caloocan Branch",
-  "Malabon Branch",
-  "Navotas Branch",
-  "Valenzuela Branch",
-  "Manila Branch",
-  "Pasay Branch",
-  "Makati Branch",
-  "Taguig Branch",
-  "Pasig Branch",
-  "Marikina Branch",
-  "San Juan Branch",
-  "Mandaluyong Branch",
-  "Las Piñas Branch",
-  "Parañaque Branch",
-  "Muntinlupa Branch",
-  "Pateros Branch",
-  "Other"
-];
+export const validBranches = allBranches;
 
 export const validEducation = [
   "Elementary School",
