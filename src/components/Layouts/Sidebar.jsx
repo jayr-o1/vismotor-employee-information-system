@@ -125,7 +125,7 @@ const Sidebar = () => {
           {/* Staff */}
           <li className="my-0">
             <NavLink
-              to="/employees"
+              to="/hr-staff"
               className={({ isActive }) =>
                 `flex items-center py-3 px-6 w-full ${
                   isActive
@@ -133,28 +133,10 @@ const Sidebar = () => {
                     : `${inactiveText} ${hoverBg} ${isDark ? 'hover:text-white' : 'hover:text-gray-900'} hover:no-underline`
                 }`
               }
-              title="Staff Directory"
+              title="HR Staff Directory"
             >
               <i className="fas fa-id-badge w-5 text-center mr-4"></i> 
-              Staff Directory
-            </NavLink>
-          </li>
-
-          {/* Employee Directory */}
-          <li className="my-0">
-            <NavLink
-              to="/employee-directory"
-              className={({ isActive }) =>
-                `flex items-center py-3 px-6 w-full ${
-                  isActive
-                    ? `${activeBg} ${activeText} ${activeIndicator} hover:no-underline`
-                    : `${inactiveText} ${hoverBg} ${isDark ? 'hover:text-white' : 'hover:text-gray-900'} hover:no-underline`
-                }`
-              }
-              title="Employee Directory"
-            >
-              <i className="fas fa-users w-5 text-center mr-4"></i> 
-              Employee Directory
+              HR Staff Directory
             </NavLink>
           </li>
 
@@ -164,16 +146,16 @@ const Sidebar = () => {
           {/* Profile Banner */}
           {user && (
             <li className="my-2">
-              <div className={`flex items-center justify-between p-3 ${profileBannerBg}`}>
-                <div className="flex items-center">
+              <div className={`p-3 ${profileBannerBg}`}>
+                <div className="flex items-center justify-center mb-2">
                   <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#0e8631] flex items-center justify-center text-lg font-bold">
                     {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </div>
-                  <div className="ml-3 flex-1 overflow-hidden">
-                    <p className={`${isDark ? 'text-white' : 'text-gray-800'} font-medium truncate`}>{user.name || 'User'}</p>
-                  </div>
                 </div>
-                <div className="flex space-x-4">
+                <div className="text-center mb-2">
+                  <p className={`${isDark ? 'text-white' : 'text-gray-800'} font-medium text-xs`}>{user.name || 'User'}</p>
+                </div>
+                <div className="flex justify-center space-x-6">
                   <NavLink
                     to="/settings"
                     title="Settings"

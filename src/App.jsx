@@ -68,14 +68,14 @@ function App() {
             {/* Protected Routes wrapped in Layout */}
             <Route element={<ProtectedRoute element={<Layout />} />}>
               <Route path="/home" element={<Home />} />
-              <Route path="/employees" element={<Employees />} />
-              <Route path="/employees/:id" element={<EmployeeDetails />} />
+              <Route path="/hr-staff" element={<Employees />} />
+              <Route path="/hr-staff/:id" element={<EmployeeDetails />} />
               <Route path="/applicants" element={<Applicants />} />
               <Route path="/applicants/:id" element={<ApplicantDetails />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/onboarding/:id" element={<OnboardingDetail />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/staff-directory" element={<StaffDirectory />} />
+              <Route path="/hr-staff-directory" element={<StaffDirectory />} />
             </Route>
             
             {/* Redirect root to login */}

@@ -98,7 +98,7 @@ const Employees = () => {
 
   // Navigate to employee details page
   const handleViewEmployee = (employee) => {
-    navigate(`/employees/${employee.id}`);
+    navigate(`/hr-staff/${employee.id}`);
   };
 
   // Open edit employee modal
@@ -339,19 +339,19 @@ const Employees = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header with search and export */}
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-semibold">Employees</h1>
+          <h1 className="text-2xl font-semibold">HR Staff Directory</h1>
           <div className="flex gap-2 items-center">
             <button
               onClick={() => exportEmployeesByDept(employees)}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
               <i className="fas fa-file-csv mr-2"></i>
-              Export Employee Data
+              Export HR Staff Data
             </button>
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search employees..."
+                placeholder="Search staff..."
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className={`pl-10 pr-4 py-2 rounded-lg border ${
@@ -503,7 +503,7 @@ const Employees = () => {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Edit Employee</h2>
+              <h2 className="text-2xl font-semibold">Edit HR Staff Member</h2>
               <button 
                 onClick={() => setEditModalOpen(false)}
                 className={`p-2 rounded-full ${

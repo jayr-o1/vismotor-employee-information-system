@@ -175,7 +175,7 @@ const StaffDirectory = () => {
       
       <div className="max-w-7xl mx-auto py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Staff Directory</h1>
+          <h1 className="text-2xl font-semibold">HR Staff Directory</h1>
           <div className="relative">
             <input
               type="text"

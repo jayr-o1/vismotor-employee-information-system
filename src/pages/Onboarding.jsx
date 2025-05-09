@@ -120,9 +120,9 @@ const Onboarding = () => {
   return (
     <>
       <ToastContainer position="top-right" />
-      <div className="max-w-7xl mx-auto py-6">
+      <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Employee Onboarding</h1>
+          <h1 className="text-2xl font-semibold">Applicant Onboarding</h1>
           
           <div className="flex space-x-2">
             {/* Search Box */}

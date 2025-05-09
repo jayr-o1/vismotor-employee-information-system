@@ -458,14 +458,14 @@ const Home = () => {
           
           <div className="flex flex-col gap-6 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link to="/employees" style={{ textDecoration: 'none' }}>
+              <Link to="/hr-staff" style={{ textDecoration: 'none' }}>
                 <DashboardCard
                   value={stats.employees}
                   title="Total Employees"
                   icon="fas fa-users"
                   color="blue"
                   trend={{ value: 3.6, isUpward: true }}
-                  description="From Staff Directory"
+                  description="From HR Staff Directory"
                 />
               </Link>
               <Link to="/onboarding" style={{ textDecoration: 'none' }}>

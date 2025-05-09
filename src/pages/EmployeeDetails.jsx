@@ -49,7 +49,7 @@ const EmployeeDetails = () => {
   }, [id]);
 
   const handleGoBack = () => {
-    navigate("/employees");
+    navigate("/hr-staff");
   };
 
   const handleRetry = () => {
@@ -99,7 +99,7 @@ const EmployeeDetails = () => {
             isDark ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
           }`}
         >
-          <FaArrowLeft className="mr-2" /> Back to Employees
+          <FaArrowLeft className="mr-2" /> Back to HR Staff
         </button>
         
         {loading ? (
@@ -166,77 +166,4 @@ const EmployeeDetails = () => {
                     {/* Name and Position */}
                     <div>
                       <h2 className="text-3xl font-bold">{employee.name}</h2>
-                      <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {employee.position}
-                      </p>
-                      <div className={`inline-block px-3 py-1 mt-2 rounded-full text-sm font-semibold ${
-                        employee.status === 'Active' 
-                          ? isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
-                          : isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {employee.status}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Employee Details */}
-                  <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} p-6 rounded-xl mt-6`}>
-                    <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
-                        <p className="font-medium">{employee.email}</p>
-                      </div>
-                      <div>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
-                        <p className="font-medium">{employee.phone}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} p-6 rounded-xl mt-6`}>
-                    <h3 className="text-xl font-semibold mb-4">Employment Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Department</p>
-                        <p className="font-medium">{employee.department}</p>
-                      </div>
-                      <div>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Hire Date</p>
-                        <p className="font-medium">{new Date(employee.hire_date).toLocaleDateString()}</p>
-                      </div>
-                      <div>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Employee ID</p>
-                        <p className="font-medium">EMP-{employee.id.toString().padStart(4, '0')}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* QR Code - Right column */}
-                <div className="w-full md:w-1/3 mt-6 md:mt-0">
-                  <div className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} p-6 rounded-xl h-full flex flex-col items-center justify-center`}>
-                    <h3 className="text-xl font-semibold mb-6 text-center">Employee ID Card</h3>
-                    <div className={`p-4 bg-white rounded-xl shadow-md`}>
-                      <QRCodeSVG 
-                        value={`${window.location.origin}/qr/employee/${employee.id}`}
-                        size={200}
-                        level="H"
-                        includeMargin={true}
-                      />
-                    </div>
-                    <p className="mt-4 text-center text-sm">
-                      Scan to view employee profile card
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default EmployeeDetails; 
+                      <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
