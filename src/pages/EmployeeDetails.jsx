@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaEnvelope, FaPhone, FaIdCard, FaMapMarkerAlt, FaCalendarAlt, FaUserTag } from "react-icons/fa";
 import { QRCodeSVG } from "qrcode.react";
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
@@ -35,6 +35,15 @@ const EmployeeDetails = () => {
         if (!response.data) {
           throw new Error("Employee not found");
         }
+        
+        // Add debugging to see available ID fields
+        console.log("Employee data:", response.data);
+        console.log("ID fields:", {
+          "id": response.data.id,
+          "_id": response.data._id,
+          "employee_id": response.data.employee_id
+        });
+        
         setEmployee(response.data);
       } catch (error) {
         console.error("Error fetching employee details:", error);
@@ -86,6 +95,13 @@ const EmployeeDetails = () => {
   const getProfilePictureUrl = (filename) => {
     if (!filename) return defaultAvatar;
     return `http://10.10.1.71:5000/uploads/profile-pictures/${filename}`;
+  };
+
+  // Format date for better display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not specified';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   return (
@@ -166,4 +182,107 @@ const EmployeeDetails = () => {
                     {/* Name and Position */}
                     <div>
                       <h2 className="text-3xl font-bold">{employee.name}</h2>
-                      <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                      <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {employee.position || 'Position Not Specified'}
+                      </p>
+                      <p className={`mt-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                        {employee.status === 'active' ? 'Active Employee' : employee.status}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Employee Info */}
+                  <div className={`mt-6 p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-start">
+                        <FaIdCard className={`mt-1 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <div>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Employee ID</p>
+                          <p className="font-medium">{employee.employee_id || 'Not assigned'}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start">
+                        <FaEnvelope className={`mt-1 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <div>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
+                          <p className="font-medium">{employee.email || 'Not provided'}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start">
+                        <FaPhone className={`mt-1 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <div>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
+                          <p className="font-medium">{employee.phone || 'Not provided'}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start">
+                        <FaCalendarAlt className={`mt-1 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <div>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Hire Date</p>
+                          <p className="font-medium">{formatDate(employee.hire_date)}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start">
+                        <FaMapMarkerAlt className={`mt-1 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <div>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
+                          <p className="font-medium">{employee.address || 'Not provided'}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start">
+                        <FaUserTag className={`mt-1 mr-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <div>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Department</p>
+                          <p className="font-medium">{employee.department || 'Not assigned'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {employee.notes && (
+                      <div className="mt-4">
+                        <h4 className="text-md font-semibold mb-2">Notes</h4>
+                        <p className={`p-3 rounded ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>{employee.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* QR Code - Right column */}
+                <div className="w-full md:w-1/3 mt-6 md:mt-0">
+                  <div className={`p-6 rounded-lg text-center ${isDark ? 'bg-gray-700' : 'bg-white border border-gray-200'}`}>
+                    <h3 className="text-lg font-semibold mb-4">Employee QR Code</h3>
+                    <div className="inline-block p-2 bg-white rounded-lg">
+                      <QRCodeSVG 
+                        value={`http://10.10.1.71:5173/qr/employee/${employee.id || employee._id || employee.employee_id}`}
+                        size={180}
+                        bgColor={"#ffffff"}
+                        fgColor={"#000000"}
+                        level={"H"}
+                        includeMargin={true}
+                      />
+                    </div>
+                    <p className="mt-4 text-sm text-gray-500">Scan to view employee profile</p>
+                    
+                    <div className="mt-6 p-4 rounded-lg bg-green-50 text-green-800">
+                      <h4 className="font-medium">Branch/Location</h4>
+                      <p className="mt-1">{employee.branch || 'Not assigned'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default EmployeeDetails;
