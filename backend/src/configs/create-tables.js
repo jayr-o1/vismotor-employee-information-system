@@ -3,9 +3,14 @@ const fs = require('fs');
 const path = require('path');
 const dbConfig = require('./database');
 
-// Read SQL file
-const sqlFilePath = path.join(__dirname, 'db_tables.sql');
-const sqlContent = fs.readFileSync(sqlFilePath, 'utf8');
+// Read SQL files
+const schemaFilePath = path.join(__dirname, 'sql', 'schema.sql');
+const sampleDataFilePath = path.join(__dirname, 'sql', 'sample-data.sql');
+const schemaContent = fs.readFileSync(schemaFilePath, 'utf8');
+const sampleDataContent = fs.readFileSync(sampleDataFilePath, 'utf8');
+
+// Combine schema and sample data
+const sqlContent = schemaContent + '\n' + sampleDataContent;
 
 // Split the SQL content into individual statements
 const sqlStatements = sqlContent
@@ -35,10 +40,22 @@ async function executeSql() {
     
     try {
       await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+      
+      // Drop the tables that were highlighted in the image
+      await connection.query('DROP TABLE IF EXISTS employee_documents');
+      await connection.query('DROP TABLE IF EXISTS employee_equipment');
+      await connection.query('DROP TABLE IF EXISTS employee_training');
+      await connection.query('DROP TABLE IF EXISTS document_types');
+      await connection.query('DROP TABLE IF EXISTS equipment_types');
+      await connection.query('DROP TABLE IF EXISTS training_types');
+      
+      // Keep other tables
       await connection.query('DROP TABLE IF EXISTS employees');
       await connection.query('DROP TABLE IF EXISTS interviews');
       await connection.query('DROP TABLE IF EXISTS feedback');
+      await connection.query('DROP TABLE IF EXISTS applicant_notes');
       await connection.query('DROP TABLE IF EXISTS applicants');
+      await connection.query('DROP TABLE IF EXISTS users');
       await connection.query('SET FOREIGN_KEY_CHECKS = 1');
       console.log('Tables dropped successfully.');
     } catch (error) {
@@ -75,6 +92,9 @@ async function executeSql() {
     
     // Check sample data
     console.log('\nVerifying sample data...');
+    const [users] = await connection.query('SELECT COUNT(*) as count FROM users');
+    console.log(`Users count: ${users[0].count}`);
+    
     const [applicants] = await connection.query('SELECT COUNT(*) as count FROM applicants');
     console.log(`Applicants count: ${applicants[0].count}`);
     

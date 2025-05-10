@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import apiService from "../../services/api";
+import { showToast, showValidationErrors } from "../../components/Alerts";
+import { showLoading, closeLoading, showSuccess } from "../../components/SweetAlerts";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -12,21 +14,25 @@ const ForgotPassword = () => {
 
   const handleReset = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
+    // Validation
     if (!email) {
       setError("Email is required!");
-      toast.error("Email is required!", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      setIsLoading(false);
+      showValidationErrors("Email is required!");
       return;
     }
+
+    // Check valid email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      showValidationErrors("Please enter a valid email address");
+      return;
+    }
+
+    // Show loading state
+    setIsLoading(true);
+    showLoading("Sending reset link...");
 
     try {
       // Send a request to the backend
@@ -37,28 +43,25 @@ const ForgotPassword = () => {
       setMessage(successMessage);
       setError("");
       
-      toast.success(successMessage, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      // Close loading state and show success
+      closeLoading();
+      showSuccess("Reset Link Sent", `
+        <p>${successMessage}</p>
+        <p class="mt-2 text-sm">Please check your inbox and spam folder.</p>
+      `);
+      
+      // Also show a toast for additional confirmation
+      showToast.success(successMessage);
     } catch (error) {
       // Handle errors
+      closeLoading();
+      
       const errorMessage = error.response?.data?.message || "Something went wrong. Please try again later.";
       setError(errorMessage);
       setMessage("");
       
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      // Show error toast
+      showToast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

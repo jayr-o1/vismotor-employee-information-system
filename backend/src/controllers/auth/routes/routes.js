@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const mysql = require('mysql2/promise');
-const dbConfig = require('../../../configs/database');
+const db = require('../../../configs/database');
+const bcrypt = require('bcryptjs');
 
 // Import controllers
 const signup = require('../signupController');
@@ -19,7 +19,7 @@ router.get('/api/verify-email', verifyEmail);
 router.post('/api/resend-verification', async (req, res) => {
   try {
     const { email } = req.body;
-    const connection = await mysql.createPool(dbConfig).getConnection();
+    const connection = await db.getConnection();
     
     // Find user by email
     const [users] = await connection.query('SELECT * FROM users WHERE email = ?', [email]);
@@ -51,7 +51,7 @@ router.post('/api/resend-verification', async (req, res) => {
     
     // Send verification email
     const { sendVerificationEmail } = require('../../../services/emailService');
-    const verificationLink = `http://localhost:5173/verify-email?token=${verificationToken}`;
+    const verificationLink = `http://10.10.1.71:5173/verify-email?token=${verificationToken}`;
     
     try {
       await sendVerificationEmail(email, verificationLink);
@@ -67,23 +67,107 @@ router.post('/api/resend-verification', async (req, res) => {
   }
 });
 
+// Admin route to create users (new endpoint)
+router.post('/api/admin/create-user', async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    
+    // Validate required fields
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: 'Name, email, password, and role are required' });
+    }
+    
+    // Validate role is one of the allowed values
+    const allowedRoles = ['it_admin', 'hr_admin', 'hr_staff'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ message: 'Invalid role specified' });
+    }
+    
+    const connection = await db.getConnection();
+    
+    try {
+      // Check if email already exists
+      const [existingUsers] = await connection.query('SELECT * FROM users WHERE email = ?', [email]);
+      
+      if (existingUsers.length > 0) {
+        return res.status(400).json({ message: 'Email already registered' });
+      }
+      
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      
+      // Insert new user - already verified since created by admin
+      const [result] = await connection.query(
+        'INSERT INTO users (name, email, password, role, is_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+        [name, email, hashedPassword, role, true]
+      );
+      
+      res.status(201).json({
+        message: 'User created successfully',
+        userId: result.insertId
+      });
+    } finally {
+      if (connection) connection.release();
+    }
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ message: 'Failed to create user' });
+  }
+});
+
 // Route to check if a user exists (used for password reset)
 router.post('/api/check-user', async (req, res) => {
   try {
     const { email } = req.body;
-    const connection = await mysql.createPool(dbConfig).getConnection();
+    console.log(`🔍 Checking if user exists with email: "${email}"`);
+    console.log(`📧 Email type: ${typeof email}, length: ${email.length}`);
     
-    const [users] = await connection.query('SELECT * FROM users WHERE email = ?', [email]);
+    // Log if there are any hidden characters or whitespace
+    const emailTrimmed = email.trim();
+    if (email !== emailTrimmed) {
+      console.log(`⚠️ Warning: Email contains leading/trailing whitespace. Original: "${email}", Trimmed: "${emailTrimmed}"`);
+    }
+    
+    const connection = await db.getConnection();
+    
+    // List all users for debugging
+    const [allUsers] = await connection.query(`SELECT id, email FROM users`);
+    console.log('📋 All users in database:');
+    allUsers.forEach(u => console.log(`- ID: ${u.id}, Email: "${u.email}"`));
+    
+    // Use case-insensitive email lookup
+    const [users] = await connection.query(
+      'SELECT * FROM users WHERE LOWER(email) = LOWER(?)', 
+      [emailTrimmed]  // Use trimmed email
+    );
+    
+    console.log(`🔎 Query executed: SELECT * FROM users WHERE LOWER(email) = LOWER('${emailTrimmed}')`);
+    console.log(`📊 Query result count: ${users.length}`);
+    
     connection.release();
     
     if (users.length === 0) {
-      return res.status(404).json({ exists: false });
+      console.log(`❌ No user found with email: "${email}"`);
+      return res.status(404).json({ 
+        success: false,
+        exists: false,
+        message: "No account found with that email address." 
+      });
     }
     
-    res.json({ exists: true });
+    console.log(`✅ User found with email: "${email}", ID: ${users[0].id}, Email: ${users[0].email}`);
+    res.json({ 
+      success: true,
+      exists: true,
+      message: "User account found" 
+    });
   } catch (error) {
-    console.error('Error checking user:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('❌ Error checking user:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'An unexpected error occurred. Please try again later.' 
+    });
   }
 });
 

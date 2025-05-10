@@ -3,11 +3,15 @@ import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import ReactPaginate from "react-paginate";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../ThemeContext";
+import { showError, showSuccess } from "../components/SweetAlerts";
+import { showToast } from "../components/Alerts";
+import { handleApiError } from "../utils/errorHandler";
+import NetworkErrorAlert, { DarkNetworkErrorAlert } from "../components/NetworkErrorAlert";
 
 const Applicants = () => {
   const { theme } = useContext(ThemeContext);
@@ -18,6 +22,7 @@ const Applicants = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   
   // Modal states
@@ -59,12 +64,24 @@ const Applicants = () => {
   // API fetch
   const fetchApplicants = async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await apiService.applicants.getAll();
       setApplicants(response.data);
     } catch (error) {
-      console.error("Error fetching applicants:", error);
-      toast.error("Failed to fetch applicants. Please check your connection or contact support.");
+      handleApiError(error, {
+        context: 'Fetch Applicants',
+        title: 'Data Retrieval Error',
+        fallbackMessage: 'Unable to load applicants data at this time.',
+        showSweetAlert: false // Don't show a modal alert, we'll use inline alert
+      });
+      
+      // Set error state for inline error display
+      setError({
+        message: error.response?.data?.message || 'Failed to fetch applicants. Please check your connection or try again later.',
+        type: (!error.response || error.message === 'Network Error') ? 'network' : 'server'
+      });
+      
       setApplicants([]);
     } finally {
       setLoading(false);
@@ -79,7 +96,7 @@ const Applicants = () => {
 
   // Filter applicants based on search term
   const filteredApplicants = applicants.filter(applicant =>
-    applicant.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    `${applicant.first_name} ${applicant.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -121,10 +138,18 @@ const Applicants = () => {
       
       setDeleteModalOpen(false);
       setCurrentApplicant(null);
-      toast.success("Applicant deleted successfully");
+      
+      // Show success message
+      showSuccess(
+        "Deleted Successfully", 
+        `<p>The applicant has been removed from the system.</p>`
+      );
     } catch (error) {
-      console.error("Error deleting applicant:", error);
-      toast.error(error.response?.data?.message || "Failed to delete applicant. Please try again.");
+      handleApiError(error, {
+        context: 'Delete Applicant',
+        title: 'Delete Failed', 
+        fallbackMessage: 'Could not delete the applicant. Please try again.'
+      });
     }
   };
 
@@ -164,20 +189,20 @@ const Applicants = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
+    <>
       <ToastContainer position="top-right" autoClose={3000} />
       
-      <div className="">
+      <div>
         {/* Header with search and add button */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold">Applicants</h1>
           <div className="flex gap-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search applicants..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search applicants..."
+                value={searchTerm}
+                onChange={handleSearchChange}
                 className={`pl-10 pr-4 py-2 rounded-lg border ${
                   isDark 
                     ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
@@ -187,111 +212,151 @@ const Applicants = () => {
               <div className="absolute left-3 top-2.5">
                 <i className={`fas fa-search ${isDark ? 'text-gray-400' : 'text-gray-500'}`}></i>
               </div>
-                </div>
-                <button 
-                  onClick={handleAddApplicant}
+            </div>
+            <button 
+              onClick={handleAddApplicant}
               className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
+            >
               <i className="fas fa-user-plus mr-2"></i>
               Add Applicant
-                </button>
-              </div>
-            </div>
+            </button>
+          </div>
+        </div>
+        
+        {/* Show error message if there is an error */}
+        {error && (
+          isDark ? 
+            <DarkNetworkErrorAlert 
+              message={error.message}
+              onRetry={fetchApplicants}
+              onDismiss={() => setError(null)}
+            /> :
+            <NetworkErrorAlert 
+              message={error.message}
+              onRetry={fetchApplicants}
+              onDismiss={() => setError(null)}
+            />
+        )}
 
         {/* Main content */}
-            {loading ? (
+        {loading ? (
           <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-              </div>
-            ) : (
-              <>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        ) : (
+          <>
             {/* Applicants Table */}
             <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md overflow-hidden mb-4`}>
-              <div className="overflow-x-auto">
-                <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Position</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Applied Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                    {currentItems.map((applicant) => (
-                      <tr key={applicant.id} className={isDark ? 'hover:bg-slate-600' : 'hover:bg-gray-100'}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="font-medium">{applicant.name}</div>
-                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{applicant.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">{applicant.position}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={getStatusStyle(applicant.status)}>
-                            {applicant.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {applicant.applied_date ? applicant.applied_date.split('T')[0] : ''}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center space-x-3">
-                            <button
-                              onClick={() => handleViewApplicant(applicant)}
-                              className={`${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-900'}`}
-                              title="View Details"
-                            >
-                              <i className="fas fa-eye"></i>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteClick(applicant)}
-                              className={`${isDark ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-900'}`}
-                              title="Delete"
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {currentItems.length === 0 ? (
+                <div className={`flex flex-col items-center justify-center py-16 px-4 ${
+                  isDark ? 'text-gray-300' : 'text-gray-500'
+                }`}>
+                  <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 ${
+                    isDark ? 'bg-slate-700' : 'bg-gray-100'
+                  }`}>
+                    <i className="fas fa-users-slash text-5xl text-gray-400"></i>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No Applicants Found</h3>
+                  <p className="text-center max-w-md mb-6">
+                    {searchTerm ? 
+                      `No results match '${searchTerm}'. Try a different search term.` : 
+                      'There are no applicants in the system yet. Add new applicants to get started.'}
+                  </p>
+                  <button 
+                    onClick={handleAddApplicant}
+                    className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <i className="fas fa-user-plus mr-2"></i>
+                    Add Applicant
+                  </button>
                 </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                    <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Position</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Applied Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                      {currentItems.map((applicant) => (
+                        <tr key={applicant.id} className={isDark ? 'hover:bg-slate-600' : 'hover:bg-gray-100'}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div>
+                                <div className="font-medium">{`${applicant.first_name} ${applicant.last_name}`}</div>
+                                <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{applicant.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">{applicant.position}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={getStatusStyle(applicant.status)}>
+                              {applicant.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {applicant.applied_date ? applicant.applied_date.split('T')[0] : ''}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex items-center space-x-3">
+                              <button
+                                onClick={() => handleViewApplicant(applicant)}
+                                className={`${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-900'}`}
+                                title="View Details"
+                              >
+                                <i className="fas fa-eye"></i>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(applicant)}
+                                className={`${isDark ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-900'}`}
+                                title="Delete"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
 
-                {/* Pagination */}
+            {/* Pagination */}
             <div className="flex justify-center my-4">
-                  <ReactPaginate
+              <ReactPaginate
                 previousLabel={<i className="fas fa-chevron-left"></i>}
                 nextLabel={<i className="fas fa-chevron-right"></i>}
                 breakLabel={"..."}
-                    pageCount={pageCount}
+                pageCount={pageCount}
                 marginPagesDisplayed={2}
                 pageRangeDisplayed={3}
-                    onPageChange={handlePageChange}
+                onPageChange={handlePageChange}
                 containerClassName={`flex items-center space-x-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                 pageClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
                 previousClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
                 nextClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
                 activeClassName={`${isDark ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}
                 disabledClassName={"text-gray-400 cursor-not-allowed"}
-                  />
-                </div>
-              </>
-            )}
-          </div>
+              />
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Delete Confirmation Modal */}
-          {deleteModalOpen && (
+      {deleteModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className={`${isDark ? 'bg-[#232f46] text-white' : 'bg-white text-gray-800'} rounded-lg shadow-lg p-6 max-w-md w-full`}>
-                <h3 className="text-xl font-semibold mb-4">Confirm Delete</h3>
-                <p className="mb-6">Are you sure you want to delete {currentApplicant?.name}? This action cannot be undone.</p>
-                <div className="flex justify-end space-x-3">
+            <h3 className="text-xl font-semibold mb-4">Confirm Delete</h3>
+            <p className="mb-6">Are you sure you want to delete {currentApplicant?.name}? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setDeleteModalOpen(false)}
                 className={`px-4 py-2 rounded-lg ${
@@ -300,19 +365,19 @@ const Applicants = () => {
                     : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                 }`}
               >
-                    Cancel
-                  </button>
+                Cancel
+              </button>
               <button
                 onClick={handleDeleteApplicant}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
-                    Delete
-                  </button>
-                </div>
-              </div>
+                Delete
+              </button>
             </div>
-          )}
-    </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

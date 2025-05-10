@@ -6,7 +6,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
 import { useNavigate } from "react-router-dom";
-import { mockEmployees } from "../mocks/employeeData";
+import axios from 'axios';
+// Import with ES module named imports style for Vite compatibility
+import XLSX from 'xlsx/dist/xlsx.full.min.js';
+import { saveAs } from 'file-saver/dist/FileSaver.min.js';
 
 const Employees = () => {
   const { theme } = useContext(ThemeContext);
@@ -21,6 +24,9 @@ const Employees = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
+  const [error, setError] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     department: "",
@@ -41,12 +47,12 @@ const Employees = () => {
   // Fetch employees from API
   const fetchEmployees = async () => {
     setLoading(true);
+    setError(null);
     try {
       // Check if token exists
       const token = localStorage.getItem("userToken");
       if (!token) {
-        console.warn("No authentication token found. Using mock data.");
-        setEmployees(mockEmployees);
+        setError("Authentication required. Please log in to view employee data.");
         setLoading(false);
         return;
       }
@@ -55,10 +61,8 @@ const Employees = () => {
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      toast.error("Failed to fetch employees from API. Using mock data for development.");
-      
-      // Use mock data when API fails
-      setEmployees(mockEmployees);
+      setError(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
+      toast.error(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -94,7 +98,7 @@ const Employees = () => {
 
   // Navigate to employee details page
   const handleViewEmployee = (employee) => {
-    navigate(`/employees/${employee.id}`);
+    navigate(`/hr-staff/${employee.id}`);
   };
 
   // Open edit employee modal
@@ -123,21 +127,123 @@ const Employees = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handle file selection for profile picture
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      console.log("Selected file:", file.name, "type:", file.type, "size:", file.size);
+      setSelectedFile(file);
+    }
+  };
+
   // Update employee
-  const handleUpdateEmployee = async () => {
+  const handleUpdateEmployee = async (e) => {
+    e.preventDefault();
+    setUploading(true);
+    setError("");
+
     try {
-      await apiService.employees.update(currentEmployee.id, formData);
+      const userId = currentEmployee.id;
+
+      if (!userId) {
+        throw new Error('Employee ID is required');
+      }
+
+      // Create employee data object with only necessary fields
+      const updatedEmployee = {
+        id: userId,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || '',
+        position: formData.position,
+        department: formData.department,
+        status: formData.status
+      };
+
+      // Only include these fields if they exist in the current employee
+      if (currentEmployee.hire_date) {
+        // Format the date as YYYY-MM-DD for MySQL
+        if (typeof currentEmployee.hire_date === 'string' && currentEmployee.hire_date.includes('T')) {
+          // If it's an ISO string, extract just the date part
+          updatedEmployee.hire_date = currentEmployee.hire_date.split('T')[0];
+        } else {
+          updatedEmployee.hire_date = currentEmployee.hire_date;
+        }
+      }
       
-      // Update the local state
-      setEmployees(employees.map(emp => 
-        emp.id === currentEmployee.id ? { ...emp, ...formData } : emp
-      ));
+      if (currentEmployee.salary) {
+        updatedEmployee.salary = currentEmployee.salary;
+      }
+
+      // Keep existing profile picture if no new one is selected
+      if (currentEmployee.profile_picture) {
+        updatedEmployee.profile_picture = currentEmployee.profile_picture;
+      }
+
+      // Split the process: first update employee data
+      console.log("Sending update with data:", JSON.stringify(updatedEmployee));
       
+      // Use direct axios call to better handle the error
+      const updateResponse = await axios.put(
+        `http://10.10.1.71:5000/api/employees/${userId}`,
+        updatedEmployee,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      console.log("Employee update successful, response:", updateResponse.data);
+
+      // Then, upload profile picture if selected (as a separate operation)
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('profilePicture', selectedFile);
+        
+        // Log form data contents for debugging
+        console.log("Uploading file:", selectedFile.name, "type:", selectedFile.type, "size:", selectedFile.size);
+        
+        try {
+          console.log("Starting profile picture upload for employee ID:", userId);
+          const uploadResponse = await axios.post(
+            `http://10.10.1.71:5000/api/employees/${userId}/profile-picture`,
+            formData,
+            { 
+              headers: { 
+                'Content-Type': 'multipart/form-data'
+              }
+            }
+          );
+          console.log("Upload response:", uploadResponse.data);
+          
+          // Update the employee object with the new profile picture URL
+          updatedEmployee.profile_picture = uploadResponse.data.profile_picture;
+          
+          // Force a refresh of the employee in the state
+          setEmployees(prev => prev.map(emp => 
+            emp.id === userId 
+              ? {...emp, profile_picture: uploadResponse.data.profile_picture} 
+              : emp
+          ));
+          
+          toast.success('Profile picture uploaded successfully');
+        } catch (uploadError) {
+          console.error('Error uploading profile picture:', uploadError);
+          console.error('Error details:', uploadError.response?.data || uploadError.message);
+          toast.error(`Failed to upload profile picture: ${uploadError.response?.data?.message || uploadError.message}`);
+          // Continue even if profile picture upload fails
+        }
+      }
+
+      // Update employees state with the updated data
+      setEmployees(employees.map(emp => emp.id === userId ? {...emp, ...updatedEmployee} : emp));
       setEditModalOpen(false);
-      toast.success("Employee updated successfully!");
-    } catch (error) {
-      console.error("Error updating employee:", error);
-      toast.error(error.response?.data?.message || error.message || "Failed to update employee. Please try again.");
+      setSelectedFile(null);
+      toast.success('Employee updated successfully');
+    } catch (err) {
+      console.error('Error updating employee:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to update employee';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -145,6 +251,8 @@ const Employees = () => {
   const handleDeleteEmployee = async () => {
     try {
       await apiService.employees.delete(currentEmployee.id);
+
+      
       
       // Remove the employee from the local state
       setEmployees(employees.filter(emp => emp.id !== currentEmployee.id));
@@ -157,28 +265,104 @@ const Employees = () => {
     }
   };
 
+  // Export employees to Excel format grouped by department
+  const exportEmployeesByDept = (employees) => {
+    try {
+      // Group employees by department
+      const byDepartment = employees.reduce((acc, emp) => {
+        const dept = emp.department || "Unassigned";
+        if (!acc[dept]) acc[dept] = [];
+        acc[dept].push(emp);
+        return acc;
+      }, {});
+
+      // Create column headers (without profile_picture)
+      const headers = [
+        "DEPARTMENT", "id", "applicant_id", "name", "email", 
+        "phone", "position", "department", "hire_date", "salary", "status"
+      ];
+      
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const wsData = [];
+      
+      // Add headers to worksheet data
+      wsData.push(headers);
+      
+      // Add each department and its employees
+      Object.entries(byDepartment).forEach(([dept, emps]) => {
+        // Add department as a row
+        const deptRow = [dept, "", "", "", "", "", "", "", "", "", ""];
+        wsData.push(deptRow);
+        
+        // Add employee rows
+        emps.forEach(emp => {
+          const row = [
+            "", // Empty first column
+            emp.id || "",
+            emp.applicant_id || "",
+            emp.name || "",
+            emp.email || "",
+            emp.phone || "",
+            emp.position || "",
+            emp.department || "",
+            emp.hire_date || "",
+            emp.salary || "",
+            emp.status || ""
+          ];
+          wsData.push(row);
+        });
+      });
+      
+      // Create worksheet from data
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Employees");
+      
+      // Generate Excel file and trigger download
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      saveAs(new Blob([excelBuffer], { type: "application/octet-stream" }), "EmployeeExport.xlsx");
+      
+      // Inform the user
+      toast.success("Employee data exported successfully to Excel");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export data: " + error.message);
+    }
+  };
+
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
+    <>
       <ToastContainer position="top-right" autoClose={3000} />
       
-      <div className="max-w-7xl mx-auto p-4 pt-2">
-        {/* Header with search */}
+      <div className="max-w-7xl mx-auto">
+        {/* Header with search and export */}
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-semibold">Employees</h1>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search employees..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className={`pl-10 pr-4 py-2 rounded-lg border ${
-                isDark 
-                  ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
-              } focus:outline-none focus:ring-2 focus:ring-green-500`}
-            />
-            <div className="absolute left-3 top-2.5">
-              <i className={`fas fa-search ${isDark ? 'text-gray-400' : 'text-gray-500'}`}></i>
+          <h1 className="text-2xl font-semibold">HR Staff Directory</h1>
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={() => exportEmployeesByDept(employees)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <i className="fas fa-file-csv mr-2"></i>
+              Export HR Staff Data
+            </button>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search staff..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className={`pl-10 pr-4 py-2 rounded-lg border ${
+                  isDark 
+                    ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'
+                } focus:outline-none focus:ring-2 focus:ring-green-500`}
+              />
+              <div className="absolute left-3 top-2.5">
+                <i className={`fas fa-search ${isDark ? 'text-gray-400' : 'text-gray-500'}`}></i>
+              </div>
             </div>
           </div>
         </div>
@@ -187,6 +371,25 @@ const Employees = () => {
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        ) : error ? (
+          <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md p-8 flex flex-col justify-center items-center h-64`}>
+            <div className="text-red-500 text-5xl mb-4">
+              <i className="fas fa-exclamation-circle"></i>
+            </div>
+            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} text-center mb-2 font-semibold`}>
+              Error Loading Data
+            </p>
+            <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-center`}>
+              {error}
+            </p>
+            <button 
+              onClick={fetchEmployees}
+              className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <i className="fas fa-sync-alt mr-2"></i>
+              Retry
+            </button>
           </div>
         ) : (
           <>
@@ -300,7 +503,7 @@ const Employees = () => {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Edit Employee</h2>
+              <h2 className="text-2xl font-semibold">Edit HR Staff Member</h2>
               <button 
                 onClick={() => setEditModalOpen(false)}
                 className={`p-2 rounded-full ${
@@ -415,6 +618,27 @@ const Employees = () => {
                   <option value="On Leave">On Leave</option>
                 </select>
               </div>
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  Attach profile image (optional)
+                </label>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="w-full text-sm"
+                />
+                {selectedFile && (
+                  <p className={`mt-1 text-xs ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                    Selected file: {selectedFile.name}
+                  </p>
+                )}
+                {uploading && (
+                  <p className={`mt-1 text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                    Uploading...
+                  </p>
+                )}
+              </div>
             </div>
             <div className="flex justify-end space-x-2 mt-6">
               <button 
@@ -461,7 +685,7 @@ const Employees = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

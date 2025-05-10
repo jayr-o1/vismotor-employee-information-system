@@ -10,7 +10,7 @@ import Layout from "./components/Layout";
 
 // Lazy loaded components
 const Login = lazy(() => import("./pages/auth/Login"));
-const Signup = lazy(() => import("./pages/auth/Signup"));
+// Signup route removed since admin will handle user creation
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const Home = lazy(() => import("./pages/Home"));
 const Employees = lazy(() => import("./pages/Employees"));
@@ -18,6 +18,8 @@ const EmployeeDetails = lazy(() => import("./pages/EmployeeDetails"));
 const Applicants = lazy(() => import("./pages/Applicants"));
 const ApplicantDetails = lazy(() => import("./pages/ApplicantDetails"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
+const OnboardingDetail = lazy(() => import("./pages/OnboardingDetail"));
+const StaffDirectory = lazy(() => import("./pages/StaffDirectory"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
@@ -26,6 +28,7 @@ const NotFound = lazy(() => import("./components/NotFound"));
 const ApplicantQRProfile = lazy(() => import("./pages/ApplicantQRProfile"));
 const EmployeeQRProfile = lazy(() => import("./pages/EmployeeQRProfile"));
 const ApplicationForm = lazy(() => import("./forms/ApplicationForm"));
+const OnboardingDetails = lazy(() => import("./pages/OnboardingDetails"));
 
 function App() {
   const { isDarkMode } = useContext(ThemeContext);
@@ -46,14 +49,18 @@ function App() {
           <Routes>
             {/* Public Auth Routes - Redirect to home if already logged in */}
             <Route path="/login" element={<AuthRoute element={<Login />} />} />
-            <Route path="/signup" element={<AuthRoute element={<Signup />} />} />
+            {/* Signup route removed */}
             <Route path="/verify-email" element={<AuthRoute element={<VerifyEmail />} />} />
             <Route path="/forgot-password" element={<AuthRoute element={<ForgotPassword />} />} />
             <Route path="/reset-password" element={<AuthRoute element={<ResetPassword />} />} />
             
             {/* Truly Public Routes */}
             <Route path="/documentation" element={<Documentation />} />
-            <Route path="/apply" element={<ApplicationForm />} />
+            <Route path="/apply" element={
+              <div className="light-mode">
+                <ApplicationForm />
+              </div>
+            } />
             {/* QR Profile Public Route */}
             <Route path="/qr/applicant/:id" element={<ApplicantQRProfile />} />
             <Route path="/qr/employee/:id" element={<EmployeeQRProfile />} />
@@ -61,12 +68,14 @@ function App() {
             {/* Protected Routes wrapped in Layout */}
             <Route element={<ProtectedRoute element={<Layout />} />}>
               <Route path="/home" element={<Home />} />
-              <Route path="/employees" element={<Employees />} />
-              <Route path="/employees/:id" element={<EmployeeDetails />} />
+              <Route path="/hr-staff" element={<Employees />} />
+              <Route path="/hr-staff/:id" element={<EmployeeDetails />} />
               <Route path="/applicants" element={<Applicants />} />
               <Route path="/applicants/:id" element={<ApplicantDetails />} />
               <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/onboarding/:id" element={<OnboardingDetail />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/hr-staff-directory" element={<StaffDirectory />} />
             </Route>
             
             {/* Redirect root to login */}

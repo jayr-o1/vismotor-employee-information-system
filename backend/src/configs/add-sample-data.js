@@ -58,7 +58,7 @@ async function addSampleData() {
     
     if (missingTables.length > 0) {
       console.error(`\n❌ Error: The following tables are missing: ${missingTables.join(', ')}`);
-      console.error('Please run init-database.js first to create the required tables.');
+      console.error('Please run setup-database.js first to create the required tables.');
       return;
     }
     

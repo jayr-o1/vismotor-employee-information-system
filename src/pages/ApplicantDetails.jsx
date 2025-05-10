@@ -17,7 +17,6 @@ const ApplicantDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
-  const [onboardModalOpen, setOnboardModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [feedbackData, setFeedbackData] = useState({
     text: "",
@@ -44,24 +43,17 @@ const ApplicantDetails = () => {
     trainingSchedule: [],
     mentor: ""
   });
+  const [activeTab, setActiveTab] = useState('details');
+  const [equipmentTypes, setEquipmentTypes] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [trainingTypes, setTrainingTypes] = useState([]);
+  const [equipmentNotes, setEquipmentNotes] = useState('');
+  const [selectedTraining, setSelectedTraining] = useState(null);
+  const [onboardingProgress, setOnboardingProgress] = useState(25);
 
   useEffect(() => {
     fetchApplicantDetails();
   }, [id]);
-
-  // Handle the Escape key press for onboard modal
-  useEffect(() => {
-    const handleEscapeKey = (e) => {
-      if (e.key === 'Escape' && onboardModalOpen) {
-        handleOnboardModalClose();
-      }
-    };
-    
-    document.addEventListener('keydown', handleEscapeKey);
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [onboardModalOpen]); // Only depend on modal open state
 
   const fetchApplicantDetails = async () => {
     setLoading(true);
@@ -115,88 +107,37 @@ const ApplicantDetails = () => {
 
   const handleSubmitFeedback = async () => {
     if (!feedbackData.text.trim()) {
-      toast.error("Please enter feedback text");
-      return;
-    }
-
-    if (feedbackData.rating === 0) {
-      toast.error("Please provide a rating");
+      toast.error("Please enter note text");
       return;
     }
 
     try {
       const feedbackPayload = {
-        applicant_id: applicant.id,
-        ...feedbackData,
+        feedback_text: feedbackData.text,
         created_by: "Current User" // This should come from auth context
       };
 
-      await apiService.applicants.addNote(feedbackPayload);
+      await apiService.applicants.addFeedback(applicant.id, feedbackPayload);
       
-      // Update applicant status based on recommendation
-      if (feedbackData.recommendation === "Hire") {
-        await apiService.applicants.updateStatus(applicant.id, "Reviewed");
+      // Refresh notes
+      try {
+        const notesResponse = await apiService.applicants.getFeedback(applicant.id);
+        setNotes(notesResponse.data || []);
+      } catch (notesError) {
+        console.error("Error refreshing notes:", notesError);
       }
       
-      // Refresh notes and applicant data
-      const [notesResponse, applicantResponse] = await Promise.all([
-        apiService.applicants.getNotes(applicant.id),
-        apiService.applicants.getById(applicant.id)
-      ]);
+      toast.success("Note added successfully!");
       
-      setNotes(notesResponse.data || []);
-      setApplicant(applicantResponse.data);
-      
-      toast.success("Feedback submitted successfully!");
-      
+      // Reset feedback data and close modal
       setFeedbackData({
-        text: "",
-        rating: 0,
-        category: "Technical",
-        strengths: "",
-        areas_for_improvement: "",
-        recommendation: "Hire"
+        text: ""
       });
       setFeedbackModalOpen(false);
       
     } catch (error) {
       console.error("Error submitting feedback:", error);
-      toast.error(error.response?.data?.message || "Failed to submit feedback");
-    }
-  };
-
-  // Function to handle onboard modal close with confirmation
-  const handleOnboardModalClose = () => {
-    // Only show confirmation if user has entered data
-    if (onboardData.position || onboardData.department || onboardData.startDate || onboardData.salary) {
-      Swal.fire({
-        title: 'Discard changes?',
-        text: 'Any information you entered will be lost.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#EF4444',
-        cancelButtonColor: '#6B7280',
-        confirmButtonText: 'Discard',
-        cancelButtonText: 'Continue Editing'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Reset form data and close modal
-          setOnboardData({
-            position: "",
-            department: "",
-            startDate: "",
-            salary: "",
-            equipment: [],
-            documents: [],
-            trainingSchedule: [],
-            mentor: ""
-          });
-          setOnboardModalOpen(false);
-        }
-      });
-    } else {
-      // No data entered, just close the modal
-      setOnboardModalOpen(false);
+      toast.error(error.response?.data?.message || "Failed to submit note");
     }
   };
 
@@ -210,17 +151,8 @@ const ApplicantDetails = () => {
       return;
     }
 
-    setOnboardData({
-      position: applicant.position || "",
-      department: "",
-      startDate: "",
-      salary: "",
-      equipment: [],
-      documents: [],
-      trainingSchedule: [],
-      mentor: ""
-    });
-    setOnboardModalOpen(true);
+    // Skip the modal and directly hire the applicant
+    handleOnboardApplicant();
   };
 
   const handleOnboardApplicant = async () => {
@@ -229,142 +161,71 @@ const ApplicantDetails = () => {
       return;
     }
     
-    if (applicant.status !== 'Interviewed' && applicant.status !== 'Reviewed') {
+    if (applicant.status !== "Interviewed" && applicant.status !== "Reviewed") {
       toast.error("Applicant must be interviewed before onboarding");
-      setOnboardModalOpen(false);
       return;
     }
     
-    if (!onboardData.department || !onboardData.startDate || !onboardData.salary || !onboardData.position) {
-      toast.error("Please fill all required onboarding details");
-      return;
-    }
-
-    const salary = parseFloat(onboardData.salary);
-    if (isNaN(salary)) {
-      toast.error("Salary must be a valid number");
-      return;
-    }
-    
-    // Show confirmation before processing
-    const result = await Swal.fire({
-      title: 'Confirm Onboarding',
-      html: `
-        <div class="text-left">
-          <p>Are you sure you want to onboard <strong>${applicant.name}</strong> with the following details?</p>
-          <div class="mt-3">
-            <p><strong>Position:</strong> ${onboardData.position}</p>
-            <p><strong>Department:</strong> ${onboardData.department}</p>
-            <p><strong>Start Date:</strong> ${onboardData.startDate}</p>
-            <p><strong>Salary:</strong> $${salary}</p>
-          </div>
-        </div>
-      `,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#10B981',
-      cancelButtonColor: '#6B7280',
-      confirmButtonText: 'Yes, Onboard!',
-      cancelButtonText: 'Cancel'
-    });
-    
-    if (!result.isConfirmed) {
-      return; // User cancelled the operation
-    }
-    
-    // Close the modal immediately after confirmation
-    setOnboardModalOpen(false);
-    
-    // Save onboard data for API calls
-    const onboardingData = { ...onboardData };
-    
-    // Reset form data
-    setOnboardData({
-      position: "",
-      department: "",
-      startDate: "",
-      salary: "",
-      equipment: [],
-      documents: [],
-      trainingSchedule: [],
-      mentor: ""
-    });
-    
-    setLoading(true);
+    // Create the employee record
     try {
-      // Create employee record
-      const employeeResponse = await apiService.employees.create({
+      setLoading(true);
+      
+      // Initialize onboardData with the applicant's information
+      const position = applicant.position || "";
+      const department = applicant.branch_department || "";
+      const salary = applicant.desired_pay || "0";
+      const startDate = new Date().toISOString().split('T')[0]; // Today's date
+      
+      // Format the employee data - no validation needed since we're providing default values
+      const employeeData = {
         applicant_id: applicant.id,
-        name: applicant.name,
-        email: applicant.email,
-        phone: applicant.phone || '',
-        position: onboardingData.position,
-        department: onboardingData.department,
-        hire_date: onboardingData.startDate,
+        position: position,
+        department: department,
+        hire_date: startDate,
         salary: salary,
-        mentor: onboardingData.mentor
-      });
-
-      // Process equipment requests
-      if (onboardingData.equipment.length > 0) {
-        await apiService.employees.requestEquipment(employeeResponse.data.id, onboardingData.equipment);
-      }
-
-      // Process document uploads
-      if (onboardingData.documents.length > 0) {
-        await apiService.employees.uploadDocuments(employeeResponse.data.id, onboardingData.documents);
-      }
-
-      // Schedule training
-      if (onboardingData.trainingSchedule.length > 0) {
-        await apiService.employees.scheduleTraining(employeeResponse.data.id, onboardingData.trainingSchedule);
-      }
-
-      // Update applicant status
-      await apiService.applicants.updateStatus(applicant.id, "Accepted");
+        mentor: ""
+      };
       
-      // Send welcome email
-      await apiService.employees.sendWelcomeEmail(employeeResponse.data.id);
+      // Create the employee
+      const response = await apiService.employees.create(employeeData);
       
-      // Update applicant state
-      setApplicant(prev => ({ ...prev, status: "Accepted" }));
-      
-      // Show toast success message
-      toast.success(`${applicant.name} successfully onboarded!`, {
-        position: "top-right",
-        autoClose: 3000
-      });
-      
-      // Refresh the page immediately to show updated data
-      window.location.reload();
-      
-      // Note: The code below will not execute because of the page refresh
-      // but we'll keep it in case the refresh behavior changes later
-      Swal.fire({
-        icon: 'success',
-        title: 'Applicant Onboarded!',
-        html: `
-          <div class="text-left">
-            <p><strong>${applicant.name}</strong> has been successfully hired and added to Staff Directory!</p>
-            <div class="mt-3">
-              <p><strong>Position:</strong> ${onboardingData.position}</p>
-              <p><strong>Department:</strong> ${onboardingData.department}</p>
-              <p><strong>Start Date:</strong> ${onboardingData.startDate}</p>
-              <p><strong>Salary:</strong> $${salary}</p>
-            </div>
-          </div>
-        `,
-        confirmButtonColor: '#10B981',
-        confirmButtonText: 'Great!',
-        allowOutsideClick: false,
-        backdrop: `rgba(0,0,0,0.7)`,
-        showClass: {
-          popup: 'animate__animated animate__fadeIn animate__faster'
-        },
-        hideClass: {
-          popup: 'animate__animated animate__fadeOut animate__faster'
+      // If successful, save the equipment, documents, and training data
+      if (response.data && response.data.id) {
+        const employeeId = response.data.id;
+        
+        // Save equipment if any
+        if (onboardData.equipment.length > 0) {
+          try {
+            await apiService.employees.saveEquipment(employeeId, onboardData.equipment);
+          } catch (equipmentError) {
+            console.error("Error saving equipment:", equipmentError);
+          }
         }
-      });
+        
+        // Save documents if any
+        if (onboardData.documents.length > 0) {
+          try {
+            await apiService.employees.saveDocuments(employeeId, onboardData.documents);
+          } catch (documentsError) {
+            console.error("Error saving documents:", documentsError);
+          }
+        }
+        
+        // Save training schedule if any
+        if (onboardData.trainingSchedule.length > 0) {
+          try {
+            await apiService.employees.saveTraining(employeeId, onboardData.trainingSchedule);
+          } catch (trainingError) {
+            console.error("Error saving training schedule:", trainingError);
+          }
+        }
+        
+        // Show success message
+        toast.success("Applicant successfully onboarded as an employee");
+        
+        // Navigate to the new employee's onboarding detail page
+        navigate(`/onboarding/${employeeId}`);
+      }
     } catch (error) {
       console.error("Error onboarding applicant:", error);
       toast.error(error.response?.data?.message || "Failed to onboard applicant");
@@ -377,12 +238,45 @@ const ApplicantDetails = () => {
     if (!applicant) return;
     
     try {
+      // Get user confirmation before rejecting
+      const result = await Swal.fire({
+        title: 'Reject Applicant',
+        html: `Are you sure you want to reject <strong>${applicant.first_name} ${applicant.last_name}</strong>?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, Reject',
+        cancelButtonText: 'Cancel'
+      });
+      
+      if (!result.isConfirmed) {
+        return;
+      }
+    
+      // Use the PATCH method to update status
       await apiService.applicants.updateStatus(applicant.id, "Rejected");
+      
+      // Try to add a note about the rejection
+      try {
+        const feedbackPayload = {
+          feedback_text: `Applicant was rejected on ${new Date().toLocaleDateString()}.`,
+          created_by: "Current User"
+        };
+        
+        await apiService.applicants.addFeedback(applicant.id, feedbackPayload);
+      } catch (error) {
+        console.log("Could not add rejection note", error);
+        // Non-critical error, we can continue
+      }
       
       toast.success("Applicant marked as rejected");
       
       // Update local state
       setApplicant(prev => ({ ...prev, status: "Rejected" }));
+      
+      // Refresh the applicant data
+      fetchApplicantDetails();
       
     } catch (error) {
       console.error("Error rejecting applicant:", error);
@@ -391,72 +285,80 @@ const ApplicantDetails = () => {
   };
 
   // Handle hiring directly from interview history
-  const handleHireFromInterview = (interview) => {
+  const handleHireFromInterview = async (interview) => {
     if (!applicant) return;
     
-    // Pre-populate the onboard data with applicant info and interviewer feedback
-    setOnboardData({
-      position: applicant.position || "",
-      department: "",
-      startDate: new Date().toISOString().split('T')[0], // Default to today
-      salary: "",
-      equipment: [],
-      documents: [],
-      trainingSchedule: [],
-      mentor: interview.interviewer || "" // Use the interviewer as default mentor
-    });
-    
-    // Mark the applicant as interviewed if not already
-    if (applicant.status !== "Interviewed" && applicant.status !== "Reviewed") {
-      apiService.applicants.updateStatus(applicant.id, "Interviewed")
-        .then(() => {
-          // Update local state
-          setApplicant(prev => ({ ...prev, status: "Interviewed" }));
-        })
-        .catch(error => {
-          console.error("Error updating applicant status:", error);
-          // Continue with the onboarding modal even if status update fails
-        });
+    try {
+      // Mark the applicant as interviewed if not already
+      if (applicant.status !== "Interviewed" && applicant.status !== "Reviewed") {
+        await apiService.applicants.updateStatus(applicant.id, "Interviewed");
+        
+        // Update local state
+        setApplicant(prev => ({ ...prev, status: "Interviewed" }));
+      }
+      
+      // Now proceed with the onboarding process
+      handleOnboardApplicant();
+    } catch (error) {
+      console.error("Error updating applicant status:", error);
+      toast.error(error.response?.data?.message || "Failed to update applicant status");
     }
-    
-    // Open the onboarding modal
-    setOnboardModalOpen(true);
-    
-    // Show a SweetAlert notification instead of toast
-    Swal.fire({
-      icon: 'info',
-      title: 'Complete Onboarding',
-      text: 'Please complete the onboarding details to hire this applicant.',
-      confirmButtonColor: '#3B82F6',
-      confirmButtonText: 'Will do!'
-    });
   };
 
   // Mark an interview as completed
   const handleMarkInterviewCompleted = async (interview) => {
+    if (!applicant) return;
+    
     try {
+      // Update interview status to "Completed"
       await apiService.interviews.updateStatus(interview.id, { status: "Completed" });
       
-      // Update applicant status
-      await apiService.applicants.updateStatus(applicant.id, "Interviewed");
-      
       // Update local state
-      setApplicant(prev => {
-        // Update both the applicant status and the interview status in the interviews array
-        const updatedInterviews = prev.interviews.map(item => 
-          item.id === interview.id ? { ...item, status: "Completed" } : item
-        );
-        
-        return { 
-          ...prev, 
-          status: "Interviewed",
-          interviews: updatedInterviews
-        };
-      });
+      const updatedInterviews = applicant.interviews.map(i => 
+        i.id === interview.id ? { ...i, status: "Completed" } : i
+      );
+      
+      setApplicant(prev => ({ 
+        ...prev, 
+        interviews: updatedInterviews,
+        status: "Interviewed" // The backend updates this automatically
+      }));
+      
+      // Refresh the applicant data to ensure it's consistent with the database
+      try {
+        const applicantResponse = await apiService.applicants.getById(applicant.id);
+        if (applicantResponse.data) {
+          setApplicant(prev => ({
+            ...prev,
+            ...applicantResponse.data,
+            interviews: updatedInterviews // Keep our updated interviews
+          }));
+        }
+      } catch (refreshError) {
+        console.log("Could not refresh applicant data", refreshError);
+        // Non-critical error, we can continue
+      }
       
       toast.success("Interview marked as completed");
+      
+      // Ask if the user wants to proceed with hiring
+      const result = await Swal.fire({
+        title: 'Interview Completed',
+        html: `The interview with <strong>${applicant.first_name} ${applicant.last_name}</strong> is now marked as completed. Would you like to proceed with the hiring process?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10B981',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, Hire Now',
+        cancelButtonText: 'Not Yet'
+      });
+      
+      if (result.isConfirmed) {
+        // Call handleOnboardApplicant directly
+        handleOnboardApplicant();
+      }
     } catch (error) {
-      console.error("Error updating interview status:", error);
+      console.error("Error marking interview as completed:", error);
       toast.error(error.response?.data?.message || "Failed to update interview status");
     }
   };
@@ -469,34 +371,29 @@ const ApplicantDetails = () => {
     }
     
     try {
-      // Schedule the interview
-      await apiService.interviews.schedule({
-        applicant_id: applicant.id,
+      // Schedule the interview using the correct endpoint (directly using applicants endpoint)
+      await apiService.applicants.scheduleInterview(applicant.id, {
         interview_date: interviewData.date,
         interview_time: interviewData.time,
         location: interviewData.location,
         interviewer: interviewData.interviewer
       });
       
-      // Update applicant status
-      await apiService.applicants.updateStatus(applicant.id, "Interview Scheduled");
+      // The backend automatically updates the status when scheduling an interview,
+      // so we don't need this call anymore:
+      // await apiService.applicants.updateStatus(applicant.id, "Interview Scheduled");
       
       // Update local state
       setApplicant(prev => ({ 
         ...prev, 
-        status: "Interview Scheduled", 
+        status: "Scheduled", // Match the backend status value
         interview_scheduled: true 
       }));
       
-      // Note: The API service doesn't have an addNote function in the applicants object
-      // So we'll either need to add feedback instead or skip adding the note
-      
+      // Try to add feedback about the interview scheduling instead
       try {
-        // Try to add feedback about the interview scheduling instead
         const feedbackPayload = {
-          text: `Interview scheduled on ${interviewData.date} at ${interviewData.time} with ${interviewData.interviewer} at ${interviewData.location}`,
-          rating: 0,
-          category: "Administrative",
+          feedback_text: `Interview scheduled on ${interviewData.date} at ${interviewData.time} with ${interviewData.interviewer} at ${interviewData.location}`,
           created_by: "Current User"
         };
         
@@ -514,6 +411,17 @@ const ApplicantDetails = () => {
         // Non-critical error, we can continue
       }
       
+      // Refresh interviews list
+      try {
+        const interviewsResponse = await apiService.applicants.getInterviews(applicant.id);
+        setApplicant(prev => ({
+          ...prev,
+          interviews: interviewsResponse.data || []
+        }));
+      } catch (error) {
+        console.log("Could not refresh interviews", error);
+      }
+      
       // Reset interview data
       setInterviewData({
         date: "",
@@ -526,26 +434,252 @@ const ApplicantDetails = () => {
       toast.success("Interview scheduled successfully");
     } catch (error) {
       console.error("Error scheduling interview:", error);
-      toast.error(error.message || "Failed to schedule interview. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to schedule interview. Please try again.");
     }
+  };
+
+  // Calculate onboarding progress
+  useEffect(() => {
+    let progress = 0;
+    let totalSteps = 4; // 4 tabs
+    
+    // Basic details progress (25%)
+    if (onboardData.position && onboardData.department && onboardData.startDate && onboardData.salary) {
+      progress += 25;
+    } else if (onboardData.position || onboardData.department || onboardData.startDate || onboardData.salary) {
+      progress += 10; // Partial completion
+    }
+    
+    // Equipment progress (25%)
+    if (onboardData.equipment.length > 0) {
+      progress += 25;
+    }
+    
+    // Documents progress (25%)
+    if (onboardData.documents.length > 0) {
+      progress += 25;
+    }
+    
+    // Training progress (25%)
+    if (onboardData.trainingSchedule.length > 0) {
+      progress += 25;
+    }
+    
+    setOnboardingProgress(progress);
+  }, [onboardData]);
+
+  // Load equipment, document, and training types on component mount
+  useEffect(() => {
+      fetchEquipmentTypes();
+      fetchDocumentTypes();
+      fetchTrainingTypes();
+  }, []);
+
+  // Fetch equipment types
+  const fetchEquipmentTypes = async () => {
+    try {
+      const response = await apiService.employees.getEquipmentTypes();
+      setEquipmentTypes(response.data);
+    } catch (error) {
+      console.error("Error fetching equipment types:", error);
+      toast.error("Failed to load equipment types");
+      setEquipmentTypes([]);
+    }
+  };
+
+  // Fetch document types
+  const fetchDocumentTypes = async () => {
+    try {
+      const response = await apiService.employees.getDocumentTypes();
+      setDocumentTypes(response.data);
+    } catch (error) {
+      console.error("Error fetching document types:", error);
+      toast.error("Failed to load document types");
+      setDocumentTypes([]);
+    }
+  };
+
+  // Fetch training types
+  const fetchTrainingTypes = async () => {
+    try {
+      const response = await apiService.employees.getTrainingTypes();
+      setTrainingTypes(response.data);
+    } catch (error) {
+      console.error("Error fetching training types:", error);
+      toast.error("Failed to load training types");
+      setTrainingTypes([]);
+    }
+  };
+
+  // Handle tab navigation
+  const handleNextTab = () => {
+    if (activeTab === 'details') {
+      // Validate required fields before moving to next tab
+      if (!onboardData.position || !onboardData.department || !onboardData.startDate || !onboardData.salary) {
+        toast.error("Please fill in all required fields marked with *");
+        return;
+      }
+      setActiveTab('equipment');
+    } else if (activeTab === 'equipment') {
+      setActiveTab('documents');
+    } else if (activeTab === 'documents') {
+      setActiveTab('training');
+    }
+  };
+
+  const handlePreviousTab = () => {
+    if (activeTab === 'equipment') {
+      setActiveTab('details');
+    } else if (activeTab === 'documents') {
+      setActiveTab('equipment');
+    } else if (activeTab === 'training') {
+      setActiveTab('documents');
+    }
+  };
+
+  // Equipment handlers
+  const handleToggleEquipment = (equipmentType) => {
+    const existing = onboardData.equipment.findIndex(eq => eq.equipment_type === equipmentType);
+    
+    if (existing >= 0) {
+      // Already selected, remove it
+      const updated = [...onboardData.equipment];
+      updated.splice(existing, 1);
+      setOnboardData({...onboardData, equipment: updated});
+    } else {
+      // Add new equipment
+      setOnboardData({
+        ...onboardData, 
+        equipment: [...onboardData.equipment, { 
+          equipment_type: equipmentType,
+          description: '',
+          notes: ''
+        }]
+      });
+    }
+  };
+
+  const handleRemoveEquipment = (index) => {
+    const updated = [...onboardData.equipment];
+    updated.splice(index, 1);
+    setOnboardData({...onboardData, equipment: updated});
+  };
+
+  const handleUpdateEquipmentNotes = () => {
+    if (onboardData.equipment.length === 0) return;
+    
+    // Update the notes for all selected equipment
+    const updatedEquipment = onboardData.equipment.map(eq => ({
+      ...eq,
+      notes: equipmentNotes
+    }));
+    
+    setOnboardData({...onboardData, equipment: updatedEquipment});
+    toast.success("Equipment notes updated");
+  };
+
+  // Document handlers
+  const handleToggleDocument = (documentType, daysToSubmit = 7) => {
+    const existing = onboardData.documents.findIndex(doc => doc.document_type === documentType);
+    
+    if (existing >= 0) {
+      // Already selected, remove it
+      const updated = [...onboardData.documents];
+      updated.splice(existing, 1);
+      setOnboardData({...onboardData, documents: updated});
+    } else {
+      // Add new document
+      const docType = documentTypes.find(dt => dt.name === documentType);
+      const isRequired = docType ? docType.required : true;
+      
+      setOnboardData({
+        ...onboardData, 
+        documents: [...onboardData.documents, { 
+          document_type: documentType,
+          document_name: documentType,
+          required: isRequired,
+          days_to_submit: daysToSubmit,
+          notes: ''
+        }]
+      });
+    }
+  };
+
+  const handleRemoveDocument = (index) => {
+    const updated = [...onboardData.documents];
+    updated.splice(index, 1);
+    setOnboardData({...onboardData, documents: updated});
+  };
+
+  // Training handlers
+  const handleToggleTraining = (trainingType) => {
+    const existing = onboardData.trainingSchedule.findIndex(tr => tr.training_type === trainingType);
+    
+    if (existing >= 0) {
+      // Already selected, remove it
+      const updated = [...onboardData.trainingSchedule];
+      updated.splice(existing, 1);
+      setOnboardData({...onboardData, trainingSchedule: updated});
+      setSelectedTraining(null);
+    } else {
+      // Add new training
+      const newTraining = { 
+        training_type: trainingType,
+        description: '',
+        trainer: '',
+        location: '',
+        scheduled_date: '',
+        scheduled_time: '',
+        duration_minutes: 60
+      };
+      
+      setOnboardData({
+        ...onboardData, 
+        trainingSchedule: [...onboardData.trainingSchedule, newTraining]
+      });
+      
+      // Set this as the selected training to edit details
+      setSelectedTraining(newTraining);
+    }
+  };
+
+  const handleRemoveTraining = (index) => {
+    const updated = [...onboardData.trainingSchedule];
+    const removedItem = updated[index];
+    updated.splice(index, 1);
+    setOnboardData({...onboardData, trainingSchedule: updated});
+    
+    // If we were editing this training, reset the selection
+    if (selectedTraining && selectedTraining.training_type === removedItem.training_type) {
+      setSelectedTraining(null);
+    }
+  };
+
+  const handleUpdateTrainingDetails = () => {
+    if (!selectedTraining) return;
+    
+    // Find the training in our list and update it
+    const updated = onboardData.trainingSchedule.map(tr => 
+      tr.training_type === selectedTraining.training_type ? selectedTraining : tr
+    );
+    
+    setOnboardData({...onboardData, trainingSchedule: updated});
+    toast.success(`${selectedTraining.training_type} training details updated`);
   };
 
   if (loading) {
     return (
-      <div className="w-full min-h-screen">
-        <div className={`min-h-screen p-6 ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
+      <>
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
           </div>
-        </div>
-      </div>
+      </>
     );
   }
 
   if (error || !applicant) {
     return (
-      <div className="w-full min-h-screen">
-        <div className={`min-h-screen p-6 ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
+      <>
           <div className="text-center">
             <h2 className={`text-2xl font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
               {error || "Applicant not found"}
@@ -557,16 +691,14 @@ const ApplicantDetails = () => {
               Return to Applicants List
             </button>
           </div>
-        </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="w-full">
+    <>
       <ToastContainer position="top-right" />
       
-      <div className={`min-h-screen ${isDark ? 'bg-[#1B2537] text-white' : 'bg-gray-50 text-gray-800'}`}>
         <div className="max-w-7xl mx-auto p-6">
           {/* Back Button */}
           <button
@@ -581,7 +713,9 @@ const ApplicantDetails = () => {
           <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-lg shadow-md p-6 mb-6`}>
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{applicant.name}</h1>
+                <h1 className={`text-2xl font-semibold ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
+                  {`${applicant.first_name} ${applicant.last_name}`}
+                </h1>
                 <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{applicant.position}</p>
               </div>
               <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
@@ -608,8 +742,90 @@ const ApplicantDetails = () => {
                 </div>
                 
                 <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.phone}</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Gender</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.gender}
+                    {applicant.other_gender && ` (${applicant.other_gender})`}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Age</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.age || 'N/A'}</p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Marital Status</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.marital_status}
+                    {applicant.other_marital_status && ` (${applicant.other_marital_status})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Education</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.highest_education}
+                    {applicant.other_highest_education && ` (${applicant.other_highest_education})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Position Applying For</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.position}
+                    {applicant.other_position && ` (${applicant.other_position})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Desired Pay</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.desired_pay || 'N/A'}</p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Previously Employed at Vismotor</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.previously_employed || 'N/A'}</p>
+                </div>
+              </div>
+              
+              {/* Right Column */}
+              <div>
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Branch/Department</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.branch_department}
+                    {applicant.other_branch_department && ` (${applicant.other_branch_department})`}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Date Availability</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.date_availability}
+                    {applicant.other_date_availability && ` (${applicant.other_date_availability})`}
+                  </p>
+                </div>
+                
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Job Post Source</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {applicant.job_post_source}
+                    {applicant.other_job_source && ` (${applicant.other_job_source})`}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    {[
+                      applicant.street_address,
+                      applicant.barangay,
+                      applicant.city,
+                      applicant.province,
+                      applicant.region
+                    ].filter(Boolean).join(', ')}
+                  </p>
                 </div>
                 
                 <div className="mb-6">
@@ -618,23 +834,33 @@ const ApplicantDetails = () => {
                     {applicant.applied_date ? applicant.applied_date.split('T')[0] : ''}
                   </p>
                 </div>
-              </div>
-              
-              {/* Right Column */}
-              <div>
+
                 <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Education</p>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.education}</p>
-                </div>
-                
-                <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Experience</p>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.experience}</p>
-                </div>
-                
-                <div className="mb-6">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Skills</p>
-                  <p className={`font-medium whitespace-pre-line ${isDark ? 'text-white' : 'text-gray-800'}`}>{applicant.skills}</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Files</p>
+                  <div className="flex flex-col space-y-2 mt-2">
+                    {applicant.resume_filename && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/applicants/download/${applicant.resume_filename}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={`flex items-center ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                      >
+                        <FaPaperclip className="mr-2" /> 
+                        Resume/CV: {applicant.resume_originalname}
+                      </a>
+                    )}
+                    {applicant.house_sketch_filename && (
+                      <a 
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/applicants/download/${applicant.house_sketch_filename}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={`flex items-center ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                      >
+                        <FaPaperclip className="mr-2" /> 
+                        House Sketch: {applicant.house_sketch_originalname}
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -780,7 +1006,6 @@ const ApplicantDetails = () => {
                 )}
               </div>
             )}
-          </div>
         </div>
       </div>
 
@@ -817,108 +1042,6 @@ const ApplicantDetails = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 Add Note
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Onboard Modal */}
-      {onboardModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className={`${isDark ? 'bg-slate-800/90 border border-slate-700' : 'bg-white/90 border border-gray-200'} p-6 rounded-xl shadow-lg max-w-md w-full backdrop-blur-md`}>
-            {/* Header with title and close button */}
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Onboard {applicant.name}</h2>
-              <button 
-                onClick={handleOnboardModalClose}
-                className={`p-1 rounded-full hover:bg-opacity-80 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
-                aria-label="Close"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="grid grid-cols-1 gap-4 mb-4">
-              <div>
-                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Position</label>
-                <input
-                  type="text"
-                  value={onboardData.position}
-                  onChange={(e) => setOnboardData({...onboardData, position: e.target.value})}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark 
-                      ? 'bg-slate-700/80 border-slate-600 text-white' 
-                      : 'bg-white/80 border-gray-300 text-gray-800'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Department</label>
-                <input
-                  type="text"
-                  value={onboardData.department}
-                  onChange={(e) => setOnboardData({...onboardData, department: e.target.value})}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark 
-                      ? 'bg-slate-700/80 border-slate-600 text-white' 
-                      : 'bg-white/80 border-gray-300 text-gray-800'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Start Date</label>
-                <input
-                  type="date"
-                  value={onboardData.startDate ? onboardData.startDate.split('T')[0] : onboardData.startDate}
-                  onChange={(e) => setOnboardData({...onboardData, startDate: e.target.value})}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark 
-                      ? 'bg-slate-700/80 border-slate-600 text-white' 
-                      : 'bg-white/80 border-gray-300 text-gray-800'
-                  }`}
-                />
-              </div>
-              <div>
-                <label className={`block mb-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Salary</label>
-                <input
-                  type="text"
-                  value={onboardData.salary}
-                  onChange={(e) => setOnboardData({...onboardData, salary: e.target.value})}
-                  placeholder="e.g. 50000"
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                    isDark 
-                      ? 'bg-slate-700/80 border-slate-600 text-white' 
-                      : 'bg-white/80 border-gray-300 text-gray-800'
-                  }`}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <button 
-                onClick={handleOnboardModalClose} 
-                className={`px-4 py-2 rounded-lg ${
-                  isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                }`}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleOnboardApplicant} 
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing...
-                  </>
-                ) : "Process Onboarding"}
               </button>
             </div>
           </div>
@@ -1007,7 +1130,7 @@ const ApplicantDetails = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

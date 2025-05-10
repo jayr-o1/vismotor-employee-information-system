@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../../ThemeContext";
 
-const DashboardCard = ({ title, value, icon, color, trend }) => {
+const DashboardCard = ({ title, value, icon, color, trend, description }) => {
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
   
@@ -93,6 +93,9 @@ const DashboardCard = ({ title, value, icon, color, trend }) => {
                 </span>
                 <span className={`ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>vs last month</span>
               </p>
+            )}
+            {description && (
+              <p className={`mt-2 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{description}</p>
             )}
           </div>
           <div className={`rounded-full p-3 ${getIconBgColor()}`}>

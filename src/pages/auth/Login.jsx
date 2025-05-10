@@ -4,8 +4,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import apiService from "../../services/api";
 import { ThemeContext } from "../../ThemeContext";
-
-import Logo from "../../assets/vismotor-splash-art.png";
+import Banner from "../../assets/vismotor_banner.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -19,30 +18,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
-
-  // Force light mode styles regardless of theme context
-  useEffect(() => {
-    // Apply light mode styles to this page
-    const root = document.documentElement;
-    const body = document.body;
-    
-    // Save current theme state
-    const prevThemeClass = root.classList.contains('dark');
-    const prevBgColor = body.style.backgroundColor;
-    const prevTextColor = body.style.color;
-    
-    // Force light mode
-    root.classList.remove('dark');
-    body.style.backgroundColor = '#f8fafc'; // light background
-    body.style.color = '#0f172a'; // dark text
-    
-    // Restore theme when component unmounts
-    return () => {
-      if (prevThemeClass) root.classList.add('dark');
-      body.style.backgroundColor = prevBgColor;
-      body.style.color = prevTextColor;
-    };
-  }, []);
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("savedEmail") || sessionStorage.getItem("savedEmail");
@@ -80,7 +56,7 @@ const Login = () => {
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        theme: "light" // Force light theme for toast
+        theme: isDark ? "dark" : "light"
       });
 
       // Redirect to home page
@@ -98,7 +74,7 @@ const Login = () => {
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
-          theme: "light" // Force light theme for toast
+          theme: isDark ? "dark" : "light"
         });
       } else {
         setError(error.response?.data?.message || error.message || "Something went wrong. Please try again.");
@@ -111,7 +87,7 @@ const Login = () => {
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
-          theme: "light" // Force light theme for toast
+          theme: isDark ? "dark" : "light"
         });
       }
     } finally {
@@ -138,7 +114,7 @@ const Login = () => {
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        theme: "light" // Force light theme for toast
+        theme: isDark ? "dark" : "light"
       });
     } catch (error) {
       setError(error.response?.data?.message || "Failed to resend verification email. Please try again.");
@@ -151,7 +127,7 @@ const Login = () => {
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        theme: "light" // Force light theme for toast
+        theme: isDark ? "dark" : "light"
       });
     } finally {
       setIsResendingEmail(false);
@@ -163,133 +139,162 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page">
-      <div className="flex min-h-screen bg-gradient-to-b from-[#538b30] to-[#003519]">
-        {/* Right Column (Login Form) */}
-        <div className="flex items-center justify-center w-full p-10">
-          <div className="bg-white p-10 rounded-xl shadow-lg w-[480px]">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Login</h2>
-            <p className="text-gray-600 mb-6">Welcome back! We missed you!</p>
-            
-            {/* Error Message */}
-            {error && (
-              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
-                {error}
-                {unverifiedEmail && (
-                  <div className="mt-2">
-                    <button
-                      onClick={handleResendVerificationEmail}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                      disabled={isResendingEmail}
-                    >
-                      {isResendingEmail
-                        ? "Sending..."
-                        : resendSuccess
-                        ? "Email sent successfully!"
-                        : "Resend verification email"}
-                    </button>
-                  </div>
-                )}
+    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br ${
+      isDark 
+        ? 'from-gray-900 to-gray-800' 
+        : 'from-[#538b30] to-[#003519]'
+    }`}>
+      <ToastContainer theme={isDark ? "dark" : "light"} />
+      
+      <div className={`w-full max-w-lg p-8 rounded-xl shadow-xl ${
+        isDark 
+          ? 'bg-[#1B2537] border border-slate-700' 
+          : 'bg-white border border-gray-200'
+      }`}>
+        <div className="text-center mb-8">
+          <img src={Banner} alt="Vismotor" className="w-full object-cover mb-4" />
+        </div>
+        
+        {error && (
+          <div className={`mb-6 p-4 rounded-lg ${
+            isDark 
+              ? 'bg-red-900/20 border border-red-800 text-red-200' 
+              : 'bg-red-50 border border-red-200 text-red-700'
+          }`}>
+            <div className="flex items-center">
+              <i className="fas fa-exclamation-circle mr-2"></i>
+              <span>{error}</span>
+            </div>
+            {unverifiedEmail && (
+              <div className="mt-3 ml-6">
+                <button
+                  onClick={handleResendVerificationEmail}
+                  disabled={isResendingEmail}
+                  className={`text-sm font-medium ${
+                    isDark 
+                      ? 'text-blue-400 hover:text-blue-300' 
+                      : 'text-blue-600 hover:text-blue-800'
+                  }`}
+                >
+                  {isResendingEmail
+                    ? <><i className="fas fa-spinner fa-spin mr-2"></i>Sending...</>
+                    : resendSuccess
+                    ? <><i className="fas fa-check mr-2"></i>Email sent successfully!</>
+                    : <><i className="fas fa-paper-plane mr-2"></i>Resend verification email</>}
+                </button>
               </div>
             )}
+          </div>
+        )}
 
-            {/* Login Form */}
-            <form onSubmit={handleLogin}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
-                  placeholder="Enter your Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              Email Address
+            </label>
+            <input
+              type="email"
+              className={`w-full px-4 py-3 rounded-lg border ${
+                isDark 
+                  ? 'bg-slate-700 border-slate-600 text-white focus:ring-green-500 focus:border-green-500' 
+                  : 'bg-white border-gray-300 text-gray-800 focus:ring-green-500 focus:border-green-500'
+              } focus:outline-none focus:ring-2`}
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    className="w-full p-3 border border-orange-200 rounded-lg focus:outline-none focus:ring-0 focus:border-orange-500"
-                    placeholder="Enter your Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={togglePasswordVisibility}
-                  >
-                    {showPassword ? (
-                      <FaEyeSlash className="text-gray-500 hover:text-gray-700" />
-                    ) : (
-                      <FaEye className="text-gray-500 hover:text-gray-700" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Remember Me and Forgot Password */}
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="rememberMe"
-                    className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
-                  <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
-                    Remember Me
-                  </label>
-                </div>
-
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/forgot-password")}
-                    className="text-orange-500 text-sm font-semibold hover:underline"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-              </div>
-
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  isDark 
+                    ? 'bg-slate-700 border-slate-600 text-white focus:ring-green-500 focus:border-green-500' 
+                    : 'bg-white border-gray-300 text-gray-800 focus:ring-green-500 focus:border-green-500'
+                } focus:outline-none focus:ring-2`}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
               <button
-                type="submit"
-                className="w-full cursor-pointer bg-orange-500 hover:bg-[#538b30] text-white p-3 rounded-lg font-semibold transition duration-200"
-                disabled={isLoading}
+                type="button"
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                  isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={togglePasswordVisibility}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {showPassword ? (
+                  <FaEyeSlash />
+                ) : (
+                  <FaEye />
+                )}
               </button>
-            </form>
-
-            <div className="mt-6 border-t border-gray-300"></div>
-
-            <div className="mt-4 text-sm text-center">
-              <p>
-                Don't have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => navigate("/signup")}
-                  className="text-orange-500 font-semibold hover:underline"
-                >
-                  Sign up
-                </button>
-              </p>
             </div>
           </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className={`h-4 w-4 rounded border-gray-300 ${
+                  isDark ? 'text-green-500 focus:ring-green-600' : 'text-green-600 focus:ring-green-500'
+                }`}
+              />
+              <label 
+                htmlFor="rememberMe" 
+                className={`ml-2 text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+              >
+                Remember me
+              </label>
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className={`text-sm font-medium ${
+                  isDark ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-700'
+                }`}
+              >
+                Forgot password?
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`w-full py-3 px-4 flex justify-center items-center rounded-lg font-medium transition-colors ${
+              isLoading 
+                ? 'bg-gray-400 cursor-not-allowed text-white' 
+                : isDark 
+                ? 'bg-green-600 hover:bg-green-700 text-white' 
+                : 'bg-green-600 hover:bg-green-700 text-white'
+            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500`}
+          >
+            {isLoading ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Signing in...
+              </>
+            ) : (
+              'Sign in'
+            )}
+          </button>
+        </form>
+
+        <div className={`mt-6 text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p>Access is restricted to authorized personnel only.</p>
         </div>
       </div>
-
-      {/* Toast container for alerts */}
-      <ToastContainer theme="light" />
     </div>
   );
 };

@@ -117,6 +117,40 @@ tr.hover\:bg-gray-50:hover {
   color: #f9fafb !important;
 }
 
+/* Light Mode Override - Forces light mode regardless of theme */
+.light-mode {
+  background-color: white !important;
+  color: #333 !important;
+}
+
+.light-mode input,
+.light-mode select,
+.light-mode textarea {
+  background-color: white !important;
+  color: #333 !important;
+  border-color: #e5e7eb !important;
+}
+
+.light-mode ::placeholder {
+  color: #9ca3af !important;
+}
+
+.light-mode .form-label,
+.light-mode label {
+  color: #455a64 !important;
+}
+
+.light-mode .form-section,
+.light-mode .form-header {
+  background-color: white !important;
+  color: #333 !important;
+}
+
+.light-mode button.submit-button {
+  background-color: #FF5C00 !important;
+  color: white !important;
+}
+
 /* Application Form Specific Styles */
 .form-header {
   border-top: 8px solid #FF5C00;
@@ -369,6 +403,173 @@ input:focus, select:focus, textarea:focus, button:focus {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toast Notification Styles */
+.toast-success-container {
+  background: linear-gradient(to right, #73b573, #56ab56) !important;
+  border-left: 5px solid #3d8b3d !important;
+  color: white !important;
+  font-weight: 500 !important;
+  border-radius: 5px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.toast-error-container {
+  background: linear-gradient(to right, #e57373, #ef5350) !important;
+  border-left: 5px solid #d32f2f !important;
+  color: white !important;
+  font-weight: 500 !important;
+  border-radius: 5px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.toast-warning-container {
+  background: linear-gradient(to right, #ffb74d, #ffa726) !important;
+  border-left: 5px solid #f57c00 !important;
+  color: white !important;
+  font-weight: 500 !important;
+  border-radius: 5px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.toast-info-container {
+  background: linear-gradient(to right, #64b5f6, #42a5f5) !important;
+  border-left: 5px solid #1e88e5 !important;
+  color: white !important;
+  font-weight: 500 !important;
+  border-radius: 5px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.toast-important-container {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+  font-weight: 600 !important;
+  border-radius: 5px !important;
+  padding: 16px !important;
+}
+
+.toast-system-container {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #333 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 20px !important;
+  padding: 8px 16px !important;
+  font-size: 0.9rem !important;
+}
+
+.toast-validation-container {
+  background: linear-gradient(to right, #ef5350, #e53935) !important;
+  color: white !important;
+  border-radius: 5px !important;
+  padding: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Toast Animation */
+.Toastify__toast {
+  animation-duration: 0.3s !important;
+}
+
+/* Override the close button color to match toast style */
+.Toastify__close-button {
+  color: inherit !important;
+  opacity: 0.7 !important;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1 !important;
+}
+
+/* Animation for error alerts */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.25s ease-out;
+}
+
+/* Pulse animation for loading or attention elements */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* File upload styling */
+.file-upload-label {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.file-upload-label:hover {
+  border-color: #FF5C00;
+  background-color: rgba(255, 92, 0, 0.05);
+}
+
+.file-upload-label:active {
+  transform: scale(0.99);
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 640px) {
+  .file-upload-label {
+    padding: 8px 12px;
+  }
+  
+  .file-upload-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .file-upload-text {
+    font-size: 13px;
+  }
+}
+
+/* Add xs breakpoint for extra small screens */
+@media (min-width: 400px) {
+  .xs\:inline {
+    display: inline;
+  }
+  
+  .xs\:hidden {
+    display: none;
+  }
 }
 
 

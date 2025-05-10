@@ -21,6 +21,11 @@ if (!fs.existsSync(dbConfigPath)) {
 // Import our database setup modules
 const initializeDatabase = require('./src/configs/init-database');
 const addSampleData = require('./src/configs/add-sample-data');
+const db = require('./src/configs/database');
+const { createApplicantsTables } = require('./src/configs/create-applicant-tables');
+const { createInterviewsTables } = require('./src/configs/create-interviews-tables');
+const { createEmployeesTables } = require('./src/configs/create-employee-tables');
+const { createUsersTable } = require('./src/configs/create-users-table');
 
 // Helper function to parse command line arguments
 function parseArgs() {
@@ -98,4 +103,35 @@ async function main() {
 main().catch(err => {
   console.error('\n❌ Unexpected error:', err);
   process.exit(1);
-}); 
+});
+
+async function setupDatabase() {
+  try {
+    console.log('Setting up database tables...');
+    
+    // Create applicants tables
+    await createApplicantsTables();
+    console.log('✅ Applicants tables setup complete');
+    
+    // Create interviews tables
+    await createInterviewsTables();
+    console.log('✅ Interviews tables setup complete');
+    
+    // Create employees tables
+    await createEmployeesTables();
+    console.log('✅ Employees tables setup complete');
+    
+    // Create or update users table with profile picture support
+    await createUsersTable();
+    console.log('✅ Users table setup complete');
+    
+    console.log('✅ All tables setup complete');
+    
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Database setup failed:', error);
+    process.exit(1);
+  }
+}
+
+setupDatabase(); 

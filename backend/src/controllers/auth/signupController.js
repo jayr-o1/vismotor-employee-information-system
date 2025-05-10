@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
+const db = require('../../configs/database');
 const mysql = require('mysql2/promise');
-const dbConfig = require('../../configs/database');
 const { generateToken } = require("../../utils/tokenUtils");
 const { sendVerificationEmail } = require("../../services/emailService");
 
@@ -28,7 +28,7 @@ const signup = async (req, res) => {
     }
 
     // Create database connection
-    const connection = await mysql.createPool(dbConfig).getConnection();
+    const connection = await db.getConnection();
 
     // Check if email already exists
     const [existingEmails] = await connection.query(
@@ -60,7 +60,7 @@ const signup = async (req, res) => {
     connection.release();
 
     // Send verification email
-    const verificationLink = `http://localhost:5173/verify-email?token=${verificationToken}`;
+    const verificationLink = `http://10.10.1.71:5173/verify-email?token=${verificationToken}`;
     
     try {
       await sendVerificationEmail(email, verificationLink);
