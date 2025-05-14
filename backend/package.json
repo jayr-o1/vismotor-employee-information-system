@@ -6,9 +6,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "setup-database": "node setup-database.js",
-    "setup-sample-data": "node setup-database.js --sample",
-    "check-db": "node check-db.js"
+    "setup-database": "node src/scripts/create-tables.js",
+    "setup-sample-data": "node src/scripts/add-sample-data.js",
+    "check-db": "node src/scripts/setup-db.js --check-only"
   },
   "keywords": [],
   "author": "",

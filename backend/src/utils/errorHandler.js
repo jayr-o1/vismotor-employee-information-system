@@ -1,66 +1,35 @@
 /**
- * Utility functions for standardized error handling
+ * Helper functions for error handling
  */
 
 /**
- * Generate a standardized error response
- * @param {Error} error - The error object
- * @param {string} defaultMessage - Default message if error doesn't have one
- * @param {number} statusCode - HTTP status code to return
- * @returns {Object} Standardized error response object
- */
-const formatErrorResponse = (error, defaultMessage = 'An unexpected error occurred', statusCode = 500) => {
-  // Extract the most useful information from the error
-  const errorCode = error.code || error.name || 'UNKNOWN_ERROR';
-  const errorMessage = error.message || defaultMessage;
-  
-  // Include stack trace in development but not in production
-  const stackTrace = process.env.NODE_ENV === 'production' ? undefined : error.stack;
-  
-  // For SQL errors, provide more specific information
-  const sqlErrorInfo = error.sqlMessage || error.sqlState || error.errno 
-    ? {
-        sqlMessage: error.sqlMessage,
-        sqlState: error.sqlState,
-        errno: error.errno
-      }
-    : undefined;
-  
-  return {
-    success: false,
-    error: {
-      code: errorCode,
-      message: errorMessage,
-      statusCode,
-      details: error.details || undefined,
-      sqlError: sqlErrorInfo,
-      stack: stackTrace
-    }
-  };
-};
-
-/**
- * Send error response with appropriate status code
- * @param {Object} res - Express response object
+ * Send a standardized error response to the client
+ * @param {object} res - Express response object
  * @param {Error} error - Error object
- * @param {string} defaultMessage - Default message if error doesn't have one
+ * @param {string} message - Error message to send to client
  * @param {number} statusCode - HTTP status code
  */
-const sendErrorResponse = (res, error, defaultMessage, statusCode = 500) => {
-  console.error(`Error (${statusCode}):`, error.message);
-  console.error('Stack:', error.stack);
+const sendErrorResponse = (res, error, message, statusCode = 500) => {
+  console.error(`Error: ${message}`, error);
   
-  // If error has a specific HTTP status code defined, use it
-  const finalStatusCode = error.statusCode || statusCode;
+  // Create response object
+  const errorResponse = {
+    success: false,
+    message: message || error.message || 'An error occurred',
+    error: {
+      code: error.code || 'SERVER_ERROR'
+    }
+  };
   
-  // Format the error response
-  const errorResponse = formatErrorResponse(error, defaultMessage, finalStatusCode);
+  // Add error details if available
+  if (error.details) {
+    errorResponse.error.details = error.details;
+  }
   
-  // Send the response
-  res.status(finalStatusCode).json(errorResponse);
+  // Send response
+  res.status(statusCode).json(errorResponse);
 };
 
 module.exports = {
-  formatErrorResponse,
   sendErrorResponse
 }; 

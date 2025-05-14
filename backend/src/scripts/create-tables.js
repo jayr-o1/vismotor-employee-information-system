@@ -1,13 +1,16 @@
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const path = require('path');
-const dbConfig = require('./database');
+const dbConfig = require('../config/database').config;
+require('dotenv').config();
+
+// Update paths to SQL files
+const schemaFile = path.join(__dirname, '../config/sql/schema.sql');
+const sampleDataFile = path.join(__dirname, '../config/sql/sample-data.sql');
 
 // Read SQL files
-const schemaFilePath = path.join(__dirname, 'sql', 'schema.sql');
-const sampleDataFilePath = path.join(__dirname, 'sql', 'sample-data.sql');
-const schemaContent = fs.readFileSync(schemaFilePath, 'utf8');
-const sampleDataContent = fs.readFileSync(sampleDataFilePath, 'utf8');
+const schemaContent = fs.readFileSync(schemaFile, 'utf8');
+const sampleDataContent = fs.readFileSync(sampleDataFile, 'utf8');
 
 // Combine schema and sample data
 const sqlContent = schemaContent + '\n' + sampleDataContent;

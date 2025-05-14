@@ -4,14 +4,20 @@ const mysql = require("mysql2/promise");
 const path = require("path");
 const fs = require("fs");
 require('dotenv').config(); // Load environment variables
-const db = require("./src/configs/database");
-const authRoutes = require("./src/controllers/auth/routes/routes");
-const employeeRoutes = require("./src/controllers/employee/routes");
-const applicantRoutes = require("./src/controllers/applicant/routes");
-const userRoutes = require("./src/controllers/user/routes");
-const dashboardRoutes = require("./src/controllers/dashboard/routes");
-const applicationsRoutes = require("./src/routes/applications");
-const { validateToken, ensureVerified } = require("./src/utils/authMiddleware");
+
+// Import configuration
+const db = require("./src/config/database");
+
+// Import routes
+const authRoutes = require("./src/routes/auth.routes");
+const employeeRoutes = require("./src/routes/employee.routes");
+const applicantRoutes = require("./src/routes/applicant.routes");
+const userRoutes = require("./src/routes/user.routes");
+const dashboardRoutes = require("./src/routes/dashboard.routes");
+
+// Import middleware
+const { validateToken, ensureVerified } = require("./src/middleware/auth.middleware");
+const { errorHandler, notFoundHandler } = require("./src/middleware/error.middleware");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,11 +30,17 @@ if (!fs.existsSync(uploadsDir)) {
   console.log('Created uploads directory at:', uploadsDir);
 }
 
-// Create profile-pictures directory
+// Create subdirectories
 const profilePicsDir = path.join(uploadsDir, 'profile-pictures');
 if (!fs.existsSync(profilePicsDir)) {
   fs.mkdirSync(profilePicsDir, { recursive: true });
   console.log('Created profile-pictures directory at:', profilePicsDir);
+}
+
+const applicantFilesDir = path.join(uploadsDir, 'applicant-files');
+if (!fs.existsSync(applicantFilesDir)) {
+  fs.mkdirSync(applicantFilesDir, { recursive: true });
+  console.log('Created applicant-files directory at:', applicantFilesDir);
 }
 
 // Serve static files from uploads directory
@@ -61,12 +73,17 @@ app.use((req, res, next) => {
     '/api/reset-password',
     '/api/resend-verification',
     '/api/check-user',
+    '/api/dashboard',
+    '/api/dashboard/applicant-trends',
     '/api/applications/upload',
     '/api/applications/submit',
     '/api/applicants/download',
     '/api/profile-pictures',
     '/api/employees', // This will match /api/employees/:id/public-profile
     '/api/applicants', // This will match /api/applicants/:id/public-profile
+    '/api/equipment-types',
+    '/api/document-types',
+    '/api/training-types',
   ];
   
   // Check if the request path starts with any of the public paths
@@ -76,8 +93,14 @@ app.use((req, res, next) => {
   const isPublicProfilePath = 
     req.path.match(/\/api\/employees\/\d+\/public-profile$/) || 
     req.path.match(/\/api\/applicants\/\d+\/public-profile$/);
+    
+  // Add direct match for the problem endpoints
+  const isExactPublicPath = 
+    req.path === '/api/equipment-types' || 
+    req.path === '/api/document-types' || 
+    req.path === '/api/training-types';
   
-  if (isPublicPath || isPublicProfilePath) {
+  if (isPublicPath || isPublicProfilePath || isExactPublicPath) {
     return next();
   }
   
@@ -90,13 +113,16 @@ app.use((req, res, next) => {
   });
 });
 
-// Routes
+// Apply routes
 app.use(authRoutes);
 app.use(employeeRoutes);
 app.use(applicantRoutes);
 app.use(userRoutes);
 app.use(dashboardRoutes);
-app.use('/api/applications', applicationsRoutes);
+
+// Apply 404 handler and error handler
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // Test database connection before starting server
 async function startServer() {
@@ -112,13 +138,12 @@ async function startServer() {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
       console.log(`✅ Server accessible at http://10.10.1.71:${PORT}`);
-      console.log(`API Documentation: http://0.0.0.0:${PORT}/api-docs`);
     });
   } catch (error) {
     console.error('❌ Database connection failed:', error);
     console.error('Make sure:');
     console.error('1. MySQL server is running');
-    console.error('2. Database credentials in src/configs/database.js are correct');
+    console.error('2. Database credentials in src/config/database.js are correct');
     console.error('3. Database has been initialized: npm run setup-db');
     process.exit(1);
   }

@@ -67,7 +67,21 @@ const Applicants = () => {
     setError(null);
     try {
       const response = await apiService.applicants.getAll();
-      setApplicants(response.data);
+      // Ensure we're working with an array
+      if (response.data && Array.isArray(response.data)) {
+        setApplicants(response.data);
+      } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        // If response.data.data is an array (common API structure)
+        setApplicants(response.data.data);
+      } else {
+        console.error("Invalid applicants data format:", response.data);
+        // Set to empty array if response is not as expected
+        setApplicants([]);
+        setError({
+          message: 'Received invalid data format from server',
+          type: 'server'
+        });
+      }
     } catch (error) {
       handleApiError(error, {
         context: 'Fetch Applicants',
@@ -341,44 +355,13 @@ const Applicants = () => {
                 containerClassName={`flex items-center space-x-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                 pageClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
                 previousClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
-                nextClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
-                activeClassName={`${isDark ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}
-                disabledClassName={"text-gray-400 cursor-not-allowed"}
               />
             </div>
           </>
         )}
       </div>
-
-      {/* Delete Confirmation Modal */}
-      {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className={`${isDark ? 'bg-[#232f46] text-white' : 'bg-white text-gray-800'} rounded-lg shadow-lg p-6 max-w-md w-full`}>
-            <h3 className="text-xl font-semibold mb-4">Confirm Delete</h3>
-            <p className="mb-6">Are you sure you want to delete {currentApplicant?.name}? This action cannot be undone.</p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setDeleteModalOpen(false)}
-                className={`px-4 py-2 rounded-lg ${
-                  isDark 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                }`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteApplicant}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };
 
-export default Applicants; 
+export default Applicants;

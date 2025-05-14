@@ -1,26 +1,16 @@
 // emailService.js
-const nodemailer = require("nodemailer");
+const transporter = require('../config/email');
 require('dotenv').config(); // Load environment variables if not already loaded
 
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  auth: { 
-    user: process.env.EMAIL_USER || "olores.jayrm@gmail.com", 
-    pass: process.env.EMAIL_PASS || "obyvlbyylrcflmas" 
-  },
-  tls: { rejectUnauthorized: false },
-});
+// Verify transporter connection is already handled in the email.js config file
 
-// Verify transporter connection
-transporter.verify((error) => {
-  if (error) console.error("Nodemailer Error:", error);
-  else console.log("Server is ready to take our messages");
-});
+// Get email from environment variables
+const fromEmail = process.env.SMTP_USER || 'noreply@example.com';
 
 // Send verification email
 const sendVerificationEmail = async (email, link) => {
   const mailOptions = {
-    from: "olores.jayrm@gmail.com",
+    from: fromEmail,
     to: email,
     subject: "Verify Your Email",
     html: `<p>Click <a href="${link}">here</a> to verify your email. This link expires in 15 minutes.</p>`,
@@ -31,7 +21,7 @@ const sendVerificationEmail = async (email, link) => {
 // Send password reset email
 const sendResetPasswordEmail = async (email, link) => {
   const mailOptions = {
-    from: "olores.jayrm@gmail.com",
+    from: fromEmail,
     to: email,
     subject: "Reset Your Password",
     html: `<p>Click <a href="${link}">here</a> to reset your password. This link expires in 15 minutes.</p>`,
@@ -59,7 +49,7 @@ const sendInterviewNotification = async (applicantEmail, applicantName, intervie
                       : `<strong>Location:</strong> ${location}`;
   
   const mailOptions = {
-    from: "olores.jayrm@gmail.com",
+    from: fromEmail,
     to: applicantEmail,
     subject: "Interview Scheduled - Next Steps",
     html: `
@@ -105,7 +95,7 @@ const sendInterviewCompletionEmail = async (applicantEmail, applicantName, inter
   });
   
   const mailOptions = {
-    from: "olores.jayrm@gmail.com",
+    from: fromEmail,
     to: applicantEmail,
     subject: "Thank You for Your Interview",
     html: `
@@ -145,7 +135,7 @@ const sendInterviewCancellationEmail = async (applicantEmail, applicantName, int
   });
   
   const mailOptions = {
-    from: "olores.jayrm@gmail.com",
+    from: fromEmail,
     to: applicantEmail,
     subject: "Interview Cancellation Notice",
     html: `
@@ -185,7 +175,7 @@ const sendWelcomeEmail = async (employeeEmail, employeeName, employmentDetails) 
   });
   
   const mailOptions = {
-    from: "olores.jayrm@gmail.com",
+    from: fromEmail,
     to: employeeEmail,
     subject: "Welcome to Vismotor Inc!",
     html: `

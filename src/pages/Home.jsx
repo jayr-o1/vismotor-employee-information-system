@@ -594,13 +594,21 @@ const Home = () => {
                               isDark ? 'bg-emerald-900/30 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
                             }`}>
                               {applicant.avatar ? (
-                                <img src={applicant.avatar} alt={applicant.name} className="w-full h-full object-cover" />
+                                <img 
+                                  src={applicant.avatar} 
+                                  alt={applicant.name || `${applicant.first_name || ''} ${applicant.last_name || ''}`} 
+                                  className="w-full h-full object-cover" 
+                                />
                               ) : (
-                                applicant.name.charAt(0).toUpperCase() + (applicant.name.split(' ')[1]?.charAt(0).toUpperCase() || '')
+                                (applicant.name ? 
+                                  (applicant.name.charAt(0).toUpperCase() + (applicant.name.split(' ')[1]?.charAt(0).toUpperCase() || '')) : 
+                                  (applicant.first_name?.charAt(0).toUpperCase() + (applicant.last_name?.charAt(0).toUpperCase() || '')))
                               )}
                             </div>
                             <div className="ml-3">
-                              <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{applicant.name}</p>
+                              <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                                {applicant.name || `${applicant.first_name || ''} ${applicant.last_name || ''}`}
+                              </p>
                               <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{applicant.position}</p>
                             </div>
                           </div>

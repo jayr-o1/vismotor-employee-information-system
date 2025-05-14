@@ -28,8 +28,15 @@ const Onboarding = () => {
     try {
       const response = await apiService.employees.getAll();
       
+      // Check if response.data is an array
+      const employeesData = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.data && Array.isArray(response.data.data) 
+            ? response.data.data 
+            : []);
+      
       // Filter to employees hired in the last 90 days
-      const recentlyHired = response.data.filter(employee => {
+      const recentlyHired = employeesData.filter(employee => {
         const hireDate = new Date(employee.hire_date);
         const now = new Date();
         const daysSinceHire = Math.floor((now - hireDate) / (1000 * 60 * 60 * 24));

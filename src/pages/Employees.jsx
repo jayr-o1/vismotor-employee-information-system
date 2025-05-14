@@ -58,7 +58,15 @@ const Employees = () => {
       }
       
       const response = await apiService.employees.getAll();
-      setEmployees(response.data);
+      
+      // Check if response.data is an array
+      const employeesData = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.data && Array.isArray(response.data.data) 
+            ? response.data.data 
+            : []);
+            
+      setEmployees(employeesData);
     } catch (error) {
       console.error("Error fetching employees:", error);
       setError(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
