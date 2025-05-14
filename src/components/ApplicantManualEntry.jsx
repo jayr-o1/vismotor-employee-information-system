@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { regions, provinces, cities, barangays } from '../utils/locations';
+import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import apiService from '../services/api';
 
@@ -35,51 +34,9 @@ function ApplicantManualEntry({ onClose, refreshApplicants }) {
     status: 'NEW' // Default status for manually added applicants
   });
   
-  // State for filtered location options
-  const [availableProvinces, setAvailableProvinces] = useState([]);
-  const [availableCities, setAvailableCities] = useState([]);
-  const [availableBarangays, setAvailableBarangays] = useState([]);
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [activeSection, setActiveSection] = useState(1);
-
-  // Location filtering logic based on selected region/province/city
-  useEffect(() => {
-    if (formData.region) {
-      const filteredProvinces = provinces.filter(
-        province => province.regCode === formData.region
-      );
-      setAvailableProvinces(filteredProvinces);
-    } else {
-      setAvailableProvinces([]);
-      setAvailableCities([]);
-      setAvailableBarangays([]);
-    }
-  }, [formData.region]);
-  
-  useEffect(() => {
-    if (formData.province) {
-      const filteredCities = cities.filter(
-        city => city.provCode === formData.province
-      );
-      setAvailableCities(filteredCities);
-    } else {
-      setAvailableCities([]);
-      setAvailableBarangays([]);
-    }
-  }, [formData.province]);
-  
-  useEffect(() => {
-    if (formData.city) {
-      const filteredBarangays = barangays.filter(
-        barangay => barangay.cityCode === formData.city
-      );
-      setAvailableBarangays(filteredBarangays);
-    } else {
-      setAvailableBarangays([]);
-    }
-  }, [formData.city]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -205,95 +162,311 @@ function ApplicantManualEntry({ onClose, refreshApplicants }) {
       <form onSubmit={handleSubmit}>
         {renderSectionNav()}
         
-        {/* This is just a placeholder for now - we'd implement all sections based on ApplicationForm */}
         {activeSection === 1 && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  First Name <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
                 <input
                   type="text"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
                   required
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
                 <input
                   type="text"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
                   required
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email <span className="text-red-500">*</span>
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
                 required
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
             
-            {/* More fields would go here - simplified for now */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                  required
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age</label>
+                <input
+                  type="number"
+                  name="age"
+                  min="18"
+                  max="80"
+                  value={formData.age}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Marital Status</label>
+                <select
+                  name="maritalStatus"
+                  value={formData.maritalStatus}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                  required
+                >
+                  <option value="">Select Status</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Highest Education</label>
+                <select
+                  name="highestEducation"
+                  value={formData.highestEducation}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                  required
+                >
+                  <option value="">Select Education</option>
+                  <option value="High School">High School</option>
+                  <option value="Associate Degree">Associate Degree</option>
+                  <option value="Bachelor's Degree">Bachelor's Degree</option>
+                  <option value="Master's Degree">Master's Degree</option>
+                  <option value="Doctorate">Doctorate</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
           </div>
         )}
         
-        {/* Placeholder for Address Section */}
         {activeSection === 2 && (
           <div className="space-y-4">
-            {/* Address fields would go here */}
-            <p className="text-gray-700 dark:text-gray-300">Address information fields would be displayed here</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Region</label>
+              <input
+                type="text"
+                name="region"
+                value={formData.region}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Enter region (e.g. Region VII - Central Visayas)"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Province</label>
+              <input
+                type="text"
+                name="province"
+                value={formData.province}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Enter province (e.g. Cebu)"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">City/Municipality</label>
+              <input
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Enter city (e.g. Cebu City)"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Barangay</label>
+              <input
+                type="text"
+                name="barangay"
+                value={formData.barangay}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Enter barangay"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Street Address</label>
+              <input
+                type="text"
+                name="streetAddress"
+                value={formData.streetAddress}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Enter street address"
+              />
+            </div>
           </div>
         )}
         
-        {/* Placeholder for Employment Section */}
         {activeSection === 3 && (
           <div className="space-y-4">
-            {/* Employment fields would go here */}
-            <p className="text-gray-700 dark:text-gray-300">Employment information fields would be displayed here</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Position Applying For</label>
+              <input
+                type="text"
+                name="positionApplyingFor"
+                value={formData.positionApplyingFor}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Branch/Department</label>
+              <input
+                type="text"
+                name="branchDepartment"
+                value={formData.branchDepartment}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date Availability</label>
+              <input
+                type="date"
+                name="dateAvailability"
+                value={formData.dateAvailability}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Desired Pay (PHP)</label>
+              <input
+                type="text"
+                name="desiredPay"
+                value={formData.desiredPay}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g. 25,000"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Previously Employed at Vismotor?</label>
+              <select
+                name="previouslyEmployed"
+                value={formData.previouslyEmployed}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
           </div>
         )}
         
-        {/* Placeholder for Documents Section */}
         {activeSection === 4 && (
           <div className="space-y-4">
-            {/* Document upload fields would go here */}
-            <p className="text-gray-700 dark:text-gray-300">Document upload fields would be displayed here</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resume/CV</label>
+              <input
+                type="file"
+                name="resumeFile"
+                onChange={handleFileChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                accept=".pdf,.doc,.docx"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Accepted formats: PDF, DOC, DOCX</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">House Sketch/Map</label>
+              <input
+                type="file"
+                name="houseSketchFile"
+                onChange={handleFileChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
+                accept=".jpg,.jpeg,.png,.pdf"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Accepted formats: JPG, JPEG, PNG, PDF</p>
+            </div>
+            
+            <div className="pt-4 border-t">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                {isSubmitting ? 'Submitting...' : 'Add Applicant'}
+              </button>
+            </div>
           </div>
         )}
         
-        <div className="mt-6 flex justify-between">
+        <div className="flex justify-between mt-6 pt-4 border-t">
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+            onClick={() => setActiveSection(Math.max(1, activeSection - 1))}
+            className="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            disabled={activeSection === 1}
           >
-            Cancel
+            Previous
           </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-50"
-          >
-            {isSubmitting ? 'Saving...' : 'Save Applicant'}
-          </button>
+          
+          {activeSection < 4 ? (
+            <button
+              type="button"
+              onClick={() => setActiveSection(Math.min(4, activeSection + 1))}
+              className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {isSubmitting ? 'Submitting...' : 'Add Applicant'}
+            </button>
+          )}
         </div>
       </form>
     </div>
