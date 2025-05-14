@@ -31,18 +31,19 @@ const ApplicationForm = lazy(() => import("./forms/ApplicationForm"));
 const OnboardingDetails = lazy(() => import("./pages/OnboardingDetails"));
 
 function App() {
-  const { isDarkMode } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
   
   return (
     <Router>
-      <div className={`app ${isDarkMode ? 'dark-mode' : ''}`}>
+      <div className={`app ${isDark ? 'dark-mode' : ''}`}>
         <ToastContainer 
           position="top-right" 
           autoClose={3000} 
-          theme={isDarkMode ? 'dark' : 'light'}
+          theme={isDark ? 'dark' : 'light'}
         />
         <Suspense fallback={
-          <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+          <div className={`flex items-center justify-center h-screen ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
             <Spinner />
           </div>
         }>

@@ -12,7 +12,6 @@ const ApplicantQRProfile = () => {
   useEffect(() => {
     const fetchApplicant = async () => {
       try {
-        console.log(`Fetching applicant with ID: ${id}`);
         if (!id) {
           throw new Error("No applicant ID provided in URL");
         }
@@ -24,10 +23,8 @@ const ApplicantQRProfile = () => {
           throw new Error("No applicant data returned from API");
         }
         
-        console.log("Applicant data received:", response.data);
         setApplicant(response.data);
       } catch (err) {
-        console.error("Error fetching applicant:", err);
         setError(`Applicant not found or an error occurred. Error: ${err.message || 'Unknown error'}`);
       } finally {
         setLoading(false);

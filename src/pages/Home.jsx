@@ -115,14 +115,12 @@ const Home = () => {
   // Function to fetch applicant trends from the backend
   const fetchTrendsData = useCallback(async () => {
     try {
-      console.log('Fetching trends data...');
       setIsLoading(true);
       setIsRefreshing(true);
       
       try {
         // Get trends data from API
         const response = await apiService.dashboard.getApplicantTrends();
-        console.log('API response for trends data:', response.data);
         
         if (response.data) {
           // Check if the API returns flag indicating empty data
@@ -140,7 +138,6 @@ const Home = () => {
             });
           } else {
             // Fallback to default data if structure is unexpected
-            console.warn('Unexpected API response structure, using default data');
             setTrendsData({
               ...defaultTrendsData,
               isDemo: true
