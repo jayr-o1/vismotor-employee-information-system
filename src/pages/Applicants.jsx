@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from "react";
-import Header from "../components/Layouts/Header";
 import Sidebar from "../components/Layouts/Sidebar";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import ReactPaginate from "react-paginate";
