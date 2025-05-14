@@ -283,13 +283,13 @@ const scheduleInterview = async (req, res, next) => {
 const updateInterviewStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, notes } = req.body;
     
     if (!status) {
       return next(new AppError('Status is required', 400));
     }
     
-    const updatedInterview = await applicantModel.updateInterviewStatus(id, status);
+    const updatedInterview = await applicantModel.updateInterviewStatus(id, status, notes);
     
     if (!updatedInterview) {
       return next(new AppError(`Interview with ID ${id} not found`, 404));

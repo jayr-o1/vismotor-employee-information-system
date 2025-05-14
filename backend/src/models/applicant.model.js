@@ -228,7 +228,7 @@ const getAllInterviews = async () => {
         db.raw('CONCAT(applicants.first_name, " ", applicants.last_name) as applicant_name'),
         'applicants.position_applied as applicant_position'
       )
-      .orderBy(['interviews.interview_date', 'desc']);
+      .orderBy('interviews.interview_date', 'desc');
       
     return interviews;
   } catch (error) {
@@ -244,7 +244,7 @@ const getApplicantInterviews = async (applicantId) => {
   try {
     const interviews = await db('interviews')
       .where({ applicant_id: applicantId })
-      .orderBy(['interview_date', 'desc']);
+      .orderBy('interview_date', 'desc');
       
     return interviews;
   } catch (error) {
@@ -309,7 +309,7 @@ const scheduleInterview = async (applicantId, interviewData) => {
 /**
  * Update interview status
  */
-const updateInterviewStatus = async (interviewId, status) => {
+const updateInterviewStatus = async (interviewId, status, notes = null) => {
   try {
     return await db.transaction(async trx => {
       // Update the interview status
@@ -317,6 +317,7 @@ const updateInterviewStatus = async (interviewId, status) => {
         .where({ id: interviewId })
         .update({ 
           status,
+          notes,
           updated_at: new Date()
         });
       
@@ -378,6 +379,60 @@ const sendInterviewEmail = async (applicantId, interviewId, emailData) => {
   };
 };
 
+/**
+ * Convert applicant to employee
+ */
+const convertToEmployee = async (applicantId, employeeData) => {
+  try {
+    return await db.transaction(async trx => {
+      // Get the applicant data
+      const applicant = await trx('applicants')
+        .where({ id: applicantId })
+        .first();
+      
+      if (!applicant) {
+        return null;
+      }
+      
+      // Create employee record with data from applicant and provided employee data
+      const [employeeId] = await trx('employees').insert({
+        applicant_id: applicantId,
+        first_name: applicant.first_name,
+        last_name: applicant.last_name,
+        email: applicant.email,
+        phone: applicant.phone,
+        address: applicant.address,
+        position: employeeData.position,
+        department: employeeData.department,
+        hire_date: employeeData.hire_date,
+        salary: employeeData.salary,
+        mentor: employeeData.mentor || null,
+        status: 'active',
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+      
+      // Update the applicant status to 'hired'
+      await trx('applicants')
+        .where({ id: applicantId })
+        .update({ 
+          status: 'hired',
+          updated_at: new Date()
+        });
+      
+      // Get the newly created employee
+      const newEmployee = await trx('employees')
+        .where({ id: employeeId })
+        .first();
+      
+      return newEmployee;
+    });
+  } catch (error) {
+    console.error('Error converting applicant to employee:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   findAll,
   findById,
@@ -392,5 +447,6 @@ module.exports = {
   scheduleInterview,
   updateInterviewStatus,
   deleteInterview,
-  sendInterviewEmail
+  sendInterviewEmail,
+  convertToEmployee
 }; 
