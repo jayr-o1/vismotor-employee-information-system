@@ -30,9 +30,6 @@ export const ThemeProvider = ({ children }) => {
       body.style.backgroundColor = '#f8fafc'; // slate-50
       body.style.color = '#0f172a'; // slate-900
     }
-    
-    // Debug log
-    console.log('Theme:', theme);
   }, [theme]);
 
   return (

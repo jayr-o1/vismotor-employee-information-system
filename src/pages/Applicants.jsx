@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from "react";
-import Sidebar from "../components/Layouts/Sidebar";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import ReactPaginate from "react-paginate";
 import { ToastContainer } from "react-toastify";
@@ -51,9 +50,6 @@ const Applicants = () => {
 
   // Pagination settings
   const itemsPerPage = 10;
-
-  // Add ThemeContext
-  const { isDarkMode } = useContext(ThemeContext);
 
   // Fetch data on component mount
   useEffect(() => {
