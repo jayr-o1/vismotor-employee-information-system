@@ -159,12 +159,28 @@ const StaffDirectory = () => {
         <h2 className={`text-2xl font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
           {error}
         </h2>
-        <button
-          onClick={fetchStaff}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Try Again
-        </button>
+        <div className="flex justify-center space-x-3 mt-4">
+          <button
+            onClick={fetchStaff}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <i className="fas fa-sync-alt mr-2"></i>
+            Try Again
+          </button>
+          {error.includes("Authentication") && (
+            <button 
+              onClick={() => {
+                localStorage.removeItem("userToken");
+                localStorage.removeItem("user");
+                window.location.href = "/login";
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <i className="fas fa-sign-in-alt mr-2"></i>
+              Login Again
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -175,7 +191,7 @@ const StaffDirectory = () => {
       
       <div className="max-w-7xl mx-auto py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">HR Staff Directory</h1>
+          <h1 className="text-2xl font-semibold">Employee Directory</h1>
           <div className="relative">
             <input
               type="text"

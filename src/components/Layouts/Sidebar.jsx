@@ -125,7 +125,7 @@ const Sidebar = () => {
           {/* Staff */}
           <li className="my-0">
             <NavLink
-              to="/hr-staff"
+              to="/employee-directory"
               className={({ isActive }) =>
                 `flex items-center py-3 px-6 w-full ${
                   isActive
@@ -133,10 +133,10 @@ const Sidebar = () => {
                     : `${inactiveText} ${hoverBg} ${isDark ? 'hover:text-white' : 'hover:text-gray-900'} hover:no-underline`
                 }`
               }
-              title="HR Staff Directory"
+              title="Employee Directory"
             >
               <i className="fas fa-id-badge w-5 text-center mr-4"></i> 
-              HR Staff Directory
+              Employee Directory
             </NavLink>
           </li>
 

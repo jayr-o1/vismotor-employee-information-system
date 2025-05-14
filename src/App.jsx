@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Spinner from "./components/Layouts/Spinner";
 import { ThemeContext } from "./ThemeContext";
 import Layout from "./components/Layout";
+import TokenRefreshProvider from "./components/TokenRefreshProvider";
 
 // Lazy loaded components
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -36,57 +37,59 @@ function App() {
   
   return (
     <Router>
-      <div className={`app ${isDark ? 'dark-mode' : ''}`}>
-        <ToastContainer 
-          position="top-right" 
-          autoClose={3000} 
-          theme={isDark ? 'dark' : 'light'}
-        />
-        <Suspense fallback={
-          <div className={`flex items-center justify-center h-screen ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
-            <Spinner />
-          </div>
-        }>
-          <Routes>
-            {/* Public Auth Routes - Redirect to home if already logged in */}
-            <Route path="/login" element={<AuthRoute element={<Login />} />} />
-            {/* Signup route removed */}
-            <Route path="/verify-email" element={<AuthRoute element={<VerifyEmail />} />} />
-            <Route path="/forgot-password" element={<AuthRoute element={<ForgotPassword />} />} />
-            <Route path="/reset-password" element={<AuthRoute element={<ResetPassword />} />} />
-            
-            {/* Truly Public Routes */}
-            <Route path="/documentation" element={<Documentation />} />
-            <Route path="/apply" element={
-              <div className="light-mode">
-                <ApplicationForm />
-              </div>
-            } />
-            {/* QR Profile Public Route */}
-            <Route path="/qr/applicant/:id" element={<ApplicantQRProfile />} />
-            <Route path="/qr/employee/:id" element={<EmployeeQRProfile />} />
-            
-            {/* Protected Routes wrapped in Layout */}
-            <Route element={<ProtectedRoute element={<Layout />} />}>
-              <Route path="/home" element={<Home />} />
-              <Route path="/hr-staff" element={<Employees />} />
-              <Route path="/hr-staff/:id" element={<EmployeeDetails />} />
-              <Route path="/applicants" element={<Applicants />} />
-              <Route path="/applicants/:id" element={<ApplicantDetails />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/onboarding/:id" element={<OnboardingDetail />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/hr-staff-directory" element={<StaffDirectory />} />
-            </Route>
-            
-            {/* Redirect root to login */}
-            <Route path="/" element={<Navigate replace to="/login" />} />
-            
-            {/* Not Found Route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </div>
+      <TokenRefreshProvider>
+        <div className={`app ${isDark ? 'dark-mode' : ''}`}>
+          <ToastContainer 
+            position="top-right" 
+            autoClose={3000} 
+            theme={isDark ? 'dark' : 'light'}
+          />
+          <Suspense fallback={
+            <div className={`flex items-center justify-center h-screen ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
+              <Spinner />
+            </div>
+          }>
+            <Routes>
+              {/* Public Auth Routes - Redirect to home if already logged in */}
+              <Route path="/login" element={<AuthRoute element={<Login />} />} />
+              {/* Signup route removed */}
+              <Route path="/verify-email" element={<AuthRoute element={<VerifyEmail />} />} />
+              <Route path="/forgot-password" element={<AuthRoute element={<ForgotPassword />} />} />
+              <Route path="/reset-password" element={<AuthRoute element={<ResetPassword />} />} />
+              
+              {/* Truly Public Routes */}
+              <Route path="/documentation" element={<Documentation />} />
+              <Route path="/apply" element={
+                <div className="light-mode">
+                  <ApplicationForm />
+                </div>
+              } />
+              {/* QR Profile Public Route */}
+              <Route path="/qr/applicant/:id" element={<ApplicantQRProfile />} />
+              <Route path="/qr/employee/:id" element={<EmployeeQRProfile />} />
+              
+              {/* Protected Routes wrapped in Layout */}
+              <Route element={<ProtectedRoute element={<Layout />} />}>
+                <Route path="/home" element={<Home />} />
+                <Route path="/employee-directory" element={<Employees />} />
+                <Route path="/employee-directory/:id" element={<EmployeeDetails />} />
+                <Route path="/applicants" element={<Applicants />} />
+                <Route path="/applicants/:id" element={<ApplicantDetails />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/onboarding/:id" element={<OnboardingDetail />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/staff-directory" element={<StaffDirectory />} />
+              </Route>
+              
+              {/* Redirect root to login */}
+              <Route path="/" element={<Navigate replace to="/login" />} />
+              
+              {/* Not Found Route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </div>
+      </TokenRefreshProvider>
     </Router>
   );
 }

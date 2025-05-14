@@ -25,6 +25,9 @@ const Login = () => {
     if (savedEmail) {
       setEmail(savedEmail);
     }
+    
+    // Clear any stale tokens when the login page loads
+    localStorage.removeItem("userToken");
   }, []);
 
   const handleLogin = async (e) => {

@@ -54,6 +54,82 @@ const tokenManager = {
       console.error('Error checking token validity:', error);
       return false;
     }
+  },
+  
+  // Check if token is expired
+  isTokenExpired: () => {
+    const token = tokenManager.getToken();
+    if (!token) return true;
+    
+    try {
+      // Get expiration from token (if your JWT has standard exp claim)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000; // Convert to milliseconds
+      
+      // Return true if current time is beyond expiration
+      return Date.now() >= exp;
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
+      return true; // Assume token is expired if we can't decode it
+    }
+  },
+  
+  // Get remaining time in seconds until token expires
+  getTokenRemainingTime: () => {
+    const token = tokenManager.getToken();
+    if (!token) return 0;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000; // Convert to milliseconds
+      
+      // Calculate seconds remaining
+      const remaining = (exp - Date.now()) / 1000;
+      return remaining > 0 ? remaining : 0;
+    } catch (error) {
+      console.error('Error calculating token remaining time:', error);
+      return 0; // Return 0 if we can't decode the token
+    }
+  }
+};
+
+// Token refresh function
+const refreshToken = async () => {
+  try {
+    // Check if current token exists
+    const currentToken = tokenManager.getToken();
+    if (!currentToken) {
+      console.log('No token available to refresh');
+      return null;
+    }
+    
+    console.log('Attempting to refresh token...');
+    
+    // Make refresh token request
+    const response = await axios.post(`${API_URL}/api/refresh-token`, {}, {
+      headers: {
+        'Authorization': `Bearer ${currentToken}`
+      }
+    });
+    
+    // Check for valid response with new token
+    if (response.data && response.data.token) {
+      console.log('Token refreshed successfully');
+      tokenManager.setToken(response.data.token);
+      
+      // Also update user data if provided
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+      
+      return response.data.token;
+    }
+    
+    console.log('Token refresh returned invalid format');
+    return null;
+  } catch (error) {
+    console.error('Failed to refresh token:', error);
+    return null;
   }
 };
 
@@ -61,13 +137,11 @@ const tokenManager = {
 const handleAuthError = (error) => {
   console.error('Authentication error occurred:', error.config.url);
   
-  // Skip logging out for these specific endpoints
+  // Skip logging out for these specific endpoints - but still show Try Again button
   const skipLogoutEndpoints = [
     '/api/equipment-types',
     '/api/document-types',
-    '/api/training-types',
-    '/api/applicants',
-    '/api/employees'
+    '/api/training-types'
   ];
   
   // Check if the failed request URL is in our skip list
@@ -81,20 +155,18 @@ const handleAuthError = (error) => {
     return Promise.reject(error);
   }
   
-  // Check token validity
+  // For other endpoints, redirect to login if token is invalid
   const token = tokenManager.getToken();
-  const isValidToken = token && token !== 'null' && token !== 'undefined' && token.length > 10;
-  
-  // Only redirect if not already on login page and the token exists but is invalid
-  // This prevents redirect loops and unnecessary redirects when no token exists
-  if (window.location.pathname !== '/login' && token && !isValidToken) {
+  if (!token) {
     // Clear auth data
     tokenManager.removeToken();
     localStorage.removeItem('user');
     
-    // Redirect to login
-    console.log('Redirecting to login due to invalid token');
-    window.location.href = '/login';
+    // Only redirect if not already on login page
+    if (window.location.pathname !== '/login') {
+      console.log('Authentication required. Redirecting to login page.');
+      window.location.href = '/login';
+    }
   }
   
   return Promise.reject(error);
@@ -103,9 +175,23 @@ const handleAuthError = (error) => {
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
+    // Check if token is expired before making the request
+    if (tokenManager.isTokenExpired() && !config.url.includes('/login') && 
+        !config.url.includes('/refresh-token')) {
+      console.log('Token is expired, will attempt refresh before request');
+      // We'll let the response interceptor handle the refresh
+    }
+    
     const token = tokenManager.getToken();
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+    } else if (!config.url.includes('/login') && !config.url.includes('/signup') && 
+               !config.url.includes('/forgot-password') && !config.url.includes('/reset-password')) {
+      // If no token and not an auth endpoint, redirect to login
+      console.log('No authentication token found for protected request:', config.url);
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return config;
   },
@@ -115,10 +201,34 @@ api.interceptors.request.use(
 // Add response interceptor to detect auth issues
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    // Check if error is due to an expired token
     if (error.response && error.response.status === 401) {
+      const originalRequest = error.config;
+      
+      // Only try to refresh token if we haven't already tried for this request
+      if (!originalRequest._retry && !originalRequest.url.includes('/refresh-token')) {
+        originalRequest._retry = true;
+        
+        console.log('Attempting to refresh token after 401 error');
+        const newToken = await refreshToken();
+        
+        if (newToken) {
+          console.log('Token refreshed, retrying original request');
+          // Update the Authorization header with the new token
+          originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+          
+          // Retry the original request with the new token
+          return api(originalRequest);
+        } else {
+          console.log('Token refresh failed, proceeding with auth error handling');
+        }
+      }
+      
+      // If token refresh failed or we already tried refreshing, handle auth error
       return handleAuthError(error);
     }
+    
     return Promise.reject(error);
   }
 );
@@ -160,6 +270,7 @@ const apiService = {
     verifyEmail: (token) => api.get(`/api/verify-email?token=${token}`),
     resendVerification: (email) => api.post('/api/resend-verification', { email }),
     createUser: (userData) => api.post('/api/admin/create-user', userData),
+    refreshToken: () => refreshToken(),
   },
   
   // Dashboard endpoints
@@ -501,4 +612,5 @@ const apiService = {
   }
 };
 
+export { tokenManager, refreshToken };
 export default apiService;

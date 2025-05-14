@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../ThemeContext";
 import { useNavigate } from "react-router-dom";
 import apiService from "../services/api";
+import useAuth from "../utils/useAuth";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { FaPlus, FaSearch, FaUserCheck, FaClipboardCheck, FaClipboardList, FaLaptop, FaFileAlt, FaGraduationCap } from "react-icons/fa";
@@ -10,6 +11,7 @@ const Onboarding = () => {
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
   const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
   
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,8 +20,10 @@ const Onboarding = () => {
   
   // Fetch employees data on component mount
   useEffect(() => {
-    fetchEmployees();
-  }, []);
+    if (isAuthenticated) {
+      fetchEmployees();
+    }
+  }, [isAuthenticated]);
   
   // Fetch employees from API
   const fetchEmployees = async () => {
@@ -71,7 +75,12 @@ const Onboarding = () => {
       setEmployees(employeesWithProgress);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      setError(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
+      if (error.response?.status === 401) {
+        setError("Authentication failed. Please log in again to continue.");
+        // Don't auto-logout, let the user choose to login again
+      } else {
+        setError(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
+      }
       toast.error(`Failed to fetch employees: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
@@ -113,12 +122,28 @@ const Onboarding = () => {
           <h2 className={`text-2xl font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
             {error}
           </h2>
-          <button
-            onClick={fetchEmployees}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Try Again
-          </button>
+          <div className="flex justify-center space-x-3 mt-4">
+            <button
+              onClick={fetchEmployees}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <i className="fas fa-sync-alt mr-2"></i>
+              Try Again
+            </button>
+            {error.includes("Authentication") && (
+              <button 
+                onClick={() => {
+                  localStorage.removeItem("userToken");
+                  localStorage.removeItem("user");
+                  window.location.href = "/login";
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <i className="fas fa-sign-in-alt mr-2"></i>
+                Login Again
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
