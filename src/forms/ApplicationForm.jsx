@@ -33,7 +33,8 @@ function ApplicationForm() {
     otherJobSource: '',
     previouslyEmployed: '',
     resumeFile: null,
-    houseSketchFile: null
+    houseSketchFile: null,
+    phone: '', // Add phone field
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -148,10 +149,21 @@ function ApplicationForm() {
       
       // Use apiService to upload files with better error handling
       let uploadResult = {};
+      let resumeFilePath = null;
+      let houseSketchFilePath = null;
+      
       try {
-        const fileUploadResponse = await apiService.applicants.uploadFiles(formDataFiles);
-        uploadResult = fileUploadResponse.data;
-        console.log('Files uploaded:', uploadResult);
+        if (formData.resumeFile || formData.houseSketchFile) {
+          console.log("Uploading files...");
+          const fileUploadResponse = await apiService.applicants.uploadFiles(formDataFiles);
+          uploadResult = fileUploadResponse.data;
+          console.log('Files uploaded:', uploadResult);
+          
+          if (uploadResult.data && uploadResult.data.files) {
+            resumeFilePath = uploadResult.data.files.resumeFile?.path || null;
+            houseSketchFilePath = uploadResult.data.files.houseSketchFile?.path || null;
+          }
+        }
       } catch (uploadError) {
         console.error("Error uploading files:", uploadError);
         throw new Error(uploadError.response?.data?.message || "Failed to upload files. Please try again.");
@@ -160,27 +172,18 @@ function ApplicationForm() {
       // Prepare data for submission with file references
       const applicationData = {
         ...formData,
-        resumeFile: uploadResult.files?.resumeFile || null,
-        houseSketchFile: uploadResult.files?.houseSketchFile || null
+        // Replace file objects with file paths
+        resumeFile: resumeFilePath || (formData.resumeFile ? formData.resumeFile.name : null),
+        houseSketchFile: houseSketchFilePath || (formData.houseSketchFile ? formData.houseSketchFile.name : null),
+        phone: formData.phone || "",
       };
       
-      // Use API_URL from environment to construct the full URL for the API call
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const submitResponse = await fetch(`${API_URL}/api/applications/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(applicationData)
-      });
+      console.log("Submitting application with data:", applicationData);
       
-      if (!submitResponse.ok) {
-        const errorData = await submitResponse.json();
-        throw new Error(errorData.message || 'Failed to submit application');
-      }
+      // Use the apiService for submission
+      const submitResponse = await apiService.applicants.submitApplication(applicationData);
       
-      const submitResult = await submitResponse.json();
-      console.log('Application submitted:', submitResult);
+      console.log('Application submitted:', submitResponse.data);
       
       setSubmitSuccess(true);
       // Reset form
@@ -207,7 +210,8 @@ function ApplicationForm() {
         otherJobSource: '',
         previouslyEmployed: '',
         resumeFile: null,
-        houseSketchFile: null
+        houseSketchFile: null,
+        phone: '',
       });
     } catch (error) {
       console.error("Error during submission: ", error);
@@ -225,6 +229,7 @@ function ApplicationForm() {
     if (!formData.email) missingFields.push({ section: 1, name: "Email Address" });
     if (!formData.firstName) missingFields.push({ section: 1, name: "First Name" });
     if (!formData.lastName) missingFields.push({ section: 1, name: "Last Name" });
+    if (!formData.phone) missingFields.push({ section: 1, name: "Phone Number" });
     if (!formData.gender) missingFields.push({ section: 1, name: "Gender" });
     if (formData.gender === "OTHER" && !formData.otherGender) missingFields.push({ section: 1, name: "Specify Gender" });
     if (!formData.age) missingFields.push({ section: 1, name: "Age" });
@@ -506,6 +511,21 @@ function ApplicationForm() {
               onChange={handleChange}
               className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
               placeholder="Your email address"
+            />
+          </div>
+          
+          <div className="input-container mb-5">
+            <label className="block form-label mb-2 font-medium text-gray-700" htmlFor="phone">
+              Phone Number <span className="text-red-500 text-sm">*</span>
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="form-input w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FF5C00] focus:border-[#FF5C00] shadow-sm"
+              placeholder="Your phone number"
             />
           </div>
           

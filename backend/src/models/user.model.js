@@ -1,4 +1,4 @@
-const db = require("../config/database");
+const db = require("../database");
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
@@ -7,12 +7,12 @@ const path = require('path');
  * Find user by email
  */
 const findByEmail = async (email) => {
-  const connection = await db.getConnection();
   try {
-    const [rows] = await connection.query("SELECT * FROM users WHERE email = ?", [email]);
-    return rows.length > 0 ? rows[0] : null;
-  } finally {
-    connection.release();
+    const user = await db('users').where({ email }).first();
+    return user || null;
+  } catch (error) {
+    console.error('Error finding user by email:', error);
+    throw error;
   }
 };
 
@@ -20,28 +20,17 @@ const findByEmail = async (email) => {
  * Find user by ID
  */
 const findById = async (id) => {
-  const connection = await db.getConnection();
   try {
     // Select all fields except password for security
-    const [rows] = await connection.query(`
-      SELECT id, name, email, role, is_verified, profile_picture, created_at, updated_at
-      FROM users 
-      WHERE id = ?
-    `, [id]);
-    
-    if (rows.length === 0) {
-      return null;
-    }
-    
-    // Convert bit field to boolean if needed
-    return {
-      ...rows[0],
-      is_verified: rows[0].is_verified === 1 || 
-                  rows[0].is_verified === true || 
-                  (rows[0].is_verified && rows[0].is_verified.readInt8 && rows[0].is_verified.readInt8(0) === 1)
-    };
-  } finally {
-    connection.release();
+    const user = await db('users')
+      .select('id', 'username', 'email', 'first_name', 'last_name', 'role', 'profile_picture', 'created_at', 'updated_at')
+      .where({ id })
+      .first();
+      
+    return user || null;
+  } catch (error) {
+    console.error('Error finding user by id:', error);
+    throw error;
   }
 };
 
@@ -49,12 +38,12 @@ const findById = async (id) => {
  * Find user by verification token
  */
 const findByVerificationToken = async (token) => {
-  const connection = await db.getConnection();
   try {
-    const [rows] = await connection.query("SELECT * FROM users WHERE verification_token = ?", [token]);
-    return rows.length > 0 ? rows[0] : null;
-  } finally {
-    connection.release();
+    const user = await db('users').where({ verification_token: token }).first();
+    return user || null;
+  } catch (error) {
+    console.error('Error finding user by verification token:', error);
+    throw error;
   }
 };
 
@@ -62,15 +51,15 @@ const findByVerificationToken = async (token) => {
  * Find user by reset token
  */
 const findByResetToken = async (token) => {
-  const connection = await db.getConnection();
   try {
-    const [rows] = await connection.query(
-      "SELECT * FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()",
-      [token]
-    );
-    return rows.length > 0 ? rows[0] : null;
-  } finally {
-    connection.release();
+    const user = await db('users')
+      .where({ reset_token: token })
+      .whereRaw('reset_token_expiry > NOW()')
+      .first();
+    return user || null;
+  } catch (error) {
+    console.error('Error finding user by reset token:', error);
+    throw error;
   }
 };
 
@@ -78,54 +67,25 @@ const findByResetToken = async (token) => {
  * Get all users
  */
 const findAll = async () => {
-  const connection = await db.getConnection();
   try {
     // Check if users table exists
-    const [tables] = await connection.query(`
-      SELECT TABLE_NAME
-      FROM information_schema.TABLES
-      WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = 'users'
-    `);
+    const tableExists = await db.schema.hasTable('users');
     
     // If users table doesn't exist yet, return empty array
-    if (tables.length === 0) {
+    if (!tableExists) {
       console.log("Users table does not exist yet - returning empty array");
       return [];
     }
     
     // Select all fields except password for security
-    const [rows] = await connection.query(`
-      SELECT id, name, email, role, is_verified, profile_picture, created_at, updated_at
-      FROM users 
-      ORDER BY created_at DESC
-    `);
+    const users = await db('users')
+      .select('id', 'username', 'email', 'first_name', 'last_name', 'role', 'profile_picture', 'created_at', 'updated_at')
+      .orderBy('created_at', 'desc');
     
-    // Convert bit field to boolean if needed
-    return rows.map(user => ({
-      ...user,
-      is_verified: user.is_verified === 1 || 
-                  user.is_verified === true || 
-                  (user.is_verified && user.is_verified.readInt8 && user.is_verified.readInt8(0) === 1)
-    }));
+    return users;
   } catch (error) {
     console.error("Error in findAll:", error);
-    
-    // Try fallback query if the original one fails
-    try {
-      const [basicRows] = await connection.query(`
-        SELECT id, name, email, role
-        FROM users
-      `);
-      
-      console.log("Retrieved basic user data with fallback query");
-      return basicRows;
-    } catch (fallbackError) {
-      console.error("Fallback query error:", fallbackError);
-      throw fallbackError;
-    }
-  } finally {
-    connection.release();
+    throw error;
   }
 };
 
@@ -133,17 +93,13 @@ const findAll = async () => {
  * Create a new user
  */
 const create = async (userData) => {
-  const { name, email, password, role = 'hr_staff', is_verified = false } = userData;
+  const { first_name, last_name, username, email, password, role = 'user', is_verified = false } = userData;
   
-  const connection = await db.getConnection();
   try {
     // Check if email already exists
-    const [existingEmails] = await connection.query(
-      'SELECT * FROM users WHERE email = ?', 
-      [email]
-    );
+    const existingUser = await db('users').where({ email }).first();
     
-    if (existingEmails.length > 0) {
+    if (existingUser) {
       throw new Error('Email already exists');
     }
     
@@ -155,20 +111,31 @@ const create = async (userData) => {
     const verificationToken = !is_verified ? generateRandomToken() : null;
     
     // Insert new user
-    const [result] = await connection.query(
-      'INSERT INTO users (name, email, password, role, is_verified, verification_token) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, role, is_verified ? 1 : 0, verificationToken]
-    );
+    const [userId] = await db('users').insert({
+      username,
+      first_name,
+      last_name,
+      email,
+      password: hashedPassword,
+      role,
+      is_verified: is_verified ? 1 : 0,
+      verification_token: verificationToken,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
     
     return { 
-      id: result.insertId,
-      name,
+      id: userId,
+      username,
+      first_name,
+      last_name,
       email,
       role,
       is_verified
     };
-  } finally {
-    connection.release();
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
   }
 };
 
@@ -307,8 +274,7 @@ const updateProfilePicture = async (id, picturePath) => {
  * Helper function to generate a random token
  */
 const generateRandomToken = () => {
-  return Math.random().toString(36).substring(2, 15) + 
-         Math.random().toString(36).substring(2, 15);
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 };
 
 module.exports = {

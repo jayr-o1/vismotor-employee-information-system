@@ -48,20 +48,23 @@ const Onboarding = () => {
         return daysSinceHire <= 90; // Show employees hired in the last 90 days
       });
 
-      // Fetch progress for each employee
+      // Use employee progress data if already available, otherwise fetch it
       const employeesWithProgress = await Promise.all(
         recentlyHired.map(async (employee) => {
+          // If progress is already included in the employee data, use it
+          if (employee.progress !== undefined) {
+            return employee;
+          }
+          
           try {
             // Get onboarding progress
-            const progressResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/employees/${employee.id}/onboarding-progress`, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-              }
-            });
+            const progressResponse = await apiService.employees.getOnboardingProgress(employee.id);
             
-            if (progressResponse.ok) {
-              const progressData = await progressResponse.json();
-              return { ...employee, progress: progressData.overall };
+            if (progressResponse && progressResponse.data) {
+              return { 
+                ...employee, 
+                progress: progressResponse.data.overall 
+              };
             }
             
             return { ...employee, progress: 0 };

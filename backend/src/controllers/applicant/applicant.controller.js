@@ -186,6 +186,14 @@ const uploadFiles = async (req, res, next) => {
 const submitApplication = async (req, res, next) => {
   try {
     const applicationData = req.body;
+    
+    console.log("Controller received application data:", JSON.stringify(applicationData));
+    
+    // Validate required fields
+    if (!applicationData.email || !applicationData.firstName || !applicationData.lastName) {
+      return next(new AppError('Required fields are missing: email, firstName, and lastName must be provided', 400));
+    }
+    
     const newApplication = await applicantModel.submitApplication(applicationData);
     
     res.status(201).json({
@@ -197,93 +205,13 @@ const submitApplication = async (req, res, next) => {
       }
     });
   } catch (error) {
-    next(error);
-  }
-};
-
-// Get feedback for applicant
-const getFeedback = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const feedback = await applicantModel.getFeedback(id);
+    console.error("Error in submitApplication controller:", error);
     
-    res.status(200).json({
-      success: true,
-      message: "Successfully retrieved applicant feedback",
-      data: feedback
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Add feedback for applicant
-const addFeedback = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { feedback_text, created_by } = req.body;
-    
-    if (!feedback_text) {
-      return next(new AppError('Feedback text is required', 400));
+    // Provide a more specific error message for SQL errors
+    if (error.code === 'ER_NO_DEFAULT_FOR_FIELD') {
+      return next(new AppError(`Database error: A required field is missing - ${error.sqlMessage}`, 400));
     }
     
-    const newFeedback = await applicantModel.addFeedback(id, {
-      feedback_text,
-      created_by: created_by || 'HR Team'
-    });
-    
-    res.status(201).json({
-      success: true,
-      message: "Feedback added successfully",
-      data: newFeedback
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Update feedback
-const updateFeedback = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { feedback_text } = req.body;
-    
-    if (!feedback_text) {
-      return next(new AppError('Feedback text is required', 400));
-    }
-    
-    const updatedFeedback = await applicantModel.updateFeedback(id, feedback_text);
-    
-    if (!updatedFeedback) {
-      return next(new AppError(`Feedback with ID ${id} not found`, 404));
-    }
-    
-    res.status(200).json({
-      success: true,
-      message: "Feedback updated successfully",
-      data: updatedFeedback
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Delete feedback
-const deleteFeedback = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const success = await applicantModel.deleteFeedback(id);
-    
-    if (!success) {
-      return next(new AppError(`Feedback with ID ${id} not found`, 404));
-    }
-    
-    res.status(200).json({
-      success: true,
-      message: "Feedback deleted successfully",
-      data: { id }
-    });
-  } catch (error) {
     next(error);
   }
 };
@@ -325,11 +253,20 @@ const scheduleInterview = async (req, res, next) => {
     const { id } = req.params;
     const interviewData = req.body;
     
+    console.log("Scheduling interview for applicant ID:", id);
+    console.log("Received interview data:", interviewData);
+    
     if (!interviewData.interview_date || !interviewData.interview_time) {
       return next(new AppError('Interview date and time are required', 400));
     }
     
     const newInterview = await applicantModel.scheduleInterview(id, interviewData);
+    
+    if (!newInterview) {
+      return next(new AppError('Failed to schedule interview. Please check the provided data.', 400));
+    }
+    
+    console.log("Interview scheduled successfully:", newInterview);
     
     res.status(201).json({
       success: true,
@@ -337,6 +274,7 @@ const scheduleInterview = async (req, res, next) => {
       data: newInterview
     });
   } catch (error) {
+    console.error("Error in scheduleInterview controller:", error);
     next(error);
   }
 };
@@ -456,6 +394,7 @@ const convertToEmployee = async (req, res, next) => {
   }
 };
 
+// Export the controller methods
 module.exports = {
   getAllApplicants,
   getApplicantById,
@@ -466,10 +405,6 @@ module.exports = {
   deleteApplicant,
   uploadFiles,
   submitApplication,
-  getFeedback,
-  addFeedback,
-  updateFeedback,
-  deleteFeedback,
   getAllInterviews,
   getApplicantInterviews,
   scheduleInterview,

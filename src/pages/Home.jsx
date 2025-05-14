@@ -11,76 +11,25 @@ import 'react-toastify/dist/ReactToastify.css';
 import apiService from "../services/api";
 import { ThemeContext } from "../ThemeContext";
 
-// Define default data for when API call fails
-const defaultTrendsData = {
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-  data: [12, 19, 15, 28, 22, 25, 27, 24, 30, 32, 35, 25]
+// Define empty data structure for when API call fails
+const emptyTrendsData = {
+  labels: [],
+  data: [],
+  isEmpty: true
 };
 
-// Sample data for mock API responses when backend is unavailable
-const mockApiData = {
-  monthlyTrends: [
-    { month: 'Jan', count: 12 },
-    { month: 'Feb', count: 19 },
-    { month: 'Mar', count: 15 },
-    { month: 'Apr', count: 28 },
-    { month: 'May', count: 22 },
-    { month: 'Jun', count: 25 },
-    { month: 'Jul', count: 27 },
-    { month: 'Aug', count: 24 },
-    { month: 'Sep', count: 30 },
-    { month: 'Oct', count: 32 },
-    { month: 'Nov', count: 35 },
-    { month: 'Dec', count: 25 }
-  ],
-  statusCounts: [
-    { status: 'Pending', count: 45 },
-    { status: 'Interviewed', count: 32 },
-    { status: 'Hired', count: 18 },
-    { status: 'Rejected', count: 27 }
-  ]
-};
-
-// Function to simulate API response with delay
-const mockFetch = (endpoint, delay = 800) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (endpoint.includes('applicant-trends')) {
-        resolve({
-          ok: true,
-          json: () => Promise.resolve(mockApiData)
-        });
-      } else {
-        resolve({
-          ok: true,
-          json: () => Promise.resolve({
-            totalApplicants: 122,
-            totalEmployees: 78,
-            totalOnboarding: 12,
-            recentApplicants: [
-              { id: 1, name: 'John Doe', position: 'Software Engineer', status: 'Interview' },
-              { id: 2, name: 'Jane Smith', position: 'UI/UX Designer', status: 'Shortlisted' },
-              { id: 3, name: 'Robert Johnson', position: 'Project Manager', status: 'New' }
-            ]
-          })
-        });
-      }
-    }, delay);
-  });
-};
-
-// Function to render sample data warning banner when using demo data
-const SampleDataBanner = ({ isDark }) => (
+// Function to render no data banner when no data is available
+const NoDataBanner = ({ isDark }) => (
   <div className={`mb-6 px-4 py-3 rounded-lg ${
-    isDark ? 'bg-amber-900/20 border border-amber-800/30 text-amber-200' : 
-    'bg-amber-50 border border-amber-200 text-amber-800'
+    isDark ? 'bg-blue-900/20 border border-blue-800/30 text-blue-200' : 
+    'bg-blue-50 border border-blue-200 text-blue-800'
   }`}>
     <div className="flex items-center">
       <i className="fas fa-info-circle mr-2 text-lg"></i>
-      <span className="font-medium">Sample Data Mode</span>
+      <span className="font-medium">No Data Available</span>
     </div>
     <p className="text-sm mt-1">
-      The dashboard is currently displaying sample data. Connect to the database to see real data.
+      The dashboard is waiting for data. Add employees and applicants to see statistics here.
     </p>
   </div>
 );
@@ -97,7 +46,7 @@ const Home = () => {
     onboarding: 0,
     recentApplicants: []
   });
-  const [trendsData, setTrendsData] = useState(defaultTrendsData);
+  const [trendsData, setTrendsData] = useState(emptyTrendsData);
 
   // Calculate statistics from the trends data
   const applicantStats = useMemo(() => {
@@ -127,34 +76,28 @@ const Home = () => {
           if (response.data.isEmpty) {
             setTrendsData({
               ...response.data,
-              isDemo: false
+              isEmpty: true
             });
           } else if (response.data.labels && response.data.data) {
             // Valid data from API
             setTrendsData({
               labels: response.data.labels,
               data: response.data.data,
-              isDemo: false
+              isEmpty: false
             });
           } else {
-            // Fallback to default data if structure is unexpected
-            setTrendsData({
-              ...defaultTrendsData,
-              isDemo: true
-            });
+            // Fallback to empty data if structure is unexpected
+            setTrendsData(emptyTrendsData);
           }
         } else {
           throw new Error('Invalid API response');
         }
       } catch (error) {
         console.error('Error fetching trends data:', error);
-        // Use default data as fallback
-        setTrendsData({
-          ...defaultTrendsData,
-          isDemo: true
-        });
+        // Use empty data structure as fallback
+        setTrendsData(emptyTrendsData);
         
-        toast.error("Could not load trend data from server. Using sample data instead.");
+        toast.error("Could not load trend data from server. Please try again later.");
       }
     } finally {
       setIsLoading(false);
@@ -225,15 +168,6 @@ const Home = () => {
   useEffect(() => {
     if (trendsData.labels && trendsData.labels.length > 0 && trendsData.data && trendsData.data.length > 0) {
       createChart();
-      
-      // If using demo data, show an info message
-      if (trendsData.isDemo) {
-        toast.info("Showing demo chart data. Submit applications to see real statistics.", {
-          autoClose: 5000,
-          position: "bottom-right",
-          toastId: "demo-data-toast" // Prevent duplicate toasts
-        });
-      }
     }
   }, [trendsData, theme]); // Re-create chart when theme changes or trends data updates
 
@@ -451,7 +385,7 @@ const Home = () => {
     if (activeTab === 'dashboard') {
       return (
         <>
-          {trendsData.isDemo && <SampleDataBanner isDark={isDark} />}
+          {trendsData.isEmpty && <NoDataBanner isDark={isDark} />}
           
           <div className="flex flex-col gap-6 overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -461,7 +395,7 @@ const Home = () => {
                   title="Total Employees"
                   icon="fas fa-users"
                   color="blue"
-                  trend={{ value: 3.6, isUpward: true }}
+                  trend={{ value: 0, isUpward: true }}
                   description="From Employee Directory"
                 />
               </Link>
@@ -471,7 +405,7 @@ const Home = () => {
                   title="Onboarding"
                   icon="fas fa-clipboard-check"
                   color="yellow"
-                  trend={{ value: 3.6, isUpward: true }}
+                  trend={{ value: 0, isUpward: true }}
                   description="From Onboarding Page (hired in last 90 days)"
                 />
               </Link>
@@ -481,7 +415,7 @@ const Home = () => {
                   title="Total Applicants"
                   icon="fas fa-user-tie"
                   color="red"
-                  trend={{ value: 3.6, isUpward: true }}
+                  trend={{ value: 0, isUpward: true }}
                   description="From Applicants Page"
                 />
               </Link>

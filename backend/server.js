@@ -1,12 +1,11 @@
 const express = require("express");
 const cors = require("cors");
-const mysql = require("mysql2/promise");
 const path = require("path");
 const fs = require("fs");
 require('dotenv').config(); // Load environment variables
 
-// Import configuration
-const db = require("./src/config/database");
+// Import Knex database connection
+const db = require("./src/database");
 
 // Import routes
 const authRoutes = require("./src/routes/auth.routes");
@@ -124,15 +123,13 @@ app.use(dashboardRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Test database connection before starting server
+// Start the server
 async function startServer() {
   try {
-    // Test database connection
+    // Test database connection using Knex
     console.log('Testing database connection...');
-    const connection = await mysql.createConnection(db.config);
-    await connection.ping();
+    await db.raw('SELECT 1');
     console.log('✅ Database connection successful!');
-    await connection.end();
     
     // Start the server
     app.listen(PORT, '0.0.0.0', () => {
@@ -143,8 +140,8 @@ async function startServer() {
     console.error('❌ Database connection failed:', error);
     console.error('Make sure:');
     console.error('1. MySQL server is running');
-    console.error('2. Database credentials in src/config/database.js are correct');
-    console.error('3. Database has been initialized: npm run setup-db');
+    console.error('2. Database credentials in .env are correct');
+    console.error('3. Run migrations: npm run migrate');
     process.exit(1);
   }
 }

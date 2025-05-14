@@ -3,6 +3,7 @@ const router = express.Router();
 const employeeController = require("../controllers/employee/employee.controller");
 const uploadMiddleware = require("../middleware/upload.middleware");
 const { validateToken } = require("../middleware/auth.middleware");
+const Employee = require("../models/employee.model");
 
 // Get all employees
 router.get("/api/employees", validateToken, employeeController.getAllEmployees);
@@ -79,5 +80,8 @@ router.get("/api/training-types", (req, res) => {
     { id: 5, name: "Job-specific Training", description: "Role-specific training" }
   ]);
 });
+
+// Onboarding checklist routes
+router.post('/api/employees/:id/onboarding-checklist', validateToken, employeeController.updateOnboardingChecklist);
 
 module.exports = router; 

@@ -31,7 +31,7 @@ function ApplicantManualEntry({ onClose, refreshApplicants }) {
     previouslyEmployed: '',
     resumeFile: null,
     houseSketchFile: null,
-    status: 'NEW' // Default status for manually added applicants
+    status: 'pending' // Default status for manually added applicants
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);

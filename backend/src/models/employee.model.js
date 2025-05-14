@@ -1,17 +1,15 @@
-const db = require("../config/database");
+const db = require("../database");
 
 /**
  * Get all employees
  */
 const findAll = async () => {
-  const connection = await db.getConnection();
   try {
-    const [rows] = await connection.query(
-      "SELECT * FROM employees ORDER BY hire_date DESC"
-    );
-    return rows;
-  } finally {
-    connection.release();
+    const employees = await db('employees').orderBy('hire_date', 'desc');
+    return employees;
+  } catch (error) {
+    console.error('Error finding all employees:', error);
+    throw error;
   }
 };
 
@@ -19,15 +17,12 @@ const findAll = async () => {
  * Find employee by ID
  */
 const findById = async (id) => {
-  const connection = await db.getConnection();
   try {
-    const [rows] = await connection.query(
-      "SELECT * FROM employees WHERE id = ?",
-      [id]
-    );
-    return rows.length > 0 ? rows[0] : null;
-  } finally {
-    connection.release();
+    const employee = await db('employees').where({ id }).first();
+    return employee || null;
+  } catch (error) {
+    console.error('Error finding employee by id:', error);
+    throw error;
   }
 };
 
@@ -36,27 +31,44 @@ const findById = async (id) => {
  */
 const create = async (employeeData) => {
   const {
-    name,
+    first_name,
+    last_name,
     email,
     phone,
     position,
     department,
     hire_date,
     salary,
-    status = 'Active',
+    status = 'active',
     applicant_id = null,
     profile_picture = null
   } = employeeData;
   
-  const connection = await db.getConnection();
   try {
-    const [result] = await connection.query(
-      "INSERT INTO employees (name, email, phone, position, department, hire_date, salary, status, applicant_id, profile_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [name, email, phone, position, department, hire_date, salary, status, applicant_id, profile_picture]
-    );
-    return { id: result.insertId, ...employeeData };
-  } finally {
-    connection.release();
+    // Generate employee ID
+    const employee_id = `EMP${Date.now().toString().slice(-6)}`;
+    
+    const [id] = await db('employees').insert({
+      employee_id,
+      first_name,
+      last_name,
+      email,
+      phone,
+      position,
+      department,
+      hire_date,
+      salary,
+      status,
+      applicant_id,
+      profile_picture,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    
+    return { id, employee_id, ...employeeData };
+  } catch (error) {
+    console.error('Error creating employee:', error);
+    throw error;
   }
 };
 
@@ -65,7 +77,8 @@ const create = async (employeeData) => {
  */
 const update = async (id, employeeData) => {
   const {
-    name,
+    first_name,
+    last_name,
     email,
     phone,
     position,
@@ -76,15 +89,27 @@ const update = async (id, employeeData) => {
     salary
   } = employeeData;
   
-  const connection = await db.getConnection();
   try {
-    const [result] = await connection.query(
-      "UPDATE employees SET name = ?, email = ?, phone = ?, position = ?, department = ?, status = ?, profile_picture = ?, hire_date = ?, salary = ? WHERE id = ?",
-      [name, email, phone, position, department, status, profile_picture, hire_date, salary, id]
-    );
-    return result.affectedRows > 0 ? { id, ...employeeData } : null;
-  } finally {
-    connection.release();
+    const updated = await db('employees')
+      .where({ id })
+      .update({
+        first_name,
+        last_name,
+        email,
+        phone,
+        position,
+        department,
+        status,
+        profile_picture,
+        hire_date,
+        salary,
+        updated_at: new Date()
+      });
+      
+    return updated > 0 ? { id, ...employeeData } : null;
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    throw error;
   }
 };
 
@@ -92,15 +117,18 @@ const update = async (id, employeeData) => {
  * Update employee status
  */
 const updateStatus = async (id, status) => {
-  const connection = await db.getConnection();
   try {
-    const [result] = await connection.query(
-      "UPDATE employees SET status = ? WHERE id = ?",
-      [status, id]
-    );
-    return result.affectedRows > 0;
-  } finally {
-    connection.release();
+    const updated = await db('employees')
+      .where({ id })
+      .update({ 
+        status,
+        updated_at: new Date()
+      });
+      
+    return updated > 0;
+  } catch (error) {
+    console.error('Error updating employee status:', error);
+    throw error;
   }
 };
 
@@ -108,15 +136,20 @@ const updateStatus = async (id, status) => {
  * Delete an employee
  */
 const remove = async (id) => {
-  const connection = await db.getConnection();
   try {
-    const [result] = await connection.query(
-      "DELETE FROM employees WHERE id = ?",
-      [id]
-    );
-    return result.affectedRows > 0;
-  } finally {
-    connection.release();
+    return await db.transaction(async trx => {
+      // Delete related data first
+      await trx('employee_documents').where({ employee_id: id }).del();
+      await trx('employee_equipment').where({ employee_id: id }).del();
+      await trx('employee_training').where({ employee_id: id }).del();
+      
+      // Then delete the employee
+      const deleted = await trx('employees').where({ id }).del();
+      return deleted > 0;
+    });
+  } catch (error) {
+    console.error('Error deleting employee:', error);
+    throw error;
   }
 };
 
@@ -124,15 +157,18 @@ const remove = async (id) => {
  * Upload profile picture
  */
 const updateProfilePicture = async (id, pictureData) => {
-  const connection = await db.getConnection();
   try {
-    const [result] = await connection.query(
-      "UPDATE employees SET profile_picture = ? WHERE id = ?",
-      [pictureData.path, id]
-    );
-    return result.affectedRows > 0 ? { id, profile_picture: pictureData.path } : null;
-  } finally {
-    connection.release();
+    const updated = await db('employees')
+      .where({ id })
+      .update({ 
+        profile_picture: pictureData.path,
+        updated_at: new Date()
+      });
+      
+    return updated > 0 ? { id, profile_picture: pictureData.path } : null;
+  } catch (error) {
+    console.error('Error updating employee profile picture:', error);
+    throw error;
   }
 };
 
@@ -140,36 +176,37 @@ const updateProfilePicture = async (id, pictureData) => {
  * Get employee statistics for dashboard
  */
 const getStats = async () => {
-  const connection = await db.getConnection();
   try {
     // Get count by department
-    const [departmentCounts] = await connection.query(
-      "SELECT department, COUNT(*) as count FROM employees GROUP BY department"
-    );
+    const departmentCounts = await db('employees')
+      .select('department')
+      .count('* as count')
+      .groupBy('department');
     
     // Get count by status
-    const [statusCounts] = await connection.query(
-      "SELECT status, COUNT(*) as count FROM employees GROUP BY status"
-    );
+    const statusCounts = await db('employees')
+      .select('status')
+      .count('* as count')
+      .groupBy('status');
     
     // Get total count
-    const [totalResult] = await connection.query(
-      "SELECT COUNT(*) as total FROM employees"
-    );
+    const [{ count: total }] = await db('employees').count('* as count');
     
     // Get recent employees
-    const [recentEmployees] = await connection.query(
-      "SELECT id, name, position, department, hire_date FROM employees ORDER BY hire_date DESC LIMIT 5"
-    );
+    const recentEmployees = await db('employees')
+      .select('id', 'first_name', 'last_name', 'position', 'department', 'hire_date')
+      .orderBy('hire_date', 'desc')
+      .limit(5);
     
     return {
       departmentCounts,
       statusCounts,
-      total: totalResult[0].total,
+      total,
       recentEmployees
     };
-  } finally {
-    connection.release();
+  } catch (error) {
+    console.error('Error getting employee stats:', error);
+    throw error;
   }
 };
 
@@ -177,89 +214,362 @@ const getStats = async () => {
  * Get onboarding progress
  */
 const getOnboardingProgress = async (id) => {
-  // This would typically query a separate onboarding_progress table
-  // For now, return a placeholder structure
-  return {
-    employeeId: id,
-    steps: [
-      { name: 'Documentation', completed: true },
-      { name: 'Equipment Setup', completed: false },
-      { name: 'Training', completed: false }
-    ],
-    overallProgress: 33
-  };
+  try {
+    // Get equipment progress
+    const equipmentItems = await db('employee_equipment')
+      .count('* as total')
+      .where({ employee_id: id })
+      .first();
+    
+    // Get document progress
+    const documentItems = await db('employee_documents')
+      .count('* as total')
+      .where({ employee_id: id })
+      .first();
+    
+    // Get training progress
+    const trainingItems = await db('employee_training')
+      .count('* as total')
+      .where({ employee_id: id })
+      .first();
+    
+    // Calculate overall progress (dummy calculation for now)
+    const equipmentCount = equipmentItems.total || 0;
+    const documentCount = documentItems.total || 0;
+    const trainingCount = trainingItems.total || 0;
+    
+    // Fake integration items since we don't have a dedicated table
+    const integrationCount = 2;
+    
+    // Calculate percentages (assuming targets)
+    const equipmentPercentage = Math.min(Math.floor((equipmentCount / 3) * 100), 100);
+    const documentsPercentage = Math.min(Math.floor((documentCount / 3) * 100), 100);
+    const trainingPercentage = Math.min(Math.floor((trainingCount / 3) * 100), 100);
+    const integrationPercentage = 50; // Hardcoded for now
+    
+    // Calculate overall
+    const overall = Math.floor(
+      (equipmentPercentage + documentsPercentage + trainingPercentage + integrationPercentage) / 4
+    );
+    
+    // Get actual checklist items from tables
+    const equipmentList = await db('employee_equipment')
+      .where({ employee_id: id })
+      .select('id', 'equipment_name as label', 'issue_date', 'condition')
+      .orderBy('issue_date', 'desc');
+      
+    const documentList = await db('employee_documents')
+      .where({ employee_id: id })
+      .select('id', 'document_name as label', 'upload_date', 'document_type')
+      .orderBy('upload_date', 'desc');
+      
+    const trainingList = await db('employee_training')
+      .where({ employee_id: id })
+      .select('id', 'training_name as label', 'status', 'start_date')
+      .orderBy('start_date', 'desc');
+    
+    // Combine into a single list with formatted items
+    const checklistItems = [
+      ...equipmentList.map(item => ({
+        id: `equipment_${item.id}`,
+        label: item.label,
+        completed: true,
+        category: 'equipment',
+        date: item.issue_date
+      })),
+      ...documentList.map(item => ({
+        id: `document_${item.id}`,
+        label: item.label,
+        completed: true,
+        category: 'documents',
+        date: item.upload_date
+      })),
+      ...trainingList.map(item => ({
+        id: `training_${item.id}`,
+        label: item.label,
+        completed: item.status === 'completed',
+        category: 'training',
+        date: item.start_date
+      })),
+      // Add default integration items
+      { id: "introduction", label: "Team Introduction", completed: true, category: "integration" },
+      { id: "mentor", label: "Mentor Assignment", completed: false, category: "integration" }
+    ];
+    
+    return {
+      equipment: equipmentPercentage,
+      documents: documentsPercentage,
+      training: trainingPercentage,
+      integration: integrationPercentage,
+      overall: overall,
+      checklistItems
+    };
+  } catch (error) {
+    console.error('Error getting onboarding progress:', error);
+    // Return default values if there's an error
+    return {
+      equipment: 0,
+      documents: 0,
+      training: 0,
+      integration: 0,
+      overall: 0,
+      checklistItems: []
+    };
+  }
+};
+
+/**
+ * Update onboarding checklist item
+ */
+const updateOnboardingChecklist = async (employeeId, checklistData) => {
+  const { category, itemId, completed } = checklistData;
+  
+  try {
+    // Extract the real item ID from the formatted ID
+    const parts = itemId.split('_');
+    if (parts.length === 2) {
+      const id = parseInt(parts[1]);
+      
+      if (category === 'equipment' && id) {
+        await db('employee_equipment')
+          .where({ id, employee_id: employeeId })
+          .update({ 
+            condition: completed ? 'Good' : 'Pending',
+            updated_at: new Date()
+          });
+      } else if (category === 'documents' && id) {
+        // For documents we don't really have a status field to update
+        // But we could add notes or status if needed
+      } else if (category === 'training' && id) {
+        await db('employee_training')
+          .where({ id, employee_id: employeeId })
+          .update({ 
+            status: completed ? 'completed' : 'in progress',
+            updated_at: new Date()
+          });
+      }
+    } else if (category === 'integration') {
+      // Integration items are currently not stored in the database
+      // We would need to add a table for these, for now just return success
+    }
+    
+    return {
+      updated: true,
+      message: 'Checklist item updated successfully'
+    };
+  } catch (error) {
+    console.error('Error updating checklist item:', error);
+    return {
+      updated: false,
+      message: 'Failed to update checklist item'
+    };
+  }
 };
 
 /**
  * Get equipment
  */
 const getEquipment = async (id) => {
-  // This would typically query a separate employee_equipment table
-  // For now, return a placeholder
-  return {
-    employeeId: id,
-    equipment: []
-  };
+  try {
+    const equipment = await db('employee_equipment')
+      .where({ employee_id: id })
+      .select('*')
+      .orderBy('issue_date', 'desc');
+      
+    return {
+      employeeId: id,
+      equipment
+    };
+  } catch (error) {
+    console.error('Error getting employee equipment:', error);
+    return {
+      employeeId: id,
+      equipment: []
+    };
+  }
 };
 
 /**
  * Save equipment
  */
 const saveEquipment = async (id, equipmentData) => {
-  // This would typically update a separate employee_equipment table
-  // For now, return the data that would be saved
-  return {
-    employeeId: id,
-    equipment: equipmentData
-  };
+  try {
+    if (equipmentData.id) {
+      // Update existing equipment
+      await db('employee_equipment')
+        .where({ id: equipmentData.id, employee_id: id })
+        .update({
+          ...equipmentData,
+          updated_at: new Date()
+        });
+        
+      return {
+        employeeId: id,
+        equipment: equipmentData,
+        updated: true
+      };
+    } else {
+      // Add new equipment
+      const [equipmentId] = await db('employee_equipment').insert({
+        employee_id: id,
+        equipment_type: equipmentData.equipment_type,
+        equipment_name: equipmentData.equipment_name,
+        serial_number: equipmentData.serial_number,
+        condition: equipmentData.condition,
+        issue_date: equipmentData.issue_date || new Date(),
+        notes: equipmentData.notes,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+      
+      return {
+        employeeId: id,
+        equipment: { ...equipmentData, id: equipmentId },
+        added: true
+      };
+    }
+  } catch (error) {
+    console.error('Error saving employee equipment:', error);
+    throw error;
+  }
 };
 
 /**
  * Get documents
  */
 const getDocuments = async (id) => {
-  // This would typically query a separate employee_documents table
-  // For now, return a placeholder
-  return {
-    employeeId: id,
-    documents: []
-  };
+  try {
+    const documents = await db('employee_documents')
+      .where({ employee_id: id })
+      .select('*')
+      .orderBy('upload_date', 'desc');
+      
+    return {
+      employeeId: id,
+      documents
+    };
+  } catch (error) {
+    console.error('Error getting employee documents:', error);
+    return {
+      employeeId: id,
+      documents: []
+    };
+  }
 };
 
 /**
  * Save documents
  */
-const saveDocuments = async (id, documentsData) => {
-  // This would typically update a separate employee_documents table
-  // For now, return the data that would be saved
-  return {
-    employeeId: id,
-    documents: documentsData
-  };
+const saveDocuments = async (id, documentData) => {
+  try {
+    if (documentData.id) {
+      // Update existing document
+      await db('employee_documents')
+        .where({ id: documentData.id, employee_id: id })
+        .update({
+          ...documentData,
+          updated_at: new Date()
+        });
+        
+      return {
+        employeeId: id,
+        document: documentData,
+        updated: true
+      };
+    } else {
+      // Add new document
+      const [documentId] = await db('employee_documents').insert({
+        employee_id: id,
+        document_type: documentData.document_type,
+        document_name: documentData.document_name,
+        file_path: documentData.file_path,
+        description: documentData.description,
+        upload_date: documentData.upload_date || new Date(),
+        expiry_date: documentData.expiry_date,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+      
+      return {
+        employeeId: id,
+        document: { ...documentData, id: documentId },
+        added: true
+      };
+    }
+  } catch (error) {
+    console.error('Error saving employee document:', error);
+    throw error;
+  }
 };
 
 /**
  * Get training
  */
 const getTraining = async (id) => {
-  // This would typically query a separate employee_training table
-  // For now, return a placeholder
-  return {
-    employeeId: id,
-    training: []
-  };
+  try {
+    const training = await db('employee_training')
+      .where({ employee_id: id })
+      .select('*')
+      .orderBy('start_date', 'desc');
+      
+    return {
+      employeeId: id,
+      training
+    };
+  } catch (error) {
+    console.error('Error getting employee training:', error);
+    return {
+      employeeId: id,
+      training: []
+    };
+  }
 };
 
 /**
  * Save training
  */
 const saveTraining = async (id, trainingData) => {
-  // This would typically update a separate employee_training table
-  // For now, return the data that would be saved
-  return {
-    employeeId: id,
-    training: trainingData
-  };
+  try {
+    if (trainingData.id) {
+      // Update existing training
+      await db('employee_training')
+        .where({ id: trainingData.id, employee_id: id })
+        .update({
+          ...trainingData,
+          updated_at: new Date()
+        });
+        
+      return {
+        employeeId: id,
+        training: trainingData,
+        updated: true
+      };
+    } else {
+      // Add new training
+      const [trainingId] = await db('employee_training').insert({
+        employee_id: id,
+        training_name: trainingData.training_name,
+        provider: trainingData.provider,
+        start_date: trainingData.start_date || new Date(),
+        end_date: trainingData.end_date,
+        status: trainingData.status || 'scheduled',
+        certificate_path: trainingData.certificate_path,
+        description: trainingData.description,
+        cost: trainingData.cost,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+      
+      return {
+        employeeId: id,
+        training: { ...trainingData, id: trainingId },
+        added: true
+      };
+    }
+  } catch (error) {
+    console.error('Error saving employee training:', error);
+    throw error;
+  }
 };
 
 module.exports = {
@@ -272,6 +582,7 @@ module.exports = {
   updateProfilePicture,
   getStats,
   getOnboardingProgress,
+  updateOnboardingChecklist,
   getEquipment,
   saveEquipment,
   getDocuments,

@@ -11,6 +11,12 @@ import axios from 'axios';
 // Import with ES module named imports style for Vite compatibility
 import XLSX from 'xlsx/dist/xlsx.full.min.js';
 import { saveAs } from 'file-saver/dist/FileSaver.min.js';
+import { FiPlus, FiSearch } from "react-icons/fi";
+import { MdDone, MdClose } from "react-icons/md";
+import ModalOverlay from "../components/ModalOverlay";
+import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
+import StatusIndicator from "../components/StatusIndicator";
+import NoDataFound from "../components/NoDataFound";
 
 const Employees = () => {
   const { theme } = useContext(ThemeContext);
@@ -25,6 +31,7 @@ const Employees = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [addEmployeeModalOpen, setAddEmployeeModalOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -427,105 +434,132 @@ const Employees = () => {
           <>
             {/* Employees Table */}
             <div className={`${isDark ? 'bg-[#232f46] border border-slate-700' : 'bg-white border border-gray-200'} rounded-xl shadow-md overflow-hidden mb-4`}>
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
-                    <tr>
-                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-slate-300' : 'text-gray-500'
-                      }`}>Name</th>
-                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-slate-300' : 'text-gray-500'
-                      }`}>Position</th>
-                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-slate-300' : 'text-gray-500'
-                      }`}>Department</th>
-                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-slate-300' : 'text-gray-500'
-                      }`}>Status</th>
-                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        isDark ? 'text-slate-300' : 'text-gray-500'
-                      }`}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${
-                    isDark ? 'divide-slate-700' : 'divide-gray-200'
+              {currentItems.length === 0 ? (
+                <div className={`flex flex-col items-center justify-center py-16 px-4 ${
+                  isDark ? 'text-gray-300' : 'text-gray-500'
+                }`}>
+                  <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 ${
+                    isDark ? 'bg-slate-700' : 'bg-gray-100'
                   }`}>
-                    {currentItems.map(employee => (
-                      <tr key={employee.id} className={isDark ? 'hover:bg-slate-700/50' : 'hover:bg-gray-50'}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="font-medium">{employee.name}</div>
-                          <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{employee.email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{employee.position}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{employee.department}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                            employee.status === 'Active' 
-                              ? isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
-                              : isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {employee.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleViewEmployee(employee)}
-                              className={`p-2 rounded-lg ${
-                                isDark 
-                                  ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' 
-                                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                              } transition-colors duration-200`}
-                            >
-                              <i className="fas fa-eye"></i>
-                            </button>
-                            <button
-                              onClick={() => handleEditEmployee(employee)}
-                              className={`p-2 rounded-lg ${
-                                isDark 
-                                  ? 'bg-blue-700 hover:bg-blue-600 text-blue-300' 
-                                  : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
-                              } transition-colors duration-200`}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteClick(employee)}
-                              className={`p-2 rounded-lg ${
-                                isDark 
-                                  ? 'bg-red-700 hover:bg-red-600 text-red-300' 
-                                  : 'bg-red-100 hover:bg-red-200 text-red-600'
-                              } transition-colors duration-200`}
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
-                          </div>
-                        </td>
+                    <i className="fas fa-user-slash text-5xl text-gray-400"></i>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No Employees Found</h3>
+                  <p className="text-center max-w-md mb-6">
+                    {searchTerm ? 
+                      `No results match '${searchTerm}'. Try a different search term.` : 
+                      'There are no employees in the system yet. Add a new employee to get started.'}
+                  </p>
+                  <button 
+                    onClick={() => setAddEmployeeModalOpen(true)}
+                    className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <i className="fas fa-user-plus mr-2"></i>
+                    Add Employee
+                  </button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead className={isDark ? 'bg-slate-700' : 'bg-gray-50'}>
+                      <tr>
+                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-slate-300' : 'text-gray-500'
+                        }`}>Name</th>
+                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-slate-300' : 'text-gray-500'
+                        }`}>Position</th>
+                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-slate-300' : 'text-gray-500'
+                        }`}>Department</th>
+                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-slate-300' : 'text-gray-500'
+                        }`}>Status</th>
+                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-slate-300' : 'text-gray-500'
+                        }`}>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className={`divide-y ${
+                      isDark ? 'divide-slate-700' : 'divide-gray-200'
+                    }`}>
+                      {currentItems.map(employee => (
+                        <tr key={employee.id} className={isDark ? 'hover:bg-slate-700/50' : 'hover:bg-gray-50'}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="font-medium">{employee.name}</div>
+                            <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{employee.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{employee.position}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{employee.department}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                              employee.status === 'Active' 
+                                ? isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
+                                : isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {employee.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleViewEmployee(employee)}
+                                className={`p-2 rounded-lg ${
+                                  isDark 
+                                    ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' 
+                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                } transition-colors duration-200`}
+                              >
+                                <i className="fas fa-eye"></i>
+                              </button>
+                              <button
+                                onClick={() => handleEditEmployee(employee)}
+                                className={`p-2 rounded-lg ${
+                                  isDark 
+                                    ? 'bg-blue-700 hover:bg-blue-600 text-blue-300' 
+                                    : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
+                                } transition-colors duration-200`}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(employee)}
+                                className={`p-2 rounded-lg ${
+                                  isDark 
+                                    ? 'bg-red-700 hover:bg-red-600 text-red-300' 
+                                    : 'bg-red-100 hover:bg-red-200 text-red-600'
+                                } transition-colors duration-200`}
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
-            {/* Pagination */}
-            <div className="flex justify-center my-4">
-              <ReactPaginate
-                previousLabel={<i className="fas fa-chevron-left"></i>}
-                nextLabel={<i className="fas fa-chevron-right"></i>}
-                breakLabel={"..."}
-                pageCount={pageCount}
-                marginPagesDisplayed={2}
-                pageRangeDisplayed={3}
-                onPageChange={handlePageChange}
-                containerClassName={`flex items-center space-x-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
-                pageClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
-                previousClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
-                nextClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
-                activeClassName={`bg-green-600 text-white hover:bg-green-700 ${isDark ? 'hover:text-white' : ''}`}
-              />
-            </div>
+            {/* Pagination - only show if there are items */}
+            {currentItems.length > 0 && (
+              <div className="flex justify-center my-4">
+                <ReactPaginate
+                  previousLabel={<i className="fas fa-chevron-left"></i>}
+                  nextLabel={<i className="fas fa-chevron-right"></i>}
+                  breakLabel={"..."}
+                  pageCount={pageCount}
+                  marginPagesDisplayed={2}
+                  pageRangeDisplayed={3}
+                  onPageChange={handlePageChange}
+                  containerClassName={`flex items-center space-x-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                  pageClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+                  previousClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+                  nextClassName={`px-3 py-1.5 rounded-md ${isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-200'}`}
+                  activeClassName={`bg-green-600 text-white hover:bg-green-700 ${isDark ? 'hover:text-white' : ''}`}
+                />
+              </div>
+            )}
           </>
         )}
       </div>

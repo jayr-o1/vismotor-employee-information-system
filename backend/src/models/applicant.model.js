@@ -1,17 +1,15 @@
-const db = require("../config/database");
+const db = require("../database");
 
 /**
  * Get all applicants
  */
 const findAll = async () => {
-  const connection = await db.getConnection();
   try {
-    const [rows] = await connection.query(
-      "SELECT * FROM applicants ORDER BY applied_date DESC"
-    );
-    return rows;
-  } finally {
-    connection.release();
+    const applicants = await db('applicants').orderBy('application_date', 'desc');
+    return applicants;
+  } catch (error) {
+    console.error('Error finding all applicants:', error);
+    throw error;
   }
 };
 
@@ -19,15 +17,12 @@ const findAll = async () => {
  * Find applicant by ID
  */
 const findById = async (id) => {
-  const connection = await db.getConnection();
   try {
-    const [rows] = await connection.query(
-      "SELECT * FROM applicants WHERE id = ?",
-      [id]
-    );
-    return rows.length > 0 ? rows[0] : null;
-  } finally {
-    connection.release();
+    const applicant = await db('applicants').where({ id }).first();
+    return applicant || null;
+  } catch (error) {
+    console.error('Error finding applicant by id:', error);
+    throw error;
   }
 };
 
@@ -36,23 +31,35 @@ const findById = async (id) => {
  */
 const create = async (applicantData) => {
   const {
-    firstName,
-    lastName,
+    first_name,
+    last_name,
     email,
-    gender,
-    position,
-    highestEducation
+    phone,
+    position_applied,
+    resume_path,
+    expected_salary,
+    status = 'new'
   } = applicantData;
   
-  const connection = await db.getConnection();
   try {
-    const [result] = await connection.query(
-      "INSERT INTO applicants (first_name, last_name, email, gender, position, highest_education, status, applied_date) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())",
-      [firstName, lastName, email, gender, position, highestEducation, "Pending"]
-    );
-    return { id: result.insertId, ...applicantData };
-  } finally {
-    connection.release();
+    const [id] = await db('applicants').insert({
+      first_name,
+      last_name,
+      email,
+      phone,
+      position_applied,
+      resume_path,
+      expected_salary,
+      status,
+      application_date: new Date(),
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    
+    return { id, ...applicantData };
+  } catch (error) {
+    console.error('Error creating applicant:', error);
+    throw error;
   }
 };
 
@@ -60,25 +67,18 @@ const create = async (applicantData) => {
  * Update an applicant
  */
 const update = async (id, applicantData) => {
-  const {
-    firstName,
-    lastName,
-    email,
-    gender,
-    position,
-    highestEducation,
-    status
-  } = applicantData;
-  
-  const connection = await db.getConnection();
   try {
-    const [result] = await connection.query(
-      "UPDATE applicants SET first_name = ?, last_name = ?, email = ?, gender = ?, position = ?, highest_education = ?, status = ? WHERE id = ?",
-      [firstName, lastName, email, gender, position, highestEducation, status || "Pending", id]
-    );
-    return result.affectedRows > 0 ? { id, ...applicantData } : null;
-  } finally {
-    connection.release();
+    const updated = await db('applicants')
+      .where({ id })
+      .update({
+        ...applicantData,
+        updated_at: new Date()
+      });
+      
+    return updated > 0 ? { id, ...applicantData } : null;
+  } catch (error) {
+    console.error('Error updating applicant:', error);
+    throw error;
   }
 };
 
@@ -86,15 +86,18 @@ const update = async (id, applicantData) => {
  * Update applicant status
  */
 const updateStatus = async (id, status) => {
-  const connection = await db.getConnection();
   try {
-    const [result] = await connection.query(
-      "UPDATE applicants SET status = ? WHERE id = ?",
-      [status, id]
-    );
-    return result.affectedRows > 0;
-  } finally {
-    connection.release();
+    const updated = await db('applicants')
+      .where({ id })
+      .update({ 
+        status,
+        updated_at: new Date()
+      });
+      
+    return updated > 0;
+  } catch (error) {
+    console.error('Error updating applicant status:', error);
+    throw error;
   }
 };
 
@@ -102,31 +105,23 @@ const updateStatus = async (id, status) => {
  * Delete an applicant and related records
  */
 const remove = async (id) => {
-  const connection = await db.getConnection();
   try {
-    await connection.beginTransaction();
-    
-    // Delete related feedback
-    await connection.query("DELETE FROM feedback WHERE applicant_id = ?", [id]);
-    
-    // Delete related interviews
-    await connection.query("DELETE FROM interviews WHERE applicant_id = ?", [id]);
-    
-    // Delete the applicant
-    const [result] = await connection.query("DELETE FROM applicants WHERE id = ?", [id]);
-    
-    if (result.affectedRows === 0) {
-      await connection.rollback();
-      return false;
-    }
-    
-    await connection.commit();
-    return true;
+    // Using Knex transaction
+    return await db.transaction(async trx => {
+      // Delete related feedback
+      await trx('feedback').where({ applicant_id: id }).del();
+      
+      // Delete related interviews
+      await trx('interviews').where({ applicant_id: id }).del();
+      
+      // Delete the applicant
+      const deleted = await trx('applicants').where({ id }).del();
+      
+      return deleted > 0;
+    });
   } catch (error) {
-    await connection.rollback();
+    console.error('Error deleting applicant:', error);
     throw error;
-  } finally {
-    connection.release();
   }
 };
 
@@ -134,66 +129,59 @@ const remove = async (id) => {
  * Submit a complete application
  */
 const submitApplication = async (applicationData) => {
-  const {
-    email,
-    firstName,
-    lastName,
-    gender,
-    otherGender,
-    age,
-    maritalStatus,
-    otherMaritalStatus,
-    highestEducation,
-    otherHighestEducation,
-    region,
-    province,
-    city,
-    barangay,
-    streetAddress,
-    positionApplyingFor,
-    otherPosition,
-    branchDepartment,
-    otherBranchDepartment,
-    dateAvailability,
-    otherDateAvailability,
-    desiredPay,
-    jobPostSource,
-    otherJobSource,
-    previouslyEmployed,
-    resumeFile,
-    houseSketchFile
-  } = applicationData;
-
-  const connection = await db.getConnection();
   try {
-    const [result] = await connection.query(
-      `INSERT INTO applicants (
-        email, first_name, last_name, gender, other_gender, age, 
-        marital_status, other_marital_status, highest_education, other_highest_education,
-        region, province, city, barangay, street_address,
-        position, other_position, branch_department, other_branch_department,
-        date_availability, other_date_availability, desired_pay,
-        job_post_source, other_job_source, previously_employed,
-        resume_filename, resume_originalname, resume_path,
-        house_sketch_filename, house_sketch_originalname, house_sketch_path,
-        status, applied_date
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [
-        email, firstName, lastName, gender, otherGender, age,
-        maritalStatus, otherMaritalStatus, highestEducation, otherHighestEducation,
-        region, province, city, barangay, streetAddress,
-        positionApplyingFor, otherPosition, branchDepartment, otherBranchDepartment,
-        dateAvailability, otherDateAvailability, desiredPay,
-        jobPostSource, otherJobSource, previouslyEmployed,
-        resumeFile?.filename, resumeFile?.originalname, resumeFile?.path,
-        houseSketchFile?.filename, houseSketchFile?.originalname, houseSketchFile?.path,
-        "Pending"
-      ]
-    );
+    console.log("Received application data:", JSON.stringify(applicationData));
     
-    return { id: result.insertId, ...applicationData };
-  } finally {
-    connection.release();
+    // Map frontend field names to database field names with non-null defaults for required fields
+    const dbData = {
+      email: applicationData.email || '',
+      first_name: applicationData.firstName || '',
+      last_name: applicationData.lastName || '',
+      phone: applicationData.phone || 'Not provided', // Required field in DB
+      address: applicationData.completeAddress || null,
+      resume_path: applicationData.resumeFile ? 
+        (typeof applicationData.resumeFile === 'object' ? 
+          JSON.stringify(applicationData.resumeFile) : applicationData.resumeFile) : null,
+      position_applied: applicationData.positionApplyingFor === 'OTHER' 
+        ? applicationData.otherPosition 
+        : (applicationData.positionApplyingFor || 'General Application'), // Required field in DB
+      expected_salary: applicationData.desiredPay || null,
+      // Store additional fields in JSON format within the skills, education, and experience fields
+      skills: JSON.stringify({
+        gender: applicationData.gender === 'OTHER' ? applicationData.otherGender : applicationData.gender,
+        marital_status: applicationData.maritalStatus === 'OTHER' ? applicationData.otherMaritalStatus : applicationData.maritalStatus,
+        age: applicationData.age || null,
+        job_post_source: applicationData.jobPostSource === 'Other' ? applicationData.otherJobSource : applicationData.jobPostSource,
+        previously_employed: applicationData.previouslyEmployed || null,
+        branch_department: applicationData.branchDepartment === 'Other' ? applicationData.otherBranchDepartment : applicationData.branchDepartment,
+        date_availability: applicationData.dateAvailability === 'OTHER' ? applicationData.otherDateAvailability : applicationData.dateAvailability,
+      }),
+      education: applicationData.highestEducation === 'OTHER'
+        ? applicationData.otherHighestEducation
+        : applicationData.highestEducation || null,
+      experience: JSON.stringify({
+        house_sketch_path: applicationData.houseSketchFile || null
+      }),
+      status: 'pending', // Changed from 'new' to 'pending'
+      application_date: new Date(),
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+
+    console.log("Mapped database data:", JSON.stringify(dbData));
+    
+    // Validate required fields based on database schema
+    if (!dbData.email || !dbData.first_name || !dbData.last_name) {
+      throw new Error('Required fields (email, first_name, last_name) must be provided');
+    }
+
+    // Insert the properly mapped data
+    const [id] = await db('applicants').insert(dbData);
+    
+    return { id, ...applicationData };
+  } catch (error) {
+    console.error('Error submitting application:', error);
+    throw error;
   }
 };
 
@@ -201,86 +189,193 @@ const submitApplication = async (applicationData) => {
  * Get applicant statistics for dashboard
  */
 const getStats = async () => {
-  const connection = await db.getConnection();
   try {
     // Get count by status
-    const [statusCounts] = await connection.query(
-      "SELECT status, COUNT(*) as count FROM applicants GROUP BY status"
-    );
+    const statusCounts = await db('applicants')
+      .select('status')
+      .count('* as count')
+      .groupBy('status');
     
     // Get total count
-    const [totalResult] = await connection.query(
-      "SELECT COUNT(*) as total FROM applicants"
-    );
+    const [{ count: total }] = await db('applicants').count('* as count');
     
     // Get recent applicants
-    const [recentApplicants] = await connection.query(
-      "SELECT id, first_name, last_name, position, status, applied_date FROM applicants ORDER BY applied_date DESC LIMIT 5"
-    );
+    const recentApplicants = await db('applicants')
+      .select('id', 'first_name', 'last_name', 'position_applied', 'status', 'application_date')
+      .orderBy('application_date', 'desc')
+      .limit(5);
     
     return {
       statusCounts,
-      total: totalResult[0].total,
+      total,
       recentApplicants
     };
-  } finally {
-    connection.release();
-  }
-};
-
-/**
- * Get feedback for an applicant
- */
-const getFeedback = async (applicantId) => {
-  const connection = await db.getConnection();
-  try {
-    const [rows] = await connection.query(
-      "SELECT * FROM feedback WHERE applicant_id = ? ORDER BY created_at DESC",
-      [applicantId]
-    );
-    return rows;
-  } finally {
-    connection.release();
-  }
-};
-
-/**
- * Add feedback for an applicant
- */
-const addFeedback = async (applicantId, feedbackData) => {
-  const { feedback_text, created_by } = feedbackData;
-  
-  const connection = await db.getConnection();
-  try {
-    await connection.beginTransaction();
-    
-    // Add feedback
-    const [result] = await connection.query(
-      "INSERT INTO feedback (applicant_id, feedback_text, created_by, created_at) VALUES (?, ?, ?, NOW())",
-      [applicantId, feedback_text, created_by || "HR Team"]
-    );
-    
-    // Update applicant status to "Reviewed" if not already past that stage
-    const [applicants] = await connection.query(
-      "SELECT status FROM applicants WHERE id = ?",
-      [applicantId]
-    );
-    
-    if (applicants.length > 0 && applicants[0].status === "Pending") {
-      await connection.query(
-        "UPDATE applicants SET status = 'Reviewed' WHERE id = ?",
-        [applicantId]
-      );
-    }
-    
-    await connection.commit();
-    return { id: result.insertId, ...feedbackData };
   } catch (error) {
-    await connection.rollback();
+    console.error('Error getting applicant stats:', error);
     throw error;
-  } finally {
-    connection.release();
   }
+};
+
+/**
+ * Get all interviews
+ */
+const getAllInterviews = async () => {
+  try {
+    const interviews = await db('interviews')
+      .join('applicants', 'interviews.applicant_id', 'applicants.id')
+      .select(
+        'interviews.*',
+        db.raw('CONCAT(applicants.first_name, " ", applicants.last_name) as applicant_name'),
+        'applicants.position_applied as applicant_position'
+      )
+      .orderBy(['interviews.interview_date', 'desc']);
+      
+    return interviews;
+  } catch (error) {
+    console.error('Error getting all interviews:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get interviews for a specific applicant
+ */
+const getApplicantInterviews = async (applicantId) => {
+  try {
+    const interviews = await db('interviews')
+      .where({ applicant_id: applicantId })
+      .orderBy(['interview_date', 'desc']);
+      
+    return interviews;
+  } catch (error) {
+    console.error('Error getting applicant interviews:', error);
+    throw error;
+  }
+};
+
+/**
+ * Schedule an interview for an applicant
+ */
+const scheduleInterview = async (applicantId, interviewData) => {
+  console.log("Backend received interview data:", interviewData);
+  
+  // Extract data with defaults for safety
+  const {
+    interview_date = new Date().toISOString().split('T')[0],
+    type = 'in-person',
+    location = 'Office',
+    interviewer = 'HR Staff',
+    notes = null
+  } = interviewData;
+  
+  try {
+    return await db.transaction(async trx => {
+      // Add the interview
+      const [interviewId] = await trx('interviews').insert({
+        applicant_id: applicantId,
+        interview_date: new Date(interview_date),
+        type,
+        location,
+        interviewer,
+        status: 'scheduled',
+        notes,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+      
+      console.log("Interview scheduled, insert ID:", interviewId);
+      
+      // Update the applicant status if it's not already scheduled or higher
+      await trx('applicants')
+        .where({ id: applicantId })
+        .whereIn('status', ['new', 'reviewed'])
+        .update({ 
+          status: 'scheduled',
+          updated_at: new Date()
+        });
+      
+      // Return the newly created interview
+      const interview = await trx('interviews').where({ id: interviewId }).first();
+      console.log("Returning scheduled interview:", interview);
+      
+      return interview;
+    });
+  } catch (error) {
+    console.error("Error in scheduleInterview:", error);
+    throw error;
+  }
+};
+
+/**
+ * Update interview status
+ */
+const updateInterviewStatus = async (interviewId, status) => {
+  try {
+    return await db.transaction(async trx => {
+      // Update the interview status
+      const updated = await trx('interviews')
+        .where({ id: interviewId })
+        .update({ 
+          status,
+          updated_at: new Date()
+        });
+      
+      if (updated === 0) {
+        return null;
+      }
+      
+      // Get the applicant ID for the interview
+      const interview = await trx('interviews')
+        .select('applicant_id')
+        .where({ id: interviewId })
+        .first();
+      
+      if (interview) {
+        // If interview is completed, update applicant status to 'interviewed'
+        if (status === 'completed') {
+          await trx('applicants')
+            .where({ id: interview.applicant_id })
+            .update({ 
+              status: 'interviewed',
+              updated_at: new Date()
+            });
+        }
+      }
+      
+      // Return the updated interview
+      return await trx('interviews').where({ id: interviewId }).first();
+    });
+  } catch (error) {
+    console.error('Error updating interview status:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete an interview
+ */
+const deleteInterview = async (interviewId) => {
+  try {
+    const deleted = await db('interviews').where({ id: interviewId }).del();
+    return deleted > 0;
+  } catch (error) {
+    console.error('Error deleting interview:', error);
+    throw error;
+  }
+};
+
+/**
+ * Send interview email
+ */
+const sendInterviewEmail = async (applicantId, interviewId, emailData) => {
+  // This would typically connect to an email service
+  // For now, just returning success
+  return {
+    success: true,
+    applicantId,
+    interviewId,
+    emailSent: true
+  };
 };
 
 module.exports = {
@@ -292,6 +387,10 @@ module.exports = {
   remove,
   submitApplication,
   getStats,
-  getFeedback,
-  addFeedback
+  getAllInterviews,
+  getApplicantInterviews,
+  scheduleInterview,
+  updateInterviewStatus,
+  deleteInterview,
+  sendInterviewEmail
 }; 

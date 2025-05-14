@@ -34,12 +34,6 @@ router.post(
 // Application submission (public route)
 router.post("/api/applications/submit", applicantController.submitApplication);
 
-// Feedback
-router.get("/api/applicants/:id/feedback", applicantController.getFeedback);
-router.post("/api/applicants/:id/feedback", applicantController.addFeedback);
-router.put("/api/feedback/:id", applicantController.updateFeedback);
-router.delete("/api/feedback/:id", applicantController.deleteFeedback);
-
 // Interviews
 router.get("/api/interviews", applicantController.getAllInterviews);
 router.get("/api/applicants/:id/interviews", applicantController.getApplicantInterviews);

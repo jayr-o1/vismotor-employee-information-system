@@ -4,9 +4,8 @@
  */
 
 const bcrypt = require('bcryptjs');
-const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
-const db = require('../../config/database');
+const db = require('../../database');
 const { JWT_SECRET } = require('../../config/jwt');
 const { sendErrorResponse } = require('../../utils/errorHandler');
 const { generateToken } = require("../../utils/tokenUtils");
@@ -27,33 +26,26 @@ const login = async (req, res) => {
       throw validationError;
     }
 
-    // Create database connection
-    const connection = await db.getConnection();
-    
     try {
       // Debug: Log all users for debugging
-      const [allUsers] = await connection.query('SELECT id, name, email, role, is_verified FROM users');
+      const allUsers = await db('users').select('id', 'username as name', 'email', 'role', 'is_verified');
       console.log('All users in the database:');
       allUsers.forEach(u => console.log(`User: ${u.id}, ${u.name}, ${u.email}, ${u.role}, verified: ${u.is_verified}`));
       
       // Find user by email
       console.log(`Looking for user with email: "${email}"`);
-      const [users] = await connection.query(
-        'SELECT * FROM users WHERE email = ?',
-        [email]
-      );
+      const user = await db('users').where({ email }).first();
 
-      console.log(`Found ${users.length} users matching email`);
+      console.log(`Found user: ${user ? 'Yes' : 'No'}`);
 
-      if (users.length === 0) {
+      if (!user) {
         const authError = new Error('Invalid credentials');
         authError.code = 'AUTHENTICATION_FAILED';
         authError.statusCode = 401;
         throw authError;
       }
 
-      const user = users[0];
-      console.log(`Found user: ID=${user.id}, Name=${user.name}, Email=${user.email}, Role=${user.role}`);
+      console.log(`Found user: ID=${user.id}, Name=${user.first_name} ${user.last_name}, Email=${user.email}, Role=${user.role}`);
 
       // Check if user is verified - handle different types that might be returned
       const isVerified = user.is_verified === 1 || 
@@ -93,17 +85,15 @@ const login = async (req, res) => {
         throw authError;
       }
 
-      // Parse user name into first and last names for the token
-      const nameParts = user.name.split(' ');
-      const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(' ');
+      // Construct full name
+      const name = `${user.first_name} ${user.last_name}`;
 
       // Generate JWT token
       const token = jwt.sign(
         { 
           userId: user.id, 
           email: user.email,
-          name: user.name,
+          name: name,
           role: user.role
         },
         JWT_SECRET,
@@ -118,13 +108,14 @@ const login = async (req, res) => {
         token,
         user: {
           id: user.id,
-          name: user.name,
+          name: name,
           email: user.email,
           role: user.role
         }
       });
-    } finally {
-      if (connection) connection.release();
+    } catch (error) {
+      console.error('Error in login database operations:', error);
+      throw error;
     }
   } catch (error) {
     console.error('Error in login:', error);
@@ -151,9 +142,6 @@ const signup = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
-    // Combine firstName and lastName into name
-    const name = `${firstName} ${lastName}`;
-
     // Input validation
     if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({ message: 'Please provide all required fields' });
@@ -170,183 +158,152 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters long' });
     }
 
-    // Create database connection
-    const connection = await db.getConnection();
-
-    // Check if email already exists
-    const [existingEmails] = await connection.query(
-      'SELECT * FROM users WHERE email = ?', 
-      [email]
-    );
-
-    if (existingEmails.length > 0) {
-      connection.release();
-      return res.status(400).json({ message: 'Email already registered' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Generate verification token
-    const verificationToken = generateToken();
-    
-    // Set token expiry (15 minutes from now)
-    const verificationTokenExpires = new Date(Date.now() + 15 * 60 * 1000);
-
-    // Insert user into database using the correct column names
-    const [result] = await connection.query(
-      'INSERT INTO users (name, email, password, role, is_verified, verification_token) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'user', 0, verificationToken]
-    );
-
-    connection.release();
-
-    // Send verification email
-    const verificationLink = `http://10.10.1.71:5173/verify-email?token=${verificationToken}`;
-    
     try {
-      await sendVerificationEmail(email, verificationLink);
-      console.log(`Verification email sent to ${email}`);
-    } catch (emailError) {
-      console.error('Error sending verification email:', emailError);
-      // Don't return an error to the client, just log it
+      // Check if email already exists
+      const existingUser = await db('users').where({ email }).first();
+
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email already registered' });
+      }
+
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      // Generate verification token
+      const verificationToken = generateToken();
+      
+      // Set token expiry (15 minutes from now)
+      const verificationTokenExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+      // Create username from first name and last name
+      const username = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`;
+
+      // Insert user into database
+      const [userId] = await db('users').insert({
+        username,
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        password: hashedPassword,
+        role: 'user',
+        is_verified: 0,
+        verification_token: verificationToken,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+
+      // Send verification email
+      await sendVerificationEmail(email, verificationToken, `${firstName} ${lastName}`);
+
+      // Return success response without exposing sensitive data
+      return res.status(201).json({
+        message: 'User registered successfully. Please check your email to verify your account.',
+        user: {
+          id: userId,
+          name: `${firstName} ${lastName}`,
+          email
+        }
+      });
+    } catch (error) {
+      console.error('Database error during signup:', error);
+      throw error;
     }
-
-    res.status(201).json({ 
-      message: 'User registered successfully. Please check your email to verify your account.',
-      userId: result.insertId 
-    });
-
   } catch (error) {
     console.error('Error in signup:', error);
-    res.status(500).json({ message: 'Server error during registration' });
+    return res.status(500).json({ message: 'Server error during registration' });
   }
 };
 
-// Verify email
+// Verify user email
 const verifyEmail = async (req, res) => {
-  const { token } = req.query;
-  console.log("Received token:", token); // Debugging
-
-  if (!token) {
-    return res.status(400).json({ message: "Token is missing from the request!" });
-  }
-
   try {
-    const connection = await db.getConnection();
-    
-    // First check if there is a user with this verification token
-    const [users] = await connection.query(
-      "SELECT * FROM users WHERE verification_token = ?", 
-      [token]
-    );
+    const { token } = req.body;
 
-    // If no user found with the token, check if maybe a user was already verified with this token
-    if (users.length === 0) {
-      // Check if there's a verified user whose token was cleared after verification
-      const [verifiedUsers] = await connection.query(
-        "SELECT * FROM users WHERE is_verified = 1 AND verification_token IS NULL"
-      );
-      
-      // We can't be 100% sure this token belonged to this user, but if a user is verified,
-      // we'll assume it's from a previously used token
-      if (verifiedUsers.length > 0) {
-        connection.release();
-        return res.json({ 
-          message: "Your email is already verified. You can now log in to your account.",
-          alreadyVerified: true
-        });
+    if (!token) {
+      return res.status(400).json({ message: 'Verification token is required' });
+    }
+
+    try {
+      // Find user with verification token
+      const user = await db('users').where({ verification_token: token }).first();
+
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid or expired verification token' });
       }
-      
-      connection.release();
-      return res.status(400).json({ message: "Invalid or expired verification token!" });
-    }
 
-    const user = users[0];
-    
-    // Check if user is already verified
-    if (user.is_verified) {
-      connection.release();
-      return res.json({ 
-        message: "Your email is already verified. You can now log in to your account.",
-        alreadyVerified: true
+      // Update user as verified
+      await db('users')
+        .where({ id: user.id })
+        .update({ 
+          is_verified: 1, 
+          verification_token: null,
+          updated_at: new Date()
+        });
+
+      return res.status(200).json({
+        message: 'Email verification successful. You can now log in.',
+        user: {
+          id: user.id,
+          name: `${user.first_name} ${user.last_name}`,
+          email: user.email
+        }
       });
+    } catch (error) {
+      console.error('Database error during email verification:', error);
+      throw error;
     }
-
-    // Update user to verified status
-    await connection.query(
-      "UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = ?",
-      [user.id]
-    );
-
-    connection.release();
-    return res.json({ message: "Email verified successfully! You can now login to your account." });
   } catch (error) {
-    console.error("Email Verification Error:", error);
-    return res.status(500).json({ message: "Internal server error!" });
+    console.error('Error in verifyEmail:', error);
+    return res.status(500).json({ message: 'Server error during email verification' });
   }
 };
 
 // Resend verification email
 const resendVerification = async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ message: "Email is required" });
-  }
-
   try {
-    const connection = await db.getConnection();
-    
-    // Check if user exists
-    const [users] = await connection.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email]
-    );
+    const { email } = req.body;
 
-    if (users.length === 0) {
-      connection.release();
-      return res.status(404).json({ message: "User not found" });
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
     }
 
-    const user = users[0];
-
-    // Check if already verified
-    if (user.is_verified) {
-      connection.release();
-      return res.json({ 
-        message: "Your email is already verified. You can now log in to your account.",
-        alreadyVerified: true
-      });
-    }
-
-    // Generate new verification token
-    const verificationToken = generateToken();
-    
-    // Update with new token
-    await connection.query(
-      "UPDATE users SET verification_token = ? WHERE id = ?",
-      [verificationToken, user.id]
-    );
-
-    connection.release();
-
-    // Send new verification email
-    const verificationLink = `http://10.10.1.71:5173/verify-email?token=${verificationToken}`;
-    
     try {
-      await sendVerificationEmail(email, verificationLink);
-      console.log(`New verification email sent to ${email}`);
-    } catch (emailError) {
-      console.error('Error sending verification email:', emailError);
-      return res.status(500).json({ message: "Error sending verification email" });
-    }
+      // Find user by email
+      const user = await db('users').where({ email }).first();
 
-    return res.json({ message: "Verification email resent successfully" });
+      if (!user) {
+        return res.status(400).json({ message: 'User not found' });
+      }
+
+      if (user.is_verified) {
+        return res.status(400).json({ message: 'Email is already verified' });
+      }
+
+      // Generate new verification token
+      const verificationToken = generateToken();
+
+      // Update user with new verification token
+      await db('users')
+        .where({ id: user.id })
+        .update({ 
+          verification_token: verificationToken,
+          updated_at: new Date()
+        });
+
+      // Send verification email
+      await sendVerificationEmail(email, verificationToken, `${user.first_name} ${user.last_name}`);
+
+      return res.status(200).json({
+        message: 'Verification email sent. Please check your inbox.'
+      });
+    } catch (error) {
+      console.error('Database error during resend verification:', error);
+      throw error;
+    }
   } catch (error) {
-    console.error("Resend Verification Error:", error);
-    return res.status(500).json({ message: "Internal server error!" });
+    console.error('Error in resendVerification:', error);
+    return res.status(500).json({ message: 'Server error during resend verification' });
   }
 };
 
@@ -354,57 +311,47 @@ const resendVerification = async (req, res) => {
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
     }
-    
-    const connection = await db.getConnection();
-    
-    // Find user by email
-    const [users] = await connection.query(
-      'SELECT * FROM users WHERE email = ?', 
-      [email]
-    );
-    
-    if (users.length === 0) {
-      connection.release();
-      // Don't reveal that the user doesn't exist for security reasons
-      return res.json({ message: 'If an account exists with this email, a password reset link has been sent.' });
-    }
-    
-    const user = users[0];
-    
-    // Generate a password reset token
-    const resetToken = generateToken();
-    
-    // Set token expiry (15 minutes from now)
-    const resetTokenExpires = new Date(Date.now() + 15 * 60 * 1000);
-    
-    // Save the token and expiry to the database
-    await connection.query(
-      'UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?',
-      [resetToken, resetTokenExpires, user.id]
-    );
-    
-    connection.release();
-    
-    // Send password reset email
-    const resetLink = `http://10.10.1.71:5173/reset-password?token=${resetToken}`;
-    
+
     try {
-      // This is a placeholder - you'll need to implement the actual email sending logic
-      console.log(`Password reset email would be sent to ${email} with link: ${resetLink}`);
-      // await sendPasswordResetEmail(email, resetLink);
-    } catch (emailError) {
-      console.error('Error sending password reset email:', emailError);
-      // Don't return an error to the client, just log it
+      // Find user by email
+      const user = await db('users').where({ email }).first();
+
+      if (!user) {
+        // Don't reveal that the user doesn't exist for security reasons
+        return res.status(200).json({ message: 'If your email is registered, you will receive a password reset link' });
+      }
+
+      // Generate reset token
+      const resetToken = generateToken();
+      
+      // Set token expiry (1 hour from now)
+      const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+      // Update user with reset token
+      await db('users')
+        .where({ id: user.id })
+        .update({ 
+          reset_token: resetToken,
+          reset_token_expiry: resetTokenExpiry,
+          updated_at: new Date()
+        });
+
+      // TODO: Send password reset email
+
+      return res.status(200).json({
+        message: 'If your email is registered, you will receive a password reset link'
+      });
+    } catch (error) {
+      console.error('Database error during forgot password:', error);
+      throw error;
     }
-    
-    res.json({ message: 'If an account exists with this email, a password reset link has been sent.' });
   } catch (error) {
     console.error('Error in forgotPassword:', error);
-    res.status(500).json({ message: 'Server error during password reset request' });
+    return res.status(500).json({ message: 'Server error during password reset request' });
   }
 };
 
@@ -412,61 +359,59 @@ const forgotPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
-    
+
     if (!token || !password) {
-      return res.status(400).json({ message: 'Token and password are required' });
+      return res.status(400).json({ message: 'Token and new password are required' });
     }
-    
-    // Password validation - at least 8 characters
+
     if (password.length < 8) {
       return res.status(400).json({ message: 'Password must be at least 8 characters long' });
     }
-    
-    const connection = await db.getConnection();
-    
-    // Find user by reset token
-    const [users] = await connection.query(
-      'SELECT * FROM users WHERE reset_token = ?',
-      [token]
-    );
-    
-    if (users.length === 0) {
-      connection.release();
-      return res.status(400).json({ message: 'Invalid or expired password reset token' });
+
+    try {
+      // Find user with reset token
+      const user = await db('users')
+        .where({ reset_token: token })
+        .whereRaw('reset_token_expiry > NOW()')
+        .first();
+
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid or expired reset token' });
+      }
+
+      // Hash new password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      // Update user with new password
+      await db('users')
+        .where({ id: user.id })
+        .update({ 
+          password: hashedPassword,
+          reset_token: null,
+          reset_token_expiry: null,
+          updated_at: new Date()
+        });
+
+      return res.status(200).json({
+        message: 'Password reset successful. You can now log in with your new password.'
+      });
+    } catch (error) {
+      console.error('Database error during password reset:', error);
+      throw error;
     }
-    
-    const user = users[0];
-    
-    // Check if token has expired
-    if (user.reset_token_expires && new Date(user.reset_token_expires) < new Date()) {
-      connection.release();
-      return res.status(400).json({ message: 'Password reset token has expired' });
-    }
-    
-    // Hash the new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    
-    // Update the user's password and clear the reset token
-    await connection.query(
-      'UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?',
-      [hashedPassword, user.id]
-    );
-    
-    connection.release();
-    
-    res.json({ message: 'Password has been reset successfully' });
   } catch (error) {
     console.error('Error in resetPassword:', error);
-    res.status(500).json({ message: 'Server error during password reset' });
+    return res.status(500).json({ message: 'Server error during password reset' });
   }
 };
 
+// Export controllers
 module.exports = {
   login,
   signup,
   verifyEmail,
-  resendVerification,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  resendVerification
 }; 

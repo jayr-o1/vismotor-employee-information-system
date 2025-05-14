@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const db = require("../config/database");
+const db = require("../database");
 const { JWT_SECRET } = require('../config/jwt');
 
 /**
@@ -56,14 +56,12 @@ const validateToken = (req, res, next) => {
 
       // Check if user exists
       try {
-        const connection = await db.getConnection();
-        const [users] = await connection.query(
-          "SELECT id, email, name, role, is_verified FROM users WHERE id = ?",
-          [decoded.userId]
-        );
-        connection.release();
+        const user = await db('users')
+          .select('id', 'email', 'first_name', 'last_name', 'role', 'is_verified')
+          .where({ id: decoded.userId })
+          .first();
 
-        if (users.length === 0) {
+        if (!user) {
           console.log("User not found for token user ID:", decoded.userId);
           return res.status(401).json({
             success: false,
@@ -72,8 +70,11 @@ const validateToken = (req, res, next) => {
           });
         }
 
-        // Attach user to request object
-        req.user = users[0];
+        // Attach user to request object, combining first and last name for compatibility
+        req.user = {
+          ...user,
+          name: `${user.first_name} ${user.last_name}`
+        };
         next();
       } catch (error) {
         console.error("Database error in auth middleware:", error);

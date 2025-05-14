@@ -106,7 +106,7 @@ const Applicants = () => {
   // Filter applicants based on search term
   const filteredApplicants = applicants.filter(applicant =>
     `${applicant.first_name} ${applicant.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    applicant.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    applicant.position_applied?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     applicant.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -169,6 +169,10 @@ const Applicants = () => {
         return isDark 
           ? "bg-yellow-900/30 text-yellow-400" 
           : "bg-yellow-100 text-yellow-800";
+      case 'new':
+        return isDark 
+          ? "bg-blue-900/30 text-blue-400" 
+          : "bg-blue-100 text-blue-800";
       case 'reviewed':
         return isDark 
           ? "bg-blue-900/30 text-blue-400" 
@@ -302,7 +306,7 @@ const Applicants = () => {
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">{applicant.position}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{applicant.position_applied}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={getStatusStyle(applicant.status)}>
                               {applicant.status}

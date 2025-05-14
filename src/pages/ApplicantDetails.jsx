@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   FaArrowLeft, 
-  FaStickyNote, 
   FaUserPlus, 
   FaTimesCircle, 
   FaPaperclip, 
@@ -16,7 +15,6 @@ import {
   FaMoneyBillWave,
   FaHistory,
   FaUserTie,
-  FaFileAlt,
   FaTasks,
   FaClock
 } from "react-icons/fa";
@@ -36,23 +34,13 @@ const ApplicantDetails = () => {
   const [applicant, setApplicant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [feedbackData, setFeedbackData] = useState({
-    text: "",
-    rating: 0,
-    category: "Technical",
-    strengths: "",
-    areas_for_improvement: "",
-    recommendation: "Hire"
-  });
   const [interviewData, setInterviewData] = useState({
     date: "",
     time: "",
     location: "",
     interviewer: ""
   });
-  const [notes, setNotes] = useState([]);
   const [onboardData, setOnboardData] = useState({
     position: "",
     department: "",
@@ -125,17 +113,6 @@ const ApplicantDetails = () => {
       
       setApplicant(processedData);
       
-      // Then try to get notes, but don't let it block the main applicant data
-      try {
-        // Get feedback instead of notes - notes endpoint doesn't exist
-        const feedbackResponse = await apiService.applicants.getFeedback(id);
-        setNotes(feedbackResponse.data || []);
-      } catch (notesError) {
-        console.error("Error fetching applicant feedback:", notesError);
-        // Don't show toast error for notes - just set empty array
-        setNotes([]);
-      }
-      
       // Fetch interview history using the API service
       try {
         const interviewsResponse = await apiService.applicants.getInterviews(id);
@@ -178,58 +155,6 @@ const ApplicantDetails = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSubmitFeedback = async () => {
-    if (!feedbackData.text.trim()) {
-      toast.error("Please enter note text");
-      return;
-    }
-    
-    try {
-      // Send feedback to API
-      const response = await apiService.applicants.addFeedback(applicant.id, {
-        feedback_text: feedbackData.text,
-        created_by: "Current User"
-      });
-      
-      // Get the new feedback data from the response
-      const newFeedback = response.data;
-      
-      // Create a default feedback object if response doesn't contain proper data
-      const feedbackToAdd = newFeedback && newFeedback.id ? newFeedback : {
-        id: Date.now(),
-        feedback_text: feedbackData.text,
-        created_by: "Current User",
-        created_at: new Date().toISOString()
-      };
-      
-      // Update local state with new feedback
-      setNotes(prevNotes => [...prevNotes, feedbackToAdd]);
-      
-      // Reset feedback form
-      setFeedbackData({
-        text: "",
-        rating: 0
-      });
-      
-      setFeedbackModalOpen(false);
-      toast.success("Note added successfully");
-      
-      // Optionally refresh all feedback
-      try {
-        const feedbackResponse = await apiService.applicants.getFeedback(applicant.id);
-        if (feedbackResponse && feedbackResponse.data) {
-          setNotes(feedbackResponse.data);
-        }
-      } catch (refreshError) {
-        console.error("Error refreshing feedback:", refreshError);
-        // Not critical, we already added the note to the UI
-      }
-    } catch (error) {
-      console.error("Error adding note:", error);
-      toast.error(error.response?.data?.message || "Failed to add note. Please try again.");
     }
   };
 
@@ -349,18 +274,6 @@ const ApplicantDetails = () => {
       // Use the PATCH method to update status
       await apiService.applicants.updateStatus(applicant.id, "Rejected");
       
-      // Try to add a note about the rejection
-      try {
-        const feedbackPayload = {
-          feedback_text: `Applicant was rejected on ${new Date().toLocaleDateString()}.`,
-          created_by: "Current User"
-        };
-        
-        await apiService.applicants.addFeedback(applicant.id, feedbackPayload);
-      } catch (error) {
-        // Non-critical error, we can continue
-      }
-      
       toast.success("Applicant marked as rejected");
       
       // Update local state
@@ -461,13 +374,18 @@ const ApplicantDetails = () => {
     }
     
     try {
-      // Schedule the interview using the correct endpoint
-      const response = await apiService.applicants.scheduleInterview(applicant.id, {
+      // Format the interview data properly for the API
+      const formattedInterviewData = {
         interview_date: interviewData.date,
         interview_time: interviewData.time,
         location: interviewData.location,
         interviewer: interviewData.interviewer
-      });
+      };
+      
+      console.log("Sending interview data:", formattedInterviewData);
+      
+      // Schedule the interview using the correct endpoint
+      const response = await apiService.applicants.scheduleInterview(applicant.id, formattedInterviewData);
       
       // Update local state with new status
       setApplicant(prev => ({ 
@@ -500,26 +418,6 @@ const ApplicantDetails = () => {
         ...prev,
         interviews: updatedInterviews
       }));
-      
-      // Add a note about the interview scheduling
-      try {
-        const feedbackPayload = {
-          feedback_text: `Interview scheduled on ${interviewData.date} at ${interviewData.time} with ${interviewData.interviewer} at ${interviewData.location}`,
-          created_by: "Current User"
-        };
-        
-        await apiService.applicants.addFeedback(applicant.id, feedbackPayload);
-        
-        // Refresh feedback/notes
-        try {
-          const feedbackResponse = await apiService.applicants.getFeedback(applicant.id);
-          setNotes(feedbackResponse.data || []);
-        } catch (error) {
-          // Non-critical error
-        }
-      } catch (error) {
-        // Non-critical error, we can continue
-      }
       
       // Reset interview data
       setInterviewData({
@@ -911,21 +809,6 @@ const ApplicantDetails = () => {
                 <FaHistory className="mr-2" />
                 Interview History
               </button>
-              <button 
-                onClick={() => setActiveTab('notes')}
-                className={`px-4 py-3 text-sm font-medium flex items-center ${
-                  activeTab === 'notes' 
-                    ? isDark 
-                      ? 'text-blue-400 border-b-2 border-blue-400' 
-                      : 'text-blue-600 border-b-2 border-blue-600'
-                    : isDark 
-                      ? 'text-gray-400 hover:text-gray-300' 
-                      : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                <FaFileAlt className="mr-2" />
-                Notes
-              </button>
             </div>
 
             {/* Tab Content */}
@@ -1142,110 +1025,8 @@ const ApplicantDetails = () => {
                   )}
                 </div>
               )}
-
-              {/* Notes Tab */}
-              {activeTab === 'notes' && (
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className={`text-lg font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Feedback & Notes</h3>
-                    <button
-                      onClick={() => setFeedbackModalOpen(true)}
-                      className={`flex items-center px-3 py-1 rounded text-sm ${
-                        isDark ? 'bg-purple-800 hover:bg-purple-700 text-white' : 'bg-purple-100 hover:bg-purple-200 text-purple-800'
-                      }`}
-                    >
-                      <FaStickyNote className="mr-1 text-xs" />
-                      Add Note
-                    </button>
-                  </div>
-                  
-                  {notes && notes.length > 0 ? (
-                    <div className="space-y-4">
-                      {notes.map((note, index) => (
-                        <div
-                          key={note.id || index}
-                          className={`p-4 rounded-lg ${isDark ? 'bg-gray-800/60' : 'bg-gray-50'}`}
-                        >
-                          <div className="flex justify-between mb-2">
-                            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>{note.created_by || 'User'}</span>
-                            <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                              {note.created_at ? new Date(note.created_at).toLocaleString() : 'Date not available'}
-                            </span>
-                          </div>
-                          <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                            {note.feedback_text || note.text || 'No content'}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className={`py-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      <p>No notes added yet.</p>
-                      <button
-                        onClick={() => setFeedbackModalOpen(true)}
-                        className={`mt-4 flex items-center px-4 py-2 mx-auto rounded-lg text-sm ${
-                          isDark ? 'bg-purple-800 hover:bg-purple-700 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'
-                        }`}
-                      >
-                        <FaStickyNote className="mr-2" />
-                        Add First Note
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
-          
-          {/* Add Note Modal */}
-          {feedbackModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate__animated animate__fadeIn">
-              <div 
-                className={`w-full max-w-lg rounded-xl shadow-xl p-6 relative animate__animated animate__fadeInUp ${
-                  isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white'
-                }`}
-              >
-                <h3 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Add Note</h3>
-                
-                <div className="mb-4">
-                  <textarea
-                    value={feedbackData.text}
-                    onChange={(e) => setFeedbackData({...feedbackData, text: e.target.value})}
-                    placeholder="Enter your note here..."
-                    className={`w-full px-3 py-2 rounded-lg shadow-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDark 
-                        ? 'bg-gray-700 text-white border-gray-600 placeholder-gray-400' 
-                        : 'bg-white text-gray-800 border-gray-300 placeholder-gray-500'
-                    }`}
-                    rows={5}
-                  ></textarea>
-                </div>
-                
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => setFeedbackModalOpen(false)}
-                    className={`px-4 py-2 rounded-lg text-sm ${
-                      isDark 
-                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
-                    }`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSubmitFeedback}
-                    className={`px-4 py-2 rounded-lg text-sm ${
-                      isDark 
-                        ? 'bg-blue-700 hover:bg-blue-600' 
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    } text-white`}
-                  >
-                    Save Note
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
           
           {/* Schedule Interview Modal */}
           {scheduleModalOpen && (

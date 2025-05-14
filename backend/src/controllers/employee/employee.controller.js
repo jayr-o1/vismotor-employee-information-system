@@ -392,6 +392,34 @@ const getTrainingTypes = async (req, res) => {
   }
 };
 
+/**
+ * Update onboarding checklist
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
+const updateOnboardingChecklist = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { category, itemId, completed } = req.body;
+    
+    // Validate required fields
+    if (!category || !itemId || completed === undefined) {
+      return next(new AppError('Missing required fields for checklist update', 400));
+    }
+    
+    const result = await employeeModel.updateOnboardingChecklist(id, { category, itemId, completed });
+    
+    res.status(200).json({
+      success: true,
+      message: "Checklist item updated successfully",
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllEmployees,
   getEmployeeById,
@@ -410,5 +438,6 @@ module.exports = {
   saveTraining,
   getEquipmentTypes,
   getDocumentTypes,
-  getTrainingTypes
+  getTrainingTypes,
+  updateOnboardingChecklist
 }; 
